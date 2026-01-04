@@ -1,0 +1,8 @@
+# Secret keys - DO NOT COMMIT
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

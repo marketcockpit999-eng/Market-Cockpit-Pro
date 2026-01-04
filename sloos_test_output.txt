@@ -1,0 +1,10 @@
+OK  DRTSCILM: 6.5 (2025-10-01) - C&I Standards (Existing, Large/Medium) - ALREADY HAVE
+ERR DRSTDCL: Unable to read URL: https://fred.stlouisfed.org/gr - C&I Standards (Large/Medium)
+ERR DRSTSS: Unable to read URL: https://fred.stlouisfed.org/gr - C&I Standards (Small)
+ERR DRSDCL: index -1 is out of bounds for axis 0 with size 0 - C&I Demand (Large/Medium)
+OK  BUSLOANS: 2,698.6 (2025-11-01) - C&I Loan Balance (Total)
+OK  SUBLPDRCSC: 6.6 (2025-10-01) - CRE Standards (Construction)
+ERR SUBLPDRNS: Unable to read URL: https://fred.stlouisfed.org/gr - CRE Standards (Nonfarm Nonres)
+ERR SUBLPDRMF: Unable to read URL: https://fred.stlouisfed.org/gr - CRE Standards (Multifamily)
+ERR DRSDRE: Unable to read URL: https://fred.stlouisfed.org/gr - CRE Demand
+OK  CREACBW027SBOG: 3,064.6 (2025-12-17) - CRE Loan Balance (Weekly)
