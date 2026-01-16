@@ -115,6 +115,18 @@ INDICATORS = {
         'notes': 'SOMA短期国債（RMP対象）',
         'divisor': 1000,
     },
+    'SomaBillsRatio': {
+        'source': 'CALCULATED',
+        'id': 'SOMA_RATIO',
+        'unit': '%',
+        'frequency': 'weekly',
+        'freshness': 'weekly',
+        'category': 'fed_liquidity',
+        'ui_page': '01_liquidity',
+        'ai_include': True,
+        'ai_section': 'FRB流動性',
+        'notes': 'SOMA短期国債比率',
+    },
     'SRF': {
         'source': 'FRED',
         'id': 'WORAL',
@@ -1043,6 +1055,67 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '仮想通貨',
         'notes': 'イーサリアム',
+    },
+    
+    # =========================================================================
+    # NEW ADVANCED INDICATORS (2026-01-16)
+    # =========================================================================
+    'M2_Velocity': {
+        'source': 'FRED',
+        'id': 'M2V',
+        'unit': '',
+        'frequency': 'quarterly',
+        'freshness': 'quarterly',
+        'category': 'economy',
+        'ui_page': '10_market_lab',  # New Lab Page
+        'ai_include': True,
+        'ai_section': 'マクロ分析',
+        'notes': 'M2通貨回転率（インフレ・景気過熱）',
+    },
+    'Financial_Stress': {
+        'source': 'FRED',
+        'id': 'STLFSI4',
+        'unit': '',
+        'frequency': 'weekly',
+        'freshness': 'weekly',
+        'category': 'financial_stress',
+        'ui_page': '10_market_lab',
+        'ai_include': True,
+        'ai_section': '金融ストレス',
+        'notes': 'セントルイス連銀金融ストレス指数',
+    },
+    'ECB_Assets': {
+        'source': 'FRED',
+        'id': 'ECBASSETSW',
+        'unit': 'M',
+        'frequency': 'weekly',
+        'freshness': 'weekly',
+        'category': 'central_bank',
+        'ui_page': '02_global_money', # Or hidden mainly for calc
+        'ai_include': True,
+        'ai_section': '中央銀行',
+        'notes': 'ECB総資産 (Million EUR)',
+        'divisor': 1000000, # Initial unit is Million? FRED says "Millions of Euros". Convert to Trillions? Or Billions?
+        # Usually we want Billions for consistency with Fed Assets. 1,000,000 Million = 1 Trillion.
+        # Fed Assets is in Billions.
+        # Let's keep it Raw and normalize in data_fetcher if needed, or set divisor here.
+        # FRED: ECBASSETSW is "Millions of Euros".
+        # To get Billions of Euros: Divide by 1,000.
+        # To get Trillions: Divide by 1,000,000.
+        # Current Fed Assets is Billions. Let's aim for Billions.
+        'divisor': 1000, 
+    },
+    'Global_Liquidity_Proxy': {
+        'source': 'CALCULATED',
+        'id': 'GLP_USD',
+        'unit': 'B USD',
+        'frequency': 'weekly', # Driven by Fed/ECB weekly
+        'freshness': 'weekly',
+        'category': 'liquidity',
+        'ui_page': '10_market_lab',
+        'ai_include': True,
+        'ai_section': '流動性',
+        'notes': 'グローバル流動性プロキシ (Fed+ECB-TGA-RRP)',
     },
 }
 

@@ -225,6 +225,7 @@ pg = st.navigation([
     st.Page("pages/07_market_voices.py", title="📰 Market Voices"),
     st.Page("pages/08_sentiment.py", title="🎭 Market Sentiment"),
     st.Page("pages/09_banking.py", title="🏦 Banking Sector"),
+    st.Page("pages/11_analysis_lab.py", title="🧪 Market Analysis Lab"),
 ])
 
 pg.run()

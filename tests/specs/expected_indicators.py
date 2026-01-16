@@ -9,6 +9,7 @@ Market Cockpit Pro - Master Specification
 ---------
 2026-01-15: 初版作成 - 67指標定義
 2026-01-15: v1.1 - REQUIRED_DATAFRAME_COLUMNSをconstants.pyと整合
+2026-01-17: v1.2 - 新指標追加 (M2_Velocity, Financial_Stress, ECB_Assets, Global_Liquidity_Proxy, etc.) + 新ページ追加
 """
 
 # ========== 不変の定義（絶対に変わらない）==========
@@ -24,7 +25,7 @@ BILLS_RATIO_FORMULA = "(SOMA_Bills / SOMA_Total) * 100"
 
 # 期待される指標数
 # 変更時は日付と理由をコメントで記載すること
-EXPECTED_INDICATOR_COUNT = 67  # 2026-01-15: 初版
+EXPECTED_INDICATOR_COUNT = 83  # 2026-01-17: 新指標追加 (M2_Velocity, Financial_Stress, Banking等)
 
 # ページファイル（存在確認用）
 EXPECTED_PAGE_FILES = [
@@ -36,6 +37,8 @@ EXPECTED_PAGE_FILES = [
     "06_monte_carlo.py",
     "07_market_voices.py",
     "08_sentiment.py",
+    "09_banking.py",       # 2026-01-16: Banking Sector追加
+    "11_analysis_lab.py",  # 2026-01-17: Market Analysis Lab追加
 ]
 
 # utilsモジュール（インポート確認用）
@@ -72,6 +75,11 @@ EXPECTED_FRED_KEYS = [
     "CN_CPI", "JP_CPI", "EU_CPI",
     # Economy
     "RetailSales", "RealGDP", "ConsumerSent",
+    # Banking Sector (2026-01-16 added)
+    "Credit_Card_Loans", "Consumer_Loans", "Bank_Securities", "Bank_Deposits",
+    "Small_Bank_Deposits", "CC_Delinquency", "CP_Spread", "NFCI", "Breakeven_10Y",
+    # Market Analysis Lab (2026-01-17 added)
+    "M2_Velocity", "Financial_Stress", "ECB_Assets",
 ]
 
 # Yahoo指標キー

@@ -96,9 +96,60 @@ else:
     else:
         st.write("DEBUG: Global_M2 column MISSING from DataFrame.")
 
+
+# === Global Liquidity Proxy (Fed + ECB) ===
+st.markdown("---")
+st.markdown("### 🌊 Global Liquidity Proxy (Fed + ECB)")
+st.caption("💡 FRB資産 + ECB資産(ドル換算)。市場感応度の高い流動性指標。")
+
+if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy', pd.Series()).isna().all():
+    gl_series = df['Global_Liquidity_Proxy'].dropna()
+    gl_val = gl_series.iloc[-1]
+    
+    # Calculate YoY (Approximate 252 days for trading days, or simply use logic)
+    # Using simple lookup
+    daily_change = gl_val - gl_series.iloc[-2] if len(gl_series) > 1 else 0
+    
+    # YoY Calculation
+    try:
+        one_year_ago_date = gl_series.index[-1] - pd.DateOffset(years=1)
+        # Find nearest date
+        idx_loc = gl_series.index.get_indexer([one_year_ago_date], method='nearest')[0]
+        gl_val_yoy = gl_series.iloc[idx_loc]
+        yoy_pct = ((gl_val - gl_val_yoy) / gl_val_yoy) * 100
+        yoy_str = f"{yoy_pct:+.2f}% YoY"
+    except:
+        yoy_str = "N/A"
+
+    col_gl1, col_gl2 = st.columns([1, 2])
+    
+    with col_gl1:
+        st.metric(
+            "Global Liquidity Proxy",
+            f"${gl_val/1000:.2f}T", 
+            delta=yoy_str,
+            help="Fed Assets + (ECB Assets * EUR/USD)"
+        )
+        st.caption(f"前日比: {daily_change:+.1f}B")
+    
+    with col_gl2:
+        # Show comparison with SP500 or BTC? Analysis is on Page 10, so just trend here.
+        st.markdown("##### 📈 Trend (YTD)")
+        # Filter YTD
+        ytd_start = pd.Timestamp(f"{gl_series.index[-1].year}-01-01")
+        st.line_chart(gl_series[gl_series.index >= ytd_start], height=200)
+        
+else:
+    st.info("ℹ️ Global Liquidity Proxy データ計算中/不足 (ECBデータ待機中)")
+
 st.markdown("---")
 st.markdown("### 💵 Regional M2 Breakdown")
 
+
+# === Currency Variables ===
+usdjpy = df['USDJPY'].iloc[-1] if 'USDJPY' in df.columns else 145.0
+eurusd = df['EURUSD'].iloc[-1] if 'EURUSD' in df.columns else 1.08
+usdcny = df['USDCNY'].iloc[-1] if 'USDCNY' in df.columns else 7.25
 
 # US & China
 col1, col2 = st.columns(2)
@@ -153,7 +204,11 @@ with col3:
              st.caption(f"⚠️ 自動取得不可・{m['source']}発表より")
         show_metric_with_sparkline("JP M2 (Nominal)", df.get('JP_M2'), 'JP_M2', "T JPY", notes="名目")
         jp_m2_val = df.get('JP_M2').iloc[-1]
-        st.markdown(f"**💵 ≈ ${jp_m2_val/usdjpy*1000/1000:.1f}T USD** (1 USD = {usdjpy:.1f} JPY)")
+        # Japan M2 Logic
+        # Fallback for usdjpy if not defined
+        usdjpy_val = df['USDJPY'].iloc[-1] if 'USDJPY' in df.columns else 145.0
+        
+        st.markdown(f"**💵 ≈ ${jp_m2_val/usdjpy_val*1000/1000:.1f}T USD** (1 USD = {usdjpy_val:.1f} JPY)")
         
         if 'JP_CPI' in df.columns:
             jp_cpi = df.get('JP_CPI').iloc[-1]

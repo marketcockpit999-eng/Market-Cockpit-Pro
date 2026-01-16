@@ -204,7 +204,82 @@ if treasury_data:
 else:
     st.warning("⚠️ RWAデータの取得に失敗しました。")
 
+# === Market Depth Section ===
 st.markdown("---")
+st.subheader("💧 Market Depth (Liquidity Quality)")
+st.caption("Centralized (CEX) vs Decentralized (DEX) Liquidity Cost")
+
+import requests
+
+@st.cache_data(ttl=300)
+def fetch_btc_depth():
+    # CEX: Bitcoin
+    cex_url = "https://api.coingecko.com/api/v3/coins/bitcoin/tickers?include_exchange_logo=false&depth=false"
+    # DEX: Wrapped Bitcoin
+    dex_url = "https://api.coingecko.com/api/v3/coins/wrapped-bitcoin/tickers?include_exchange_logo=false&depth=false"
+    
+    data = []
+    
+    try:
+        # Fetch CEX
+        r_cex = requests.get(cex_url, timeout=5).json()
+        tickers = r_cex.get('tickers', [])
+        # Filter top exchanges
+        targets = ['Binance', 'Coinbase Exchange', 'Kraken', 'Bybit', 'Bitfinex']
+        for t in tickers:
+            market = t['market']['name']
+            if market in targets and t['target'] in ['USDT', 'USD']:
+                spread = t.get('bid_ask_spread_percentage')
+                if spread:
+                    data.append({'Type': 'CEX', 'Market': market, 'Spread (%)': spread})
+                    
+        # Fetch DEX
+        r_dex = requests.get(dex_url, timeout=5).json()
+        tickers = r_dex.get('tickers', [])
+        # Filter Uniswap/Curve
+        for t in tickers:
+            market = t['market']['name']
+            if ('Uniswap' in market or 'Curve' in market) and t['target'] in ['USDT', 'USDC', 'DAI', 'WETH']:
+                spread = t.get('bid_ask_spread_percentage')
+                if spread:
+                     data.append({'Type': 'DEX', 'Market': market, 'Spread (%)': spread})
+    except:
+        pass
+        
+    return pd.DataFrame(data)
+
+depth_df = fetch_btc_depth()
+if not depth_df.empty and 'Spread (%)' in depth_df.columns:
+    # Aggregation
+    cex_rows = depth_df[depth_df['Type']=='CEX']
+    dex_rows = depth_df[depth_df['Type']=='DEX']
+    
+    avg_cex = cex_rows['Spread (%)'].mean() if not cex_rows.empty else 0
+    avg_dex = dex_rows['Spread (%)'].mean() if not dex_rows.empty else 0
+    
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.metric("Avg CEX Spread", f"{avg_cex:.4f}%", help="Binance, Coinbase, Kraken...")
+        if avg_cex > 0:
+            st.metric("Avg DEX Spread", f"{avg_dex:.4f}%", delta=f"{(avg_dex/avg_cex):.1f}x Higher Cost", delta_color="inverse", help="Uniswap, Curve (WBTC)")
+        else:
+             st.metric("Avg DEX Spread", f"{avg_dex:.4f}%")
+    
+    with col2:
+        # Bar chart
+        fig = go.Figure()
+        # CEX Bar
+        cex_sorted = cex_rows.sort_values('Spread (%)')
+        fig.add_trace(go.Bar(x=cex_sorted['Market'], y=cex_sorted['Spread (%)'], name='CEX', marker_color='#00e676'))
+        # DEX Bar
+        dex_sorted = dex_rows.sort_values('Spread (%)').head(5) # Limit to top 5 DEX pools
+        fig.add_trace(go.Bar(x=dex_sorted['Market'], y=dex_sorted['Spread (%)'], name='DEX', marker_color='#ff1744'))
+        
+        fig.update_layout(title="Bid-Ask Spread (%) Comparison", template='plotly_dark', height=300)
+        st.plotly_chart(fig, use_container_width=True)
+else:
+    st.info("Market Depth data unavailable (CoinGecko API limit or timeout)")
+
 st.info("""
 💡 **なぜこれが重要？**
 - **ステーブルコイン**: クリプト市場への資金流入/流出を測定

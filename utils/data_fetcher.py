@@ -274,7 +274,7 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
     # Unit Normalization (Million to Billion)
     mil_to_bil = ['Fed_Assets', 'TGA', 'Reserves', 'SOMA_Total', 'Bank_Cash', 
                   'SRF', 'FIMA', 'Primary_Credit', 'Total_Loans', 'SOMA_Bills', 
-                  'M2SL', 'M2REAL', 'CI_Loans', 'CRE_Loans']
+                  'M2SL', 'M2REAL', 'CI_Loans', 'CRE_Loans', 'ECB_Assets']
     for col in mil_to_bil:
         if col in df.columns:
             df[col] = df[col] / 1000
@@ -282,6 +282,24 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
     # Calculate Net Liquidity
     if all(c in df.columns for c in ['Fed_Assets', 'TGA', 'ON_RRP']):
         df['Net_Liquidity'] = df['Fed_Assets'] - df['TGA'] - df['ON_RRP']
+
+    # Calculate Global Liquidity Proxy (Fed + ECB - TGA - RRP)
+    # ECB Assets (likely in Billions EUR after normalization) needs conversion to USD
+    glp_cols = ['Fed_Assets', 'ECB_Assets', 'TGA', 'ON_RRP', 'EURUSD']
+    if all(c in df.columns for c in glp_cols):
+        try:
+            # fill EURUSD to match weekly/daily cadence
+            eur_usd = df['EURUSD'].ffill()
+            ecb_usd = df['ECB_Assets'] * eur_usd
+            # Ensure indices match
+            df['Global_Liquidity_Proxy'] = df['Fed_Assets'].ffill() + ecb_usd.ffill() - df['TGA'].ffill() - df['ON_RRP'].ffill()
+        except Exception as e:
+            print(f"Error calculating GLP: {e}")
+    else:
+        missing_glp = [c for c in glp_cols if c not in df.columns]
+        # Only print if missing columns are not just calculated ones (though these are all source)
+        if missing_glp:
+            print(f"⚠️ GLP Calculation Skipped. Missing: {missing_glp}")
     
     # Calculate Real M2 Index
     if all(c in df.columns for c in ['M2SL', 'CPI']):
@@ -359,9 +377,14 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
             
             # Sum up (M2SL is already Trillions USD)
             # Use US M2 as base cadence, but ffill to allow daily observation
-            us_m2 = df['M2SL'].ffill().bfill()
+            us_m2 = df['M2SL'].ffill()
             
+            # Sum with fillna(0) is dangerous, so valid addition only
             df['Global_M2'] = us_m2 + cn_m2_usd + jp_m2_usd + eu_m2_usd
+            
+            # Forward fill the result to prevent drops at the very end if one component lags slightly
+            df['Global_M2'] = df['Global_M2'].ffill()
+            
         except Exception as e:
             print(f"Error calculating Global M2: {e}")
     

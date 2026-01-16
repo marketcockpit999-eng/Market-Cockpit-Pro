@@ -31,6 +31,9 @@
 | 20 | `ON_RRP` | RRPONTSYD | ON RRP |
 | 21 | `FedFundsUpper` | DFEDTARU | FF金利上限 |
 | 22 | `FedFundsLower` | DFEDTAR | FF金利下限 |
+| 23 | `USD_EUR` | DEXUSEU | ドル/ユーロレート |
+| 24 | `Global_Liquidity_Proxy` | (計算値) | 世界流動性 (Fed+ECB) |
+| 25 | `Asset_Spreads` | Yahoo | 流動性監視 (SPY, TLT, GLD, SLV, USO) |
 
 ---
 
@@ -51,6 +54,8 @@
 | 12 | `Net_Liquidity` | (計算値) | ネットリクイディティ |
 | 13 | `SomaBillsRatio` | (計算値) | Bills比率 |
 | 14 | `CRE_Loans` | CREACBW027SBOG | CRE融資残高 |
+| 15 | `Financial_Stress` | STLFSI4 | 金融ストレス指数 |
+| 16 | `ECB_Assets` | ECBASSETSW | ECB総資産 |
 
 ---
 
@@ -94,6 +99,7 @@
 | 7 | `CRE_Std_Multifamily` | DRTSSP | CRE融資基準 (集合住宅) |
 | 8 | `CRE_Demand` | DRTSCLCC | CRE融資需要 |
 | 9 | `RealGDP` | GDPC1 | 実質GDP |
+| 10 | `M2_Velocity` | M2V | M2回転速度 |
 
 ---
 
@@ -106,4 +112,4 @@
 
 ---
 
-**Total: 67 items** (22 Daily + 14 Weekly + 22 Monthly + 9 Quarterly)
+**Total: 73 items** (25 Daily + 16 Weekly + 22 Monthly + 10 Quarterly)

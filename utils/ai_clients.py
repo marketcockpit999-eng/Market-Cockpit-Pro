@@ -80,6 +80,9 @@ def get_market_summary(df):
     add_metric("SOMA Total", "SOMA_Total", "B", with_change=True, is_level=True)
     add_metric("SOMA Bills", "SOMA_Bills", "B", with_change=True, is_level=True)
     add_metric("SOMA Bills Ratio", "SomaBillsRatio", "%", with_change=True)
+    add_metric("Global Liquidity Proxy", "Global_Liquidity_Proxy", "B", with_change=True, is_level=True)
+    add_metric("M2 Velocity", "M2_Velocity", "", with_change=True, is_level=True)
+    add_metric("Financial Stress", "Financial_Stress", "", with_change=True)
     
     # Rates
     summary_parts.append("\n【金利】")
