@@ -62,19 +62,25 @@ if 'Global_M2' in df.columns and not df.get('Global_M2', pd.Series()).isna().all
             import plotly.graph_objects as go
             from plotly.subplots import make_subplots
             
-            # Align data indices
-            common_idx = df.index.intersection(global_m2_series.index)
-            # Filter last 2 years for relevance
-            start_date = common_idx[-730] if len(common_idx) > 730 else common_idx[0]
-            chart_df = df.loc[start_date:]
+            # Use only valid Global M2 data (no NaN)
+            valid_gm2 = df['Global_M2'].dropna()
+            # Filter last 2 years
+            if len(valid_gm2) > 730:
+                chart_start = valid_gm2.index[-730]
+            else:
+                chart_start = valid_gm2.index[0]
+            
+            # Create chart dataframe with valid range only
+            chart_gm2 = valid_gm2[valid_gm2.index >= chart_start]
+            chart_btc = df['BTC'][df.index >= chart_start].dropna()
             
             fig = make_subplots(specs=[[{"secondary_y": True}]])
             fig.add_trace(
-                go.Scatter(x=chart_df.index, y=chart_df['Global_M2'], name='Global M2 ($T)', line=dict(color='#00FFFF', width=2)),
+                go.Scatter(x=chart_gm2.index, y=chart_gm2, name='Global M2 ($T)', line=dict(color='#00FFFF', width=2)),
                 secondary_y=False
             )
             fig.add_trace(
-                go.Scatter(x=chart_df.index, y=chart_df['BTC'], name='BTC ($)', line=dict(color='#FFA500', width=2, dash='dot')),
+                go.Scatter(x=chart_btc.index, y=chart_btc, name='BTC ($)', line=dict(color='#FFA500', width=2, dash='dot')),
                 secondary_y=True
             )
             fig.update_layout(

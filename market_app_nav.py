@@ -158,7 +158,7 @@ with st.sidebar:
     
     # Data Freshness Status
     st.divider()
-    st.subheader("📅 データ鮮度")
+    st.subheader("🔄 更新ステータス")
     
     if hasattr(df, 'attrs') and 'last_valid_dates' in df.attrs:
         freshness = get_data_freshness_status(
