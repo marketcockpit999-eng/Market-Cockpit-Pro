@@ -16,6 +16,8 @@ from utils import (
     get_market_summary,
     run_gemini_analysis, run_claude_analysis,
     search_google_news,
+    get_indicators_for_ai,
+    get_data_freshness_status,
 )
 
 # Get AI clients and data from session state
@@ -30,6 +32,21 @@ if df is None:
 # ========== PAGE CONTENT ==========
 st.subheader("🤖 AI Market Analysis")
 st.caption("💡 膨大な市場データから相関性と構造を抽出")
+
+# Show Data Count Status
+ai_indicators = get_indicators_for_ai()
+ai_count = len(ai_indicators)
+total_freshness = get_data_freshness_status(df.attrs.get('last_valid_dates', {})) if hasattr(df, 'attrs') else {'summary': {'total': 0}}
+total_count = total_freshness['summary']['total']
+
+col_info1, col_info2, col_info3 = st.columns([1, 1, 2])
+with col_info1:
+    st.metric("👁️ AI監視対象数", f"{ai_count} / {total_count}", help="AIが分析対象としているデータ数 / 全監視データ数")
+with col_info2:
+    if ai_count < total_count:
+        st.warning(f"⚠️ {total_count - ai_count}個のデータがAI分析から除外されています")
+    else:
+        st.success("✅ 全データを監視中")
 
 # Fetch market summary
 with st.spinner("📊 市場データを集約中..."):

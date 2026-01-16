@@ -349,16 +349,19 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
     if all(c in df.columns for c in required_cols):
         try:
             # CN M2 (Trillion USD)
-            cn_m2_usd = df['CN_M2'] / df['USDCNY']
+            cn_m2_usd = df['CN_M2'].ffill().bfill() / df['USDCNY'].ffill().bfill()
             
             # JP M2 (Trillion USD)
-            jp_m2_usd = df['JP_M2'] / df['USDJPY']
+            jp_m2_usd = df['JP_M2'].ffill().bfill() / df['USDJPY'].ffill().bfill()
             
             # EU M2 (Trillion USD)
-            eu_m2_usd = df['EU_M2'] * df['EURUSD']
+            eu_m2_usd = df['EU_M2'].ffill().bfill() * df['EURUSD'].ffill().bfill()
             
             # Sum up (M2SL is already Trillions USD)
-            df['Global_M2'] = df['M2SL'] + cn_m2_usd + jp_m2_usd + eu_m2_usd
+            # Use US M2 as base cadence, but ffill to allow daily observation
+            us_m2 = df['M2SL'].ffill().bfill()
+            
+            df['Global_M2'] = us_m2 + cn_m2_usd + jp_m2_usd + eu_m2_usd
         except Exception as e:
             print(f"Error calculating Global M2: {e}")
     

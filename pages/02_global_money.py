@@ -33,64 +33,72 @@ if df is None:
 st.subheader("🌏 Global Money & FX")
 st.caption("💡 グローバル流動性、為替、コモディティ、仮想通貨の動向")
 
-# === Global M2 Section ===
+# === Global M2 Total (Top Priority) ===
 st.markdown("---")
-st.markdown("### 💵 Global M2 Money Supply")
-st.caption("💡 世界の主要国マネーサプライ動向")
+st.markdown("### 🌍 Global M2 Total (True Total)")
+st.caption("💡 世界主要4地域 (US+CN+JP+EU) のマネーサプライ合計 (USD換算)")
 
-# Get exchange rates
-usdjpy = df.get('USDJPY').iloc[-1] if df.get('USDJPY') is not None and len(df.get('USDJPY', pd.Series()).dropna()) > 0 else 157.0
-eurusd = df.get('EURUSD').iloc[-1] if df.get('EURUSD') is not None and len(df.get('EURUSD', pd.Series()).dropna()) > 0 else 1.04
-usdcny = df.get('USDCNY').iloc[-1] if df.get('USDCNY') is not None and len(df.get('USDCNY', pd.Series()).dropna()) > 0 else 7.30
-
-# === Global M2 TOTAL (BTC相関指標) ===
+# Check if Global_M2 exists
 if 'Global_M2' in df.columns and not df.get('Global_M2', pd.Series()).isna().all():
-    st.markdown("### 🌍 Global M2 Total (USD換算)")
-    st.caption("💡 世界主要4地域（US+CN+JP+EU）のM2合計 - BTCとの相関で有名な指標")
-    
     global_m2_series = df['Global_M2'].dropna()
-    if len(global_m2_series) > 0:
-        gm2_val = global_m2_series.iloc[-1]
-        gm2_change = gm2_val - global_m2_series.iloc[-2] if len(global_m2_series) > 1 else 0
-        
-        col_gm2_1, col_gm2_2 = st.columns([1, 2])
-        
-        with col_gm2_1:
-            st.metric(
-                "🌍 Global M2 Total", 
-                f"${gm2_val:.1f}T",
-                delta=f"{gm2_change:+.2f}T vs 前日",
-                help="US M2 + CN M2/USDCNY + JP M2/USDJPY + EU M2*EURUSD"
+    gm2_val = global_m2_series.iloc[-1]
+    gm2_change = gm2_val - global_m2_series.iloc[-2] if len(global_m2_series) > 1 else 0
+    
+    col_gm2_1, col_gm2_2 = st.columns([1, 2])
+    
+    with col_gm2_1:
+        st.metric(
+            "🌍 Global M2 Total", 
+            f"${gm2_val:.2f}T",
+            delta=f"{gm2_change:+.2f}T vs Prior",
+            help="US M2 + CN M2/USDCNY + JP M2/USDJPY + EU M2*EURUSD"
+        )
+        st.info("計算式: US + CN(USD) + JP(USD) + EU(USD)")
+    
+    with col_gm2_2:
+        # Global M2 vs BTC comparison
+        if 'BTC' in df.columns and not df['BTC'].isna().all():
+            st.markdown("##### 📊 Global M2 vs BTC (Correlated?)")
+            import plotly.graph_objects as go
+            from plotly.subplots import make_subplots
+            
+            # Align data indices
+            common_idx = df.index.intersection(global_m2_series.index)
+            # Filter last 2 years for relevance
+            start_date = common_idx[-730] if len(common_idx) > 730 else common_idx[0]
+            chart_df = df.loc[start_date:]
+            
+            fig = make_subplots(specs=[[{"secondary_y": True}]])
+            fig.add_trace(
+                go.Scatter(x=chart_df.index, y=chart_df['Global_M2'], name='Global M2 ($T)', line=dict(color='#00FFFF', width=2)),
+                secondary_y=False
             )
-            st.caption("計算式: US + CN/CNY + JP/JPY + EU*EUR")
-        
-        with col_gm2_2:
-            # Global M2 vs BTC comparison
-            if 'BTC' in df.columns:
-                st.markdown("##### 📊 Global M2 vs BTC (過去2年間)")
-                import plotly.graph_objects as go
-                from plotly.subplots import make_subplots
-                
-                fig = make_subplots(specs=[[{"secondary_y": True}]])
-                fig.add_trace(
-                    go.Scatter(x=df.index, y=df['Global_M2'], name='Global M2 (T)', line=dict(color='cyan')),
-                    secondary_y=False
-                )
-                fig.add_trace(
-                    go.Scatter(x=df.index, y=df['BTC'], name='BTC ($)', line=dict(color='orange')),
-                    secondary_y=True
-                )
-                fig.update_layout(
-                    template='plotly_dark',
-                    height=250,
-                    hovermode='x unified',
-                    margin=dict(l=0, r=0, t=30, b=0)
-                )
-                fig.update_yaxes(title_text="Global M2 ($T)", secondary_y=False)
-                fig.update_yaxes(title_text="BTC ($)", secondary_y=True)
-                st.plotly_chart(fig, use_container_width=True)
+            fig.add_trace(
+                go.Scatter(x=chart_df.index, y=chart_df['BTC'], name='BTC ($)', line=dict(color='#FFA500', width=2, dash='dot')),
+                secondary_y=True
+            )
+            fig.update_layout(
+                template='plotly_dark',
+                height=300,
+                hovermode='x unified',
+                margin=dict(l=0, r=0, t=10, b=0),
+                legend=dict(orientation="h", y=1.1, x=0.5, xanchor="center"),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
+            fig.update_yaxes(title_text="Global M2 ($T)", secondary_y=False, showgrid=True, gridcolor='rgba(128,128,128,0.2)')
+            fig.update_yaxes(title_text="BTC ($)", secondary_y=True, showgrid=False)
+            st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("⚠️ Global M2 Data Not Available. Please check 'Health Check' or Force Update.")
+    if 'Global_M2' in df.columns:
+        st.write(f"DEBUG: Global_M2 column exists. Non-NaN count: {df['Global_M2'].count()}")
+    else:
+        st.write("DEBUG: Global_M2 column MISSING from DataFrame.")
 
 st.markdown("---")
+st.markdown("### 💵 Regional M2 Breakdown")
+
 
 # US & China
 col1, col2 = st.columns(2)
