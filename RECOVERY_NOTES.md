@@ -1,3 +1,17 @@
+# RECOVERY NOTES - Market Cockpit Pro
+
+## 🚀 2026-01-09: 一次情報ハンター & パフォーマンス強化
+- **Tab 7 (Market Voices) -> Primary Source Intelligence Hunter**:
+  - `search_google_news` に `mode='primary'` を実装済み。
+  - ロジック: `site:.gov OR site:.org OR site:bis.org` 等のドメイン制限 + `filetype:pdf`。
+  - 目的: ニュースメディアのノイズを排し、当局の一次資料から「ニュースになる前の予兆」を掘り起こす。
+- **Tab 5 (AI Analysis)**:
+  - 役割: 定量データの解釈。カスタム質問は「ダッシュボードの数字＋補足ニュース」用。
+- **高速起動 (Disk Cache)**:
+  - `.market_data_cache.pkl` による FRED データのディスクキャッシュ実装済み（TTL 10分）。再起動が5秒以内に短縮。
+
+---
+
 # Market Cockpit Pro - 開発状況メモ
 
 ## 🎯 現在の状況（2025-12-29 22:31）

@@ -1,0 +1,11 @@
+streamlit>=1.28.0
+pandas>=2.0.0
+pandas-datareader>=0.10.0
+yfinance>=0.2.30
+plotly>=5.18.0
+requests>=2.31.0
+feedparser>=6.0.10
+python-dateutil>=2.8.2
+python-dotenv>=1.0.0
+google-genai>=1.0.0
+anthropic>=0.40.0

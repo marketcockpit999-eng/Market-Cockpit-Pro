@@ -1,169 +1,45 @@
-# Market Cockpit Pro - 完全ガイド
+# Claude引き継ぎ用ファイル
 
-**最終更新**: 2026年1月4日  
-**場所**: `C:\Users\81802\.gemini\antigravity\scratch\market_monitor\`
+このフォルダには Market Cockpit Pro の修正作業に必要なファイルが含まれています。
 
----
+## 📁 ファイル一覧
 
-## 🚀 起動方法
-
-```powershell
-cd C:\Users\81802\.gemini\antigravity\scratch\market_monitor
-streamlit run market_app.py
-```
-
----
-
-## 📊 現在の機能（完成済み）
-
-### Tab 1: Liquidity & Rates
-| セクション | 機能 |
+| ファイル名 | 説明 |
 |-----------|------|
-| Net Liquidity vs S&P 500 | 流動性と株価の相関 |
-| ON RRP, Reserves, TGA | FRBバランスシート構成要素 |
-| Market Plumbing | SOFR, SRF, FIMA, Credit Spreads |
-| SOMA | 総保有額、Bills比率、RMPアラート |
-| Emergency Loans | ディスカウントウィンドウ、緊急融資 |
-| Private Banking | 銀行現金、貸出態度（SLOOS） |
-| M2 | 名目・実質通貨供給量 |
+| `market_app_nav.py` | 現在のメインエントリーポイント（分割後） |
+| `market_app_original.py` | 分割前の元ファイル（参照用） |
+| `pages/` | 各タブのページファイル（01〜08） |
+| `utils_config.py` | 設定・定数ファイル |
+| `utils_constants.py` | 詳細定数・EXPLANATIONS辞書 |
+| `MONITORED_ITEMS.md` | 監視対象67項目リスト |
 
-### Tab 2: Macro & Markets
-| セクション | 機能 |
-|-----------|------|
-| 経済指標 | 失業率、CPI、Core PCE |
-| FX | ドル指数、USD/JPY、EUR/USD |
-| コモディティ | 原油、銅、金 |
-| 暗号通貨 | BTC、ETH |
+## 📋 Claudeへのプロンプト
 
-### Tab 3: AI Analysis
-| 機能 | 説明 |
-|------|------|
-| Gemini分析 | Google AIによる市場分析 |
-| Claude分析 | Anthropic AIによる市場分析 |
-| データフレッシュネス | データ鮮度の監視 |
-
-### 中国クレジットインパルス
-- プロキシ指標として実装
-- M2増加率ベース
+以下をコピーしてClaudeに送信してください：
 
 ---
 
-## 🔧 重要な設定
+以下の修正を行ってください：
 
-### APIキー（.envファイル）
+1. **🔄 提供元更新日の表示追加**
+   - 全67項目（MONITORED_ITEMS.md参照）に対して「🔄 提供元更新日」を表示
+   - market_app_original.pyを参考に、抜け漏れを修正
 
-```
-GEMINI_API_KEY=xxx
-ANTHROPIC_API_KEY=xxx
-FRED_API_KEY=4e9f89c09658e42a4362d1251d9a3d05
-```
+2. **補足説明文の復元**
+   - market_app_original.pyに含まれていた詳しい説明文を各指標に復元
+   - 特にH4.1関連（Reserves, TGA, ON_RRP等）と金利関連（EFFR, SOFR, IORB等）は詳細に
+   - utils_constants.pyのEXPLANATIONS辞書を活用
 
-### 不変のルール（PROJECT_RULES.md参照）
+3. **タイトル位置の修正**
+   - 「Market Cockpit Pro v2.0.0 - Modular Edition」を各タブ表示の上（最上部）に移動
+   - 現在は各タブ表示の下にあるので修正
 
-1. **外科手術的修正** - 必要な行だけを変更
-2. **UIコンテキスト保護** - 説明文やタブ構造を消さない
-3. **単位の正規化** - Million → Billion に変換
-4. **日付表示** - 実際のデータ日付を表示（今日ではない）
-
----
-
-## ⚠️ 既知の注意点
-
-### M2 (Real) の計算
-
-```python
-Real M2 = (M2_nominal / CPI_current) × CPI_base
-```
-
-キャッシュ問題で0.1 Bと表示される場合がある。
-→ 詳細は `RECOVERY_NOTES.md` 参照
-
-### SOMA Bills
-
-FREDに直接データがないため、H.4.1レポートから手動取得する仕組みあり。
+market_app_original.pyと分割後のコードを比較し、欠落している機能があれば復元してください。
 
 ---
 
-## 📁 ファイル構成
+## 🔄 作業後の手順
 
-### 重要ファイル
-| ファイル | 役割 |
-|---------|------|
-| `market_app.py` | メインアプリ（2351行） |
-| `.env` | APIキー（機密） |
-| `PROJECT_RULES.md` | 開発ルール（不変） |
-| `RECOVERY_NOTES.md` | トラブルシューティング |
-| `PROJECT_STATE.md` | プロジェクト状態（この下に統合） |
-
-### データファイル
-| ファイル | 役割 |
-|---------|------|
-| `market_monitor_log.csv` | ログデータ |
-| `market_data_v3.csv` | 保存された市場データ |
-| `manual_h41_data.csv` | 手動入力H.4.1データ |
-
-### デバッグ用（必要時のみ）
-- `debug_*.py` - 各種デバッグスクリプト
-- `test_*.py` - テストスクリプト
-
-### レポート（参考資料）
-- `*.pdf` - Gemini DeepResearchレポート
-
----
-
-## 📝 更新履歴
-
-| 日付 | 内容 |
-|------|------|
-| 2026-01-04 | ドキュメント統合・整理 |
-| 2026-01-02 | PROJECT_STATE.md作成 |
-| 2025-12-31 | 中国クレジットインパルス追加 |
-| 2025-12-30 | データフレッシュネス監視実装 |
-| 2025-12-29 | デュアルAI分析（Gemini/Claude）実装 |
-| 2025-12-28 | 統一レイアウト完成 |
-
----
-
-## 🎯 次にやること候補
-
-1. [ ] データフレッシュネス監視の改善
-2. [ ] 中国クレジットインパルス表示の洗練
-3. [ ] エラーハンドリング強化
-4. [ ] パフォーマンス最適化
-
----
-
-## 🔍 クイックリファレンス
-
-### よく使うコマンド
-
-```powershell
-# アプリ起動
-streamlit run market_app.py
-
-# キャッシュクリア起動
-streamlit run market_app.py --server.fileWatcherType none
-
-# デバッグ
-python debug_m2_real.py
-```
-
-### トラブル時
-
-1. まず `RECOVERY_NOTES.md` を確認
-2. Force Update ボタンをクリック
-3. Streamlit再起動
-4. デバッグスクリプト実行
-
----
-
-## 💡 AIへの引継ぎメモ
-
-次回このプロジェクトを触る時のために：
-
-1. **このファイルを最初に読む** - 全体像の把握
-2. **PROJECT_RULES.md** - 絶対守るルール
-3. **RECOVERY_NOTES.md** - M2 Realの問題など詳細
-4. **market_app.py** - メインコード（2351行、慎重に編集）
-
-**重要**: ユーザーは「おっさん」と自称しているが、金融市場に詳しく、品質への目が厳しい。UIの変更は慎重に、必ず確認を取ること。
+1. 修正されたファイルをダウンロード
+2. 元の場所 (`C:\Users\81802\.gemini\antigravity\scratch\market_monitor\`) に上書きコピー
+3. アプリを再起動して確認

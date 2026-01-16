@@ -6,3 +6,19 @@
 __pycache__/
 *.pyc
 *.pyo
+
+# Cache files
+.market_data_cache.pkl
+*.pkl
+
+# Logs
+logs/*.log
+!logs/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.bak
