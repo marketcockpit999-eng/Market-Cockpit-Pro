@@ -6,10 +6,10 @@ with focus on **Fed liquidity** and **macro indicators**.
 ## Screenshots
 
 ### Liquidity & Rates
-![Liquidity](screenshot-liquidity.png)
+![Liquidity](screenshot-liquidity..png)
 
 ### AI Market Analysis
-![AI Analysis](screenshot-ai-analysis.png)
+![AI Analysis](screenshot-ai-analysis..png)
 
 ### Monte Carlo Simulation
 ![Monte Carlo](screenshot_monte_carlo..png)
