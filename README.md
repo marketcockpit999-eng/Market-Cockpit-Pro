@@ -6,14 +6,13 @@ with focus on **Fed liquidity** and **macro indicators**.
 ## Screenshots
 
 ### Liquidity & Rates
-![Liquidity](screenshot-liquidity.png.png)
+![Liquidity](screenshot-liquidity.png)
 
 ### AI Market Analysis
-![AI Analysis](screenshot-ai-analysis.png.png)
+![AI Analysis](screenshot-ai-analysis.png)
 
 ### Monte Carlo Simulation
-![Monte Carlo](screenshot_monte_carlo.png.png)
-
+![Monte Carlo](screenshot_monte_carlo..png)
 ## Why I Built This
 
 I wanted to understand the real sources of market liquidity. As a long-term 
