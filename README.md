@@ -13,7 +13,6 @@ with focus on **Fed liquidity** and **macro indicators**.
 
 ### Monte Carlo Simulation
 ![Monte Carlo](screenshot_monte_carlo..png)
-## Why I Built This
 
 I wanted to understand the real sources of market liquidity. As a long-term 
 investor (not a day trader), my goal was to identify optimal entry points 
