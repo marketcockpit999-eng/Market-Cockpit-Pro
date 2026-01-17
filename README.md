@@ -1,9 +1,18 @@
-# Market-Cockpit-Pro
-A Streamlit-based dashboard for monitoring financial market conditions with focus on Fed liquidity and macro indicators.
 # 📊 Market Cockpit Pro
 
 A Streamlit-based dashboard for monitoring financial market conditions 
 with focus on **Fed liquidity** and **macro indicators**.
+
+## Screenshots
+
+### Liquidity & Rates
+![Liquidity](screenshot-liquidity.png.png)
+
+### AI Market Analysis
+![AI Analysis](screenshot-ai-analysis.png.png)
+
+### Monte Carlo Simulation
+![Monte Carlo](screenshot_monte_carlo.png.png)
 
 ## Why I Built This
 
