@@ -2,6 +2,9 @@
 """
 Market Cockpit Pro - Page 2: Global Money & FX
 グローバル流動性、為替、コモディティ、仮想通貨
+
+NOTE: Non-US M2 data (CN, JP, EU) removed due to unreliable FRED data sources.
+      Only US M2 and Global Liquidity Proxy (Fed+ECB) are maintained.
 """
 
 import streamlit as st
@@ -12,348 +15,276 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils import show_metric_with_sparkline, EXPLANATIONS, DATA_FREQUENCY
-
-# Manual Global M2 data
-MANUAL_GLOBAL_M2 = {
-    'CN_M2': {'value': 336.9, 'date': '2025-11', 'source': 'PBoC', 'cpi': 0.2},
-    'JP_M2': {'value': 1260, 'date': '2025-11', 'source': 'BOJ', 'cpi': 2.9},
-    'EU_M2': {'value': 15.6, 'date': '2025-11', 'source': 'ECB', 'cpi': 2.1},
-}
+from utils import show_metric_with_sparkline, EXPLANATIONS, DATA_FREQUENCY, t
 
 # Get data from session state
 df = st.session_state.get('df')
 df_original = st.session_state.get('df_original')
 
 if df is None:
-    st.error("データが読み込まれていません。main.pyから起動してください。")
+    st.error(t('error_data_not_loaded'))
     st.stop()
 
 # ========== PAGE CONTENT ==========
 st.subheader("🌏 Global Money & FX")
-st.caption("💡 グローバル流動性、為替、コモディティ、仮想通貨の動向")
+st.caption(t('global_money_subtitle'))
 
-# === Global M2 Total (Top Priority) ===
+# === US M2 Section ===
 st.markdown("---")
-st.markdown("### 🌍 Global M2 Total (True Total)")
-st.caption("💡 世界主要4地域 (US+CN+JP+EU) のマネーサプライ合計 (USD換算)")
+st.markdown(f"### 💵 US Money Supply (M2)")
+st.caption("💡 米国のマネーサプライ - FREDから自動取得")
 
-# Check if Global_M2 exists
-if 'Global_M2' in df.columns and not df.get('Global_M2', pd.Series()).isna().all():
-    global_m2_series = df['Global_M2'].dropna()
-    gm2_val = global_m2_series.iloc[-1]
-    gm2_change = gm2_val - global_m2_series.iloc[-2] if len(global_m2_series) > 1 else 0
-    
-    col_gm2_1, col_gm2_2 = st.columns([1, 2])
-    
-    with col_gm2_1:
-        st.metric(
-            "🌍 Global M2 Total", 
-            f"${gm2_val:.2f}T",
-            delta=f"{gm2_change:+.2f}T vs Prior",
-            help="US M2 + CN M2/USDCNY + JP M2/USDJPY + EU M2*EURUSD"
-        )
-        st.info("計算式: US + CN(USD) + JP(USD) + EU(USD)")
-    
-    with col_gm2_2:
-        # Global M2 vs BTC comparison
-        if 'BTC' in df.columns and not df['BTC'].isna().all():
-            st.markdown("##### 📊 Global M2 vs BTC (Correlated?)")
-            import plotly.graph_objects as go
-            from plotly.subplots import make_subplots
-            
-            # Use only valid Global M2 data (no NaN)
-            valid_gm2 = df['Global_M2'].dropna()
-            # Filter last 2 years
-            if len(valid_gm2) > 730:
-                chart_start = valid_gm2.index[-730]
-            else:
-                chart_start = valid_gm2.index[0]
-            
-            # Create chart dataframe with valid range only
-            chart_gm2 = valid_gm2[valid_gm2.index >= chart_start]
-            chart_btc = df['BTC'][df.index >= chart_start].dropna()
-            
-            fig = make_subplots(specs=[[{"secondary_y": True}]])
-            fig.add_trace(
-                go.Scatter(x=chart_gm2.index, y=chart_gm2, name='Global M2 ($T)', line=dict(color='#00FFFF', width=2)),
-                secondary_y=False
-            )
-            fig.add_trace(
-                go.Scatter(x=chart_btc.index, y=chart_btc, name='BTC ($)', line=dict(color='#FFA500', width=2, dash='dot')),
-                secondary_y=True
-            )
-            fig.update_layout(
-                template='plotly_dark',
-                height=300,
-                hovermode='x unified',
-                margin=dict(l=0, r=0, t=10, b=0),
-                legend=dict(orientation="h", y=1.1, x=0.5, xanchor="center"),
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)'
-            )
-            fig.update_yaxes(title_text="Global M2 ($T)", secondary_y=False, showgrid=True, gridcolor='rgba(128,128,128,0.2)')
-            fig.update_yaxes(title_text="BTC ($)", secondary_y=True, showgrid=False)
-            st.plotly_chart(fig, use_container_width=True)
-else:
-    st.warning("⚠️ Global M2 Data Not Available. Please check 'Health Check' or Force Update.")
-    if 'Global_M2' in df.columns:
-        st.write(f"DEBUG: Global_M2 column exists. Non-NaN count: {df['Global_M2'].count()}")
-    else:
-        st.write("DEBUG: Global_M2 column MISSING from DataFrame.")
-
-
-# === Global Liquidity Proxy (Fed + ECB) ===
-st.markdown("---")
-st.markdown("### 🌊 Global Liquidity Proxy (Fed + ECB)")
-st.caption("💡 FRB資産 + ECB資産(ドル換算)。市場感応度の高い流動性指標。")
-
-if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy', pd.Series()).isna().all():
-    gl_series = df['Global_Liquidity_Proxy'].dropna()
-    gl_val = gl_series.iloc[-1]
-    
-    # Calculate YoY (Approximate 252 days for trading days, or simply use logic)
-    # Using simple lookup
-    daily_change = gl_val - gl_series.iloc[-2] if len(gl_series) > 1 else 0
-    
-    # YoY Calculation
-    try:
-        one_year_ago_date = gl_series.index[-1] - pd.DateOffset(years=1)
-        # Find nearest date
-        idx_loc = gl_series.index.get_indexer([one_year_ago_date], method='nearest')[0]
-        gl_val_yoy = gl_series.iloc[idx_loc]
-        yoy_pct = ((gl_val - gl_val_yoy) / gl_val_yoy) * 100
-        yoy_str = f"{yoy_pct:+.2f}% YoY"
-    except:
-        yoy_str = "N/A"
-
-    col_gl1, col_gl2 = st.columns([1, 2])
-    
-    with col_gl1:
-        st.metric(
-            "Global Liquidity Proxy",
-            f"${gl_val/1000:.2f}T", 
-            delta=yoy_str,
-            help="Fed Assets + (ECB Assets * EUR/USD)"
-        )
-        st.caption(f"前日比: {daily_change:+.1f}B")
-    
-    with col_gl2:
-        # Show comparison with SP500 or BTC? Analysis is on Page 10, so just trend here.
-        st.markdown("##### 📈 Trend (YTD)")
-        # Filter YTD
-        ytd_start = pd.Timestamp(f"{gl_series.index[-1].year}-01-01")
-        st.line_chart(gl_series[gl_series.index >= ytd_start], height=200)
-        
-else:
-    st.info("ℹ️ Global Liquidity Proxy データ計算中/不足 (ECBデータ待機中)")
-
-st.markdown("---")
-st.markdown("### 💵 Regional M2 Breakdown")
-
-
-# === Currency Variables ===
-usdjpy = df['USDJPY'].iloc[-1] if 'USDJPY' in df.columns else 145.0
-eurusd = df['EURUSD'].iloc[-1] if 'EURUSD' in df.columns else 1.08
-usdcny = df['USDCNY'].iloc[-1] if 'USDCNY' in df.columns else 7.25
-
-# US & China
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("#### 🇺🇸 US M2")
-    show_metric_with_sparkline("US M2 (Nominal)", df.get('M2SL'), 'M2SL', "T", notes="名目")
-    show_metric_with_sparkline("US M2 (Real)", df.get('M2REAL'), 'M2REAL', "T", notes="実質(1982-84基準)")
+    st.markdown("#### 🇺🇸 US M2 (Nominal)")
+    show_metric_with_sparkline("US M2", df.get('M2SL'), 'M2SL', "T", "M2SL", notes="名目M2")
     if 'M2SL' in df.columns and not df.get('M2SL', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['M2SL']].dropna(), height=150)
 
 with col2:
-    st.markdown("#### 🇨🇳 China M2")
-    if 'CN_M2' in df.columns and not df.get('CN_M2', pd.Series()).isna().all():
-        if 'CN_M2' in MANUAL_GLOBAL_M2:
-             m = MANUAL_GLOBAL_M2['CN_M2']
-             st.caption(f"📅 {m['date']} (手動更新)")
-             st.caption(f"⚠️ 自動取得不可・{m['source']}発表より")
-        show_metric_with_sparkline("CN M2 (Nominal)", df.get('CN_M2'), 'CN_M2', "T CNY", notes="名目")
-        cn_m2_val = df.get('CN_M2').iloc[-1]
-        st.markdown(f"**💵 ≈ ${cn_m2_val/usdcny:.1f}T USD** (1 USD = {usdcny:.2f} CNY)")
-        
-        if 'CN_CPI' in df.columns:
-            cn_cpi = df.get('CN_CPI').iloc[-1]
-            show_metric_with_sparkline("CN M2 (Real)", df.get('CN_M2_Real'), 'CN_M2_Real', "T CNY", notes=f"CPI {cn_cpi}%調整")
-            cn_m2_real_val = df.get('CN_M2_Real').iloc[-1]
-            st.markdown(f"**💵 ≈ ${cn_m2_real_val/usdcny:.1f}T USD**")
-        
-        st.markdown("###### Long-term Trend (過去2年間)")
-        st.line_chart(df[['CN_M2']].dropna(), height=150)
-    else:
-        st.warning("⚠️ China M2 Data Unavailable (FRED Source Outdated)")
-    
-    st.markdown("---")
-    st.markdown("##### 📊 Credit Impulse（信用刺激指数）")
-    st.caption("⚠️ 代用計算: BIS経由FRED四半期信用残高データ(CRDQCNAPABIS)使用")
-    show_metric_with_sparkline("Credit Impulse", df.get('CN_Credit_Impulse'), 'CN_Credit_Impulse', "%", notes="(信用フロー変化/GDP)")
-    if 'CN_Credit_Impulse' in df.columns and not df.get('CN_Credit_Impulse', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去5年間)")
-        st.line_chart(df[['CN_Credit_Impulse']].dropna(), height=150)
+    st.markdown("#### 🇺🇸 US M2 (Real)")
+    show_metric_with_sparkline("US M2 Real", df.get('M2REAL'), 'M2REAL', "T", "M2REAL", notes="実質M2 (1982-84基準)")
+    if 'M2REAL' in df.columns and not df.get('M2REAL', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        st.line_chart(df[['M2REAL']].dropna(), height=150)
 
-# Japan & Euro
-col3, col4 = st.columns(2)
-
-with col3:
-    st.markdown("#### 🇯🇵 Japan M2")
-    if 'JP_M2' in df.columns and not df.get('JP_M2', pd.Series()).isna().all():
-        if 'JP_M2' in MANUAL_GLOBAL_M2:
-             m = MANUAL_GLOBAL_M2['JP_M2']
-             st.caption(f"📅 {m['date']} (手動更新)")
-             st.caption(f"⚠️ 自動取得不可・{m['source']}発表より")
-        show_metric_with_sparkline("JP M2 (Nominal)", df.get('JP_M2'), 'JP_M2', "T JPY", notes="名目")
-        jp_m2_val = df.get('JP_M2').iloc[-1]
-        # Japan M2 Logic
-        # Fallback for usdjpy if not defined
-        usdjpy_val = df['USDJPY'].iloc[-1] if 'USDJPY' in df.columns else 145.0
-        
-        st.markdown(f"**💵 ≈ ${jp_m2_val/usdjpy_val*1000/1000:.1f}T USD** (1 USD = {usdjpy_val:.1f} JPY)")
-        
-        if 'JP_CPI' in df.columns:
-            jp_cpi = df.get('JP_CPI').iloc[-1]
-            show_metric_with_sparkline("JP M2 (Real)", df.get('JP_M2_Real'), 'JP_M2_Real', "T JPY", notes=f"CPI {jp_cpi}%調整")
-            jp_m2_real_val = df.get('JP_M2_Real').iloc[-1]
-            st.markdown(f"**💵 ≈ ${jp_m2_real_val/usdjpy*1000/1000:.1f}T USD**")
-            
-        st.markdown("###### Long-term Trend (過去2年間)")
-        st.line_chart(df[['JP_M2']].dropna(), height=150)
-    else:
-        st.warning("⚠️ Japan M2 Data Unavailable")
-
-with col4:
-    st.markdown("#### 🇪🇺 Euro M2")
-    if 'EU_M2' in df.columns and not df.get('EU_M2', pd.Series()).isna().all():
-        if 'EU_M2' in MANUAL_GLOBAL_M2:
-             m = MANUAL_GLOBAL_M2['EU_M2']
-             st.caption(f"📅 {m['date']} (手動更新)")
-             st.caption(f"⚠️ 自動取得不可・{m['source']}発表より")
-        show_metric_with_sparkline("EU M2 (Nominal)", df.get('EU_M2'), 'EU_M2', "T EUR", notes="名目")
-        eu_m2_val = df.get('EU_M2').iloc[-1]
-        st.markdown(f"**💵 ≈ ${eu_m2_val*eurusd:.1f}T USD** (1 EUR = {eurusd:.2f} USD)")
-        
-        if 'EU_CPI' in df.columns:
-            eu_cpi = df.get('EU_CPI').iloc[-1]
-            show_metric_with_sparkline("EU M2 (Real)", df.get('EU_M2_Real'), 'EU_M2_Real', "T EUR", notes=f"CPI {eu_cpi}%調整")
-            eu_m2_real_val = df.get('EU_M2_Real').iloc[-1]
-            st.markdown(f"**💵 ≈ ${eu_m2_real_val*eurusd:.1f}T USD**")
-            
-        st.markdown("###### Long-term Trend (過去2年間)")
-        st.line_chart(df[['EU_M2']].dropna(), height=150)
-    else:
-        st.warning("⚠️ Euro M2 Data Unavailable")
 
 # === FX Section ===
 st.markdown("---")
-st.markdown("### 💱 Foreign Exchange")
+st.markdown(f"### {t('fx_section')}")
 
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     st.markdown("#### DXY")
-    show_metric_with_sparkline("Dollar Index", df.get('DXY'), 'DXY', "pt", notes="ドル強弱指数", decimal_places=3)
+    show_metric_with_sparkline(t('dollar_index'), df.get('DXY'), 'DXY', "pt", "DXY", notes=t('dollar_strength'), decimal_places=3)
     if 'DXY' in df.columns and not df.get('DXY', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['DXY']].dropna(), height=150)
 
 with col2:
     st.markdown("#### USD/JPY")
-    show_metric_with_sparkline("USD/JPY", df.get('USDJPY'), 'USDJPY', "¥", notes="円キャリー", decimal_places=3)
+    show_metric_with_sparkline("USD/JPY", df.get('USDJPY'), 'USDJPY', "¥", "USDJPY", notes=t('yen_carry'), decimal_places=3)
     if 'USDJPY' in df.columns and not df.get('USDJPY', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['USDJPY']].dropna(), height=150)
 
 with col3:
     st.markdown("#### EUR/USD")
-    show_metric_with_sparkline("EUR/USD", df.get('EURUSD'), 'EURUSD', "$", notes="ユーロドル", decimal_places=3)
+    show_metric_with_sparkline("EUR/USD", df.get('EURUSD'), 'EURUSD', "$", "EURUSD", notes=t('euro_dollar'), decimal_places=3)
     if 'EURUSD' in df.columns and not df.get('EURUSD', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['EURUSD']].dropna(), height=150)
 
 with col4:
     st.markdown("#### USD/CNY")
-    show_metric_with_sparkline("USD/CNY", df.get('USDCNY'), 'USDCNY', "CNY", notes="人民元", decimal_places=3)
+    show_metric_with_sparkline("USD/CNY", df.get('USDCNY'), 'USDCNY', "CNY", "USDCNY", notes=t('yuan'), decimal_places=3)
     if 'USDCNY' in df.columns and not df.get('USDCNY', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['USDCNY']].dropna(), height=150)
 
 # === Global Indices Section ===
 st.markdown("---")
-st.markdown("### 📈 Global Indices")
-st.caption("💡 主要株価指数")
+st.markdown(f"### {t('global_indices')}")
+st.caption(t('global_indices_desc'))
 
 col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("#### 🇯🇵 Nikkei 225")
-    show_metric_with_sparkline("Nikkei 225", df.get('NIKKEI'), 'NIKKEI', "¥", notes="日経平均株価", decimal_places=0)
+    show_metric_with_sparkline("Nikkei 225", df.get('NIKKEI'), 'NIKKEI', "¥", "NIKKEI", notes=t('nikkei_notes'), decimal_places=0)
     if 'NIKKEI' in df.columns and not df.get('NIKKEI', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['NIKKEI']].dropna(), height=150)
 
 with col2:
     st.markdown("#### 🇺🇸 S&P 500")
-    show_metric_with_sparkline("S&P 500", df.get('SP500'), 'SP500', "pt", notes="米国大型株指数", decimal_places=0)
+    show_metric_with_sparkline("S&P 500", df.get('SP500'), 'SP500', "pt", "SP500", notes=t('sp500_notes'), decimal_places=0)
     if 'SP500' in df.columns and not df.get('SP500', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['SP500']].dropna(), height=150)
 
 # === Commodities Section ===
 st.markdown("---")
-st.markdown("### 🛢️ Commodities")
+st.markdown(f"### {t('commodities_section')}")
 
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     st.markdown("#### Gold")
-    show_metric_with_sparkline("Gold", df.get('Gold'), 'Gold', "$", notes="金先物", decimal_places=3)
+    show_metric_with_sparkline("Gold", df.get('Gold'), 'Gold', "$", "Gold", notes=t('gold_futures'), decimal_places=3)
     if 'Gold' in df.columns and not df.get('Gold', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['Gold']].dropna(), height=150)
 
 with col2:
     st.markdown("#### Silver")
-    show_metric_with_sparkline("Silver", df.get('Silver'), 'Silver', "$", notes="銀先物", decimal_places=3)
+    show_metric_with_sparkline("Silver", df.get('Silver'), 'Silver', "$", "Silver", notes=t('silver_futures'), decimal_places=3)
     if 'Silver' in df.columns and not df.get('Silver', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['Silver']].dropna(), height=150)
 
 with col3:
     st.markdown("#### Oil (WTI)")
-    show_metric_with_sparkline("Oil", df.get('Oil'), 'Oil', "$", notes="原油先物", decimal_places=3)
+    show_metric_with_sparkline("Oil", df.get('Oil'), 'Oil', "$", "Oil", notes=t('oil_futures'), decimal_places=3)
     if 'Oil' in df.columns and not df.get('Oil', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['Oil']].dropna(), height=150)
 
 with col4:
     st.markdown("#### Copper")
-    show_metric_with_sparkline("Copper", df.get('Copper'), 'Copper', "$", notes="銅先物（景気先行指標）", decimal_places=3)
+    show_metric_with_sparkline("Copper", df.get('Copper'), 'Copper', "$", "Copper", notes=t('copper_futures'), decimal_places=3)
     if 'Copper' in df.columns and not df.get('Copper', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['Copper']].dropna(), height=150)
 
 # === Crypto Section ===
 st.markdown("---")
-st.markdown("### 🪙 Cryptocurrency")
+st.markdown(f"### {t('crypto_section')}")
 
 col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("#### Bitcoin (BTC)")
-    show_metric_with_sparkline("BTC", df.get('BTC'), 'BTC', "$", notes="リスクオン指標", decimal_places=3)
+    show_metric_with_sparkline("BTC", df.get('BTC'), 'BTC', "$", "BTC", notes=t('risk_on_indicator'), decimal_places=3)
     if 'BTC' in df.columns and not df.get('BTC', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['BTC']].dropna(), height=200)
 
 with col2:
     st.markdown("#### Ethereum (ETH)")
-    show_metric_with_sparkline("ETH", df.get('ETH'), 'ETH', "$", notes="DeFi基盤", decimal_places=3)
+    show_metric_with_sparkline("ETH", df.get('ETH'), 'ETH', "$", "ETH", notes=t('defi_base'), decimal_places=3)
     if 'ETH' in df.columns and not df.get('ETH', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['ETH']].dropna(), height=200)
+
+# === Fiat Health Monitor Section ===
+st.markdown("---")
+st.markdown("### 📉 Fiat Health Monitor")
+st.caption(t('fiat_health_subtitle'))
+
+def calculate_fiat_health_data(df):
+    """Calculate Gold-denominated and BTC-denominated currency values
+    
+    Returns:
+        tuple: (DataFrame or None, list of missing columns)
+    """
+    result = {}
+    
+    # Required columns check
+    required = ['Gold', 'BTC', 'USDJPY', 'EURUSD', 'USDCNY', 'GBPUSD', 'USDCHF', 'AUDUSD']
+    missing = [col for col in required if col not in df.columns or df[col].isna().all()]
+    if missing:
+        return None, missing
+    
+    # Get Gold and BTC prices
+    gold = df['Gold']
+    btc = df['BTC']
+    
+    # Calculate Gold-denominated values (how many oz of Gold per 1 currency unit)
+    # Higher = stronger currency (can buy more Gold)
+    result['Gold_USD'] = 1 / gold  # 1 USD buys X oz of Gold
+    result['Gold_EUR'] = df['EURUSD'] / gold  # EUR -> USD -> Gold
+    result['Gold_JPY'] = (1 / df['USDJPY']) / gold  # JPY -> USD -> Gold
+    result['Gold_GBP'] = df['GBPUSD'] / gold  # GBP -> USD -> Gold
+    result['Gold_CNY'] = (1 / df['USDCNY']) / gold  # CNY -> USD -> Gold
+    result['Gold_CHF'] = (1 / df['USDCHF']) / gold  # CHF -> USD -> Gold
+    result['Gold_AUD'] = df['AUDUSD'] / gold  # AUD -> USD -> Gold
+    
+    # Calculate BTC-denominated values (how many BTC per 1 currency unit)
+    result['BTC_USD'] = 1 / btc
+    result['BTC_EUR'] = df['EURUSD'] / btc
+    result['BTC_JPY'] = (1 / df['USDJPY']) / btc
+    result['BTC_GBP'] = df['GBPUSD'] / btc
+    result['BTC_CNY'] = (1 / df['USDCNY']) / btc
+    result['BTC_CHF'] = (1 / df['USDCHF']) / btc
+    result['BTC_AUD'] = df['AUDUSD'] / btc
+    
+    # Gold-denominated BTC (how many oz of Gold per 1 BTC)
+    result['Gold_BTC'] = btc / gold
+    
+    return pd.DataFrame(result), []
+
+# Calculate Fiat Health data
+fiat_health, missing_cols = calculate_fiat_health_data(df)
+
+if fiat_health is not None and len(fiat_health) > 0:
+    # Normalize to 2 years ago = 100
+    lookback = min(504, len(fiat_health))  # ~2 years of trading days
+    base_idx = -lookback
+    
+    # Create normalized DataFrames
+    gold_cols = ['Gold_USD', 'Gold_EUR', 'Gold_JPY', 'Gold_GBP', 'Gold_CNY', 'Gold_CHF', 'Gold_AUD']
+    btc_cols = ['BTC_USD', 'BTC_EUR', 'BTC_JPY', 'BTC_GBP', 'BTC_CNY', 'BTC_CHF', 'BTC_AUD']
+    
+    # Gold-denominated chart
+    st.markdown(f"#### {t('fiat_gold_denominated')}")
+    st.caption(t('fiat_decline_note'))
+    
+    gold_normalized = pd.DataFrame()
+    for col in gold_cols:
+        if col in fiat_health.columns:
+            base_val = fiat_health[col].iloc[base_idx]
+            if base_val != 0 and not pd.isna(base_val):
+                gold_normalized[col.replace('Gold_', '')] = (fiat_health[col] / base_val) * 100
+    
+    if not gold_normalized.empty:
+        st.line_chart(gold_normalized.dropna(), height=300)
+        
+        # Current values
+        cols = st.columns(7)
+        currencies = ['USD', 'EUR', 'JPY', 'GBP', 'CNY', 'CHF', 'AUD']
+        for i, curr in enumerate(currencies):
+            if curr in gold_normalized.columns:
+                current = gold_normalized[curr].iloc[-1]
+                change = current - 100
+                cols[i].metric(curr, f"{current:.1f}", f"{change:+.1f}")
+    
+    # BTC-denominated chart
+    st.markdown(f"#### {t('fiat_btc_denominated')}")
+    st.caption(t('fiat_decline_note'))
+    
+    btc_normalized = pd.DataFrame()
+    for col in btc_cols:
+        if col in fiat_health.columns:
+            base_val = fiat_health[col].iloc[base_idx]
+            if base_val != 0 and not pd.isna(base_val):
+                btc_normalized[col.replace('BTC_', '')] = (fiat_health[col] / base_val) * 100
+    
+    if not btc_normalized.empty:
+        st.line_chart(btc_normalized.dropna(), height=300)
+        
+        # Current values
+        cols = st.columns(7)
+        for i, curr in enumerate(currencies):
+            if curr in btc_normalized.columns:
+                current = btc_normalized[curr].iloc[-1]
+                change = current - 100
+                cols[i].metric(curr, f"{current:.1f}", f"{change:+.1f}")
+    
+    # Gold-denominated BTC
+    st.markdown(f"#### {t('fiat_gold_btc')}")
+    st.caption(t('fiat_btc_gold_oz'))
+    
+    if 'Gold_BTC' in fiat_health.columns:
+        gold_btc = fiat_health['Gold_BTC'].dropna()
+        if len(gold_btc) > 0:
+            current_oz = gold_btc.iloc[-1]
+            base_oz = gold_btc.iloc[base_idx]
+            change_pct = ((current_oz / base_oz) - 1) * 100 if base_oz != 0 else 0
+            
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                st.metric("1 BTC =", f"{current_oz:.1f} oz Gold", f"{change_pct:+.1f}% (2Y)")
+            with col2:
+                st.line_chart(gold_btc, height=200)
+else:
+    # Show which columns are missing for debugging
+    if missing_cols:
+        missing_str = ', '.join(missing_cols)
+        st.warning(f"{t('fiat_health_no_data')} (Missing: {missing_str})")
+    else:
+        st.warning(t('fiat_health_no_data'))
+

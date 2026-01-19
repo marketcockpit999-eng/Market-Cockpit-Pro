@@ -22,6 +22,8 @@ from utils import (
     init_ai_clients,
     check_for_market_alerts,
     get_data_freshness_status,
+    t,
+    render_language_selector,
 )
 
 # ========== CUSTOM CSS ==========
@@ -97,7 +99,7 @@ st.markdown("""
 
 <div id="page-top"></div>
 
-<a href="#page-top" class="back-to-top-btn" title="ページトップに戻る">
+<a href="#page-top" class="back-to-top-btn" title="Back to top">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
     </svg>
@@ -106,7 +108,7 @@ st.markdown("""
 
 # ========== PAGE TITLE (MUST BE FIRST VISIBLE ELEMENT) ==========
 st.title(f"📊 {PAGE_TITLE}")
-st.caption("更新間隔: 10分 | データソース: FRED, Yahoo Finance, DeFiLlama, Alternative.me")
+st.caption(t('app_subtitle'))
 
 # ========== INITIALIZE DATA ==========
 @st.cache_data(ttl=3600, show_spinner="📊 市場データを読み込み中...")  # 1時間キャッシュ
@@ -135,12 +137,15 @@ if 'gemini_client' not in st.session_state or 'claude_client' not in st.session_
 
 # ========== SIDEBAR ==========
 with st.sidebar:
-    st.caption("v2.0.0 - Modular Edition")
+    # Language Selector (TOP of sidebar)
+    render_language_selector()
+    
+    st.caption("v2.2.0 - i18n Edition")
     
     st.divider()
     
     # Force Update Button
-    if st.button("🔄 Force Update", type="primary", use_container_width=True):
+    if st.button(t('sidebar_force_update'), type="primary", use_container_width=True):
         st.session_state['force_refresh'] = True
         st.rerun()
     
@@ -148,7 +153,7 @@ with st.sidebar:
     if df is not None:
         csv_data = df.to_csv()
         st.download_button(
-            "📥 Download CSV",
+            t('sidebar_download_csv'),
             csv_data,
             "market_cockpit_data.csv",
             "text/csv",
@@ -158,7 +163,7 @@ with st.sidebar:
     
     # Data Freshness Status
     st.divider()
-    st.subheader("🔄 更新ステータス")
+    st.subheader(t('sidebar_update_status'))
     
     if hasattr(df, 'attrs') and 'last_valid_dates' in df.attrs:
         freshness = get_data_freshness_status(
@@ -167,17 +172,17 @@ with st.sidebar:
         )
         
         col1, col2 = st.columns(2)
-        col1.metric("🟢 Fresh", freshness['summary']['fresh_count'])
-        col2.metric("🟡 Stale", freshness['summary']['stale_count'])
+        col1.metric(t('sidebar_fresh'), freshness['summary']['fresh_count'])
+        col2.metric(t('sidebar_stale'), freshness['summary']['stale_count'])
         
         if freshness['summary']['critical_count'] > 0:
-            st.warning(f"🔴 {freshness['summary']['critical_count']} 件のデータが古くなっています")
+            st.warning(t('sidebar_critical_warning', count=freshness['summary']['critical_count']))
         
-        st.caption(f"Health Score: {freshness['summary']['health_score']}%")
+        st.caption(t('sidebar_health_score', score=freshness['summary']['health_score']))
     
     # Market Alerts
     st.divider()
-    st.subheader("⚠️ アラート")
+    st.subheader(t('sidebar_alerts'))
     
     alerts = check_for_market_alerts(df)
     if alerts:
@@ -185,22 +190,23 @@ with st.sidebar:
             severity_class = f"alert-{alert['severity']}"
             st.markdown(f'<div class="{severity_class}">{alert["message"]}</div>', unsafe_allow_html=True)
     else:
-        st.success("✅ 重大なアラートはありません")
+        st.success(t('sidebar_no_alerts'))
     
     # AI Status
     st.divider()
-    st.subheader("🤖 AI Status")
+    st.subheader(t('sidebar_ai_status'))
     
-    gemini_status = "✅ Ready" if st.session_state.get('gemini_client') else "❌ Not configured"
-    claude_status = "✅ Ready" if st.session_state.get('claude_client') else "❌ Not configured"
+    gemini_status = t('sidebar_ready') if st.session_state.get('gemini_client') else t('sidebar_not_configured')
+    claude_status = t('sidebar_ready') if st.session_state.get('claude_client') else t('sidebar_not_configured')
     
     st.caption(f"Gemini: {gemini_status}")
     st.caption(f"Claude: {claude_status}")
     
     # Footer
     st.divider()
-    st.caption("Data Sources: FRED, Yahoo Finance, DeFiLlama, Alternative.me")
-    st.caption(f"Last Update: {df.index[-1].strftime('%Y-%m-%d %H:%M') if len(df) > 0 else 'N/A'}")
+    st.caption(t('sidebar_data_sources'))
+    last_update_date = df.index[-1].strftime('%Y-%m-%d %H:%M') if len(df) > 0 else 'N/A'
+    st.caption(t('sidebar_last_update', date=last_update_date))
 
 # ========== PAGE NAVIGATION ==========
 pages = {
@@ -226,6 +232,7 @@ pg = st.navigation([
     st.Page("pages/08_sentiment.py", title="🎭 Market Sentiment"),
     st.Page("pages/09_banking.py", title="🏦 Banking Sector"),
     st.Page("pages/11_analysis_lab.py", title="🧪 Market Analysis Lab"),
+    st.Page("pages/12_currency_lab.py", title="💱 Currency Lab"),
 ])
 
 pg.run()

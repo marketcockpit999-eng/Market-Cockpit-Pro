@@ -45,7 +45,7 @@
 3. データ取得関数 (`get_market_data`) の構造を変更しない
 
 **修正後に必ず確認:**
-1. **全タブが表示されているか** - tabs[0]〜tabs[6] の全てが動作確認
+1. **全タブが表示されているか** - 全てのページが動作確認
 2. **全指標が表示されているか** - 以下の指標が欠けていないか目視確認:
    - Liquidity: Net_Liquidity, ON_RRP, Reserves, TGA
    - SOMA: SOMA_Total, SOMA_Bills, SomaBillsRatio
@@ -196,4 +196,52 @@ tabs[7]に配置。投資家心理を可視化。
 -30〜-10%: 🟡 やや弱気
 -30%以下: 🔴 極度の悲観（逆張り買いシグナル）
 ```
+
+---
+
+## ⚠️ 7. 新規指標追加時の必須手順 (CRITICAL - 2026-01-18追加)
+
+### 🔒 Single Source of Truth: `utils/indicators.py`
+
+**新しい指標を追加する場合、`utils/indicators.py` の `INDICATORS` 辞書に1エントリ追加するだけ！**
+
+他のファイル（MONITORED_ITEMS.md、DATA_FRESHNESS_RULES等）は自動的に連携される。
+
+### 📋 指標追加チェックリスト
+
+| # | 作業 | 場所 | 自動/手動 |
+|---|------|------|----------|
+| 1 | 指標定義を追加 | `utils/indicators.py` の `INDICATORS` | **手動** |
+| 2 | 🔄 更新ステータス対象 | `get_freshness_rules()` | 自動 |
+| 3 | 🤖 AI分析データ | `ai_include: True` で自動 | 自動 |
+| 4 | ヘルスチェック対象 | `get_freshness_rules()` | 自動 |
+| 5 | MONITORED_ITEMS.md 更新 | 手動で同期 | **手動** |
+
+### 📝 indicators.py への追加例
+
+```python
+'LQD': {
+    'source': 'YAHOO',
+    'id': 'LQD',
+    'unit': '',
+    'frequency': 'daily',
+    'freshness': 'daily',
+    'category': 'credit',
+    'ui_page': '11_analysis_lab',
+    'ai_include': True,           # ← AIに送る
+    'ai_section': '社債',
+    'notes': '投資適格社債ETF',
+},
+```
+
+### ❌ 絶対にやってはいけないこと
+- 画面に表示するだけで `indicators.py` に追加し忘れる
+- `ai_include: False` のまま放置する（AI分析から漏れる）
+- `freshness` を設定し忘れる（ヘルスチェックから漏れる）
+
+### ✅ 追加後の確認
+
+1. サイドバーの「🔄 更新ステータス」で新指標が表示されるか
+2. 「🤖 AI Market Analysis」で新指標がデータに含まれるか
+3. ヘルスチェック（Fresh/Stale/Critical）で新指標がカウントされるか
 

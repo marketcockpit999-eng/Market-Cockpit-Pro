@@ -24,6 +24,17 @@ from .config import (
     MANUAL_GLOBAL_M2,
 )
 
+# i18n (Internationalization)
+from .i18n import (
+    t,
+    set_language,
+    get_current_language,
+    get_language_options,
+    render_language_selector,
+    SUPPORTED_LANGUAGES,
+    TRANSLATIONS,
+)
+
 # Indicator Registry (Single Source of Truth)
 from .indicators import (
     INDICATORS,
@@ -96,8 +107,12 @@ from .news import (
 )
 
 # Version
-__version__ = "2.1.0"  # Added unified indicator registry
+__version__ = "2.2.0"  # Added i18n support
 __all__ = [
+    # i18n
+    "t", "set_language", "get_current_language",
+    "get_language_options", "render_language_selector",
+    "SUPPORTED_LANGUAGES", "TRANSLATIONS",
     # Config
     "FRED_API_KEY", "PAGE_TITLE", "MANUAL_DATA_FILE",
     "GEMINI_MODEL", "CLAUDE_MODEL",

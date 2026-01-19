@@ -11,6 +11,7 @@ import feedparser
 import streamlit as st
 
 from .config import MONITORED_AGENCIES
+from .i18n import t
 
 
 def get_time_diff_str(date_str):
@@ -29,16 +30,16 @@ def get_time_diff_str(date_str):
         seconds = diff.total_seconds()
         
         if seconds < 0:
-            return "⚠️ 時刻不明"
+            return t('time_unknown')
         
         if seconds < 60:
-            return "たった今"
+            return t('time_just_now')
         elif seconds < 3600:
-            return f"{int(seconds // 60)}分前"
+            return t('time_minutes_ago', n=int(seconds // 60))
         elif seconds < 86400:
-            return f"{int(seconds // 3600)}時間前"
+            return t('time_hours_ago', n=int(seconds // 3600))
         elif seconds < 604800:
-            return f"{int(seconds // 86400)}日前"
+            return t('time_days_ago', n=int(seconds // 86400))
         else:
             return target_date.strftime('%Y/%m/%d')
     except:
@@ -98,13 +99,13 @@ def check_for_market_alerts(df) -> list:
         if vix > 30:
             alerts.append({
                 'type': 'VIX',
-                'message': f"⚠️ VIXが{vix:.1f}に上昇 - 市場の恐怖が高まっています",
+                'message': t('alert_vix_high', value=f"{vix:.1f}"),
                 'severity': 'high'
             })
         elif vix > 20:
             alerts.append({
                 'type': 'VIX',
-                'message': f"📊 VIXが{vix:.1f}に上昇 - 注意が必要です",
+                'message': t('alert_vix_medium', value=f"{vix:.1f}"),
                 'severity': 'medium'
             })
     
@@ -114,7 +115,7 @@ def check_for_market_alerts(df) -> list:
         if reserves < 3000:  # Below $3T is concerning
             alerts.append({
                 'type': 'Reserves',
-                'message': f"⚠️ 銀行準備金が{reserves:.0f}Bに低下 - 流動性逼迫リスク",
+                'message': t('alert_reserves_low', value=f"{reserves:.0f}"),
                 'severity': 'high'
             })
     
@@ -124,7 +125,7 @@ def check_for_market_alerts(df) -> list:
         if on_rrp < 100:  # Below $100B is very low
             alerts.append({
                 'type': 'ON_RRP',
-                'message': f"🔴 ON RRPが{on_rrp:.0f}Bに枯渇 - 余剰流動性が消滅",
+                'message': t('alert_on_rrp_depleted', value=f"{on_rrp:.0f}"),
                 'severity': 'high'
             })
     
@@ -134,7 +135,7 @@ def check_for_market_alerts(df) -> list:
         if spread > 5:
             alerts.append({
                 'type': 'Credit_Spread',
-                'message': f"⚠️ クレジットスプレッドが{spread:.2f}%に拡大 - 信用リスク上昇",
+                'message': t('alert_credit_spread_wide', value=f"{spread:.2f}"),
                 'severity': 'high'
             })
     
@@ -144,7 +145,7 @@ def check_for_market_alerts(df) -> list:
         if t10y2y < 0:
             alerts.append({
                 'type': 'Yield_Curve',
-                'message': f"⚠️ イールドカーブ逆転中 ({t10y2y:.2f}%) - リセッション警告",
+                'message': t('alert_yield_curve_inverted', value=f"{t10y2y:.2f}"),
                 'severity': 'medium'
             })
     
@@ -154,13 +155,23 @@ def check_for_market_alerts(df) -> list:
         if primary > 10:  # Above $10B is unusual
             alerts.append({
                 'type': 'Primary_Credit',
-                'message': f"🔴 ディスカウントウィンドウ利用急増 ({primary:.0f}B) - 銀行流動性危機の兆候",
+                'message': t('alert_primary_credit_surge', value=f"{primary:.0f}"),
                 'severity': 'high'
             })
     
-    # RMP Alert
+    # RMP Alert (i18n support)
     if 'RMP_Alert_Active' in df.columns and df['RMP_Alert_Active'].iloc[-1]:
-        rmp_text = df['RMP_Status_Text'].iloc[-1] if 'RMP_Status_Text' in df.columns else "RMP実行中"
+        # Build RMP status text from RMP_Status_Type and RMP_Weekly_Change
+        rmp_status_type = df['RMP_Status_Type'].iloc[-1] if 'RMP_Status_Type' in df.columns else 'monitoring'
+        rmp_weekly_change = df['RMP_Weekly_Change'].iloc[-1] if 'RMP_Weekly_Change' in df.columns else None
+        
+        if rmp_status_type == 'active' and rmp_weekly_change is not None:
+            rmp_text = f"RMP Active: +${rmp_weekly_change:.1f}B/week"
+        elif rmp_status_type == 'accelerating' and rmp_weekly_change is not None:
+            rmp_text = f"RMP Accelerating: +${rmp_weekly_change:.1f}B/week"
+        else:
+            rmp_text = "RMP Active"
+        
         alerts.append({
             'type': 'RMP',
             'message': rmp_text,

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Market Cockpit Pro - Page 6: Monte Carlo Simulation
-本物のモンテカルロシミュレーション（12の高度な手法搭載）
+本物のモンテカルロシミュレーション（8つのコア手法搭載）
 """
 
 import streamlit as st
@@ -15,15 +15,28 @@ from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
 
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils import t
+
 # =============================================================================
-# 設定
+# Settings
 # =============================================================================
 ASSETS = {
-    'S&P500': '^GSPC',
-    'NASDAQ100': '^NDX',
-    '日経225': '^N225',
-    'ゴールド': 'GC=F',
-    'ビットコイン': 'BTC-USD'
+    'S&P 500': '^GSPC',
+    'NASDAQ 100': '^NDX',
+    'Nikkei 225': '^N225',
+    'Gold': 'GC=F',
+    'Bitcoin': 'BTC-USD'
+}
+
+# Regime mapping for i18n
+REGIME_MAP = {
+    "high_vol": {"emoji": "🔥", "key": "mc_regime_high_vol"},
+    "low_vol": {"emoji": "❄️", "key": "mc_regime_low_vol"},
+    "normal": {"emoji": "📊", "key": "mc_regime_normal"},
+    "unknown": {"emoji": "❓", "key": "mc_regime_unknown"},
 }
 
 # =============================================================================
@@ -40,7 +53,7 @@ def fetch_asset_data(ticker: str, years: int = 5) -> pd.DataFrame:
 def calculate_params(df: pd.DataFrame) -> dict:
     """各種分布パラメータを計算（機関投資家モード）"""
     if df.empty or len(df) < 10:
-        return {"mu": 0.0, "sigma": 0.0, "df_t": 5.0, "regime": "不明", 
+        return {"mu": 0.0, "sigma": 0.0, "df_t": 5.0, "regime": "unknown", 
                 "jump_intensity": 0.0, "jump_mean": 0.0, "jump_std": 0.0,
                 "evt_threshold": 0.0, "evt_shape": 0.0}
     
@@ -58,16 +71,16 @@ def calculate_params(df: pd.DataFrame) -> dict:
         long_vol = daily_returns[-90:].std() * np.sqrt(252)
         
         if recent_vol > long_vol * 1.5:
-            regime = "高ボラ"
+            regime = "high_vol"
             sigma_adj = sigma * 1.2  # 上方修正
         elif recent_vol < long_vol * 0.7:
-            regime = "低ボラ"
+            regime = "low_vol"
             sigma_adj = sigma * 0.9  # 下方修正
         else:
-            regime = "通常"
+            regime = "normal"
             sigma_adj = sigma
     else:
-        regime = "通常"
+        regime = "normal"
         sigma_adj = sigma
     
     # Student-t分布の自由度を推定
@@ -83,7 +96,6 @@ def calculate_params(df: pd.DataFrame) -> dict:
     jumps = daily_returns[np.abs(daily_returns) > threshold]
     
     if len(jumps) > 0:
-        # ジャンプは日次データなので、年率ではなく約年間5%（252日中12.6回）程度が理料的
         jump_intensity = len(jumps) / len(daily_returns)  # 日次確率
         jump_mean = jumps.mean()
         jump_std = max(jumps.std(), 0.01)  # 最小値を設定
@@ -150,7 +162,6 @@ def run_monte_carlo(S0: float, mu: float, sigma: float, T: float,
     paths[:, 0] = S0
     
     # === 乱数生成 ===
-    # 通常の乱数を使用（QMCは3年だとステップ数が多すぎて問題になる）
     Z_base = np.random.standard_normal((n_base, n_steps))
     
     # Antithetic Variates: -Z も生成（分散削減）
@@ -159,16 +170,13 @@ def run_monte_carlo(S0: float, mu: float, sigma: float, T: float,
     
     # === 分布の調整 ===
     if dist_type == "Student-t (Fat-tail)":
-        # 正規分布をt分布に変換
         if df_t > 2:
             chi2_samples = np.random.chisquare(df_t, size=(n_simulations, 1))
-            # 各パス全体で同じスケーリング（ステップごとではなく）
             scale = np.sqrt(df_t / chi2_samples)
             Z_all = Z_all * scale
     
     # === Jump-Diffusion (Merton Model) ===
     if "Jump" in dist_type:
-        # ポアソン過程でジャンプ発生
         jump_times = np.random.poisson(jump_params["intensity"], (n_simulations, n_steps))
         jump_sizes = np.random.normal(jump_params["mean"], jump_params["std"], (n_simulations, n_steps))
         jump_component = jump_times * jump_sizes
@@ -176,12 +184,12 @@ def run_monte_carlo(S0: float, mu: float, sigma: float, T: float,
         jump_component = np.zeros((n_simulations, n_steps))
     
     # === GBMパス構築 ===
-    for t in range(1, n_steps + 1):
+    for step in range(1, n_steps + 1):
         drift = (mu - 0.5 * sigma**2) * dt
-        diffusion = sigma * np.sqrt(dt) * Z_all[:, t-1]
-        jump = jump_component[:, t-1]
+        diffusion = sigma * np.sqrt(dt) * Z_all[:, step-1]
+        jump = jump_component[:, step-1]
         
-        paths[:, t] = paths[:, t-1] * np.exp(drift + diffusion + jump)
+        paths[:, step] = paths[:, step-1] * np.exp(drift + diffusion + jump)
     
     return paths
 
@@ -189,45 +197,28 @@ def run_monte_carlo(S0: float, mu: float, sigma: float, T: float,
 # リスク指標計算
 # =============================================================================
 def calculate_risk_metrics(S0: float, final_prices: np.ndarray, evt_params: dict = None):
-    """
-    VaR および CVaR の計算（機関投資家モード）
-    
-    実装手法:
-    - Extreme Value Theory (EVT) によるテールリスク推定
-    - Importance Sampling によるテール部分の精度向上
-    - Bootstrap による信頼区間
-    """
+    """VaR および CVaR の計算"""
     returns = (final_prices - S0) / S0
     
-    # === 標準的なVaR/CVaR ===
     var_95 = np.percentile(returns, 5)
     var_99 = np.percentile(returns, 1)
     
     cvar_95 = returns[returns <= var_95].mean()
     cvar_99 = returns[returns <= var_99].mean()
     
-    # === 手法7: Importance Sampling ===
-    # テール部分を重点的にサンプリングして精度向上
     tail_returns = returns[returns < np.percentile(returns, 10)]
     if len(tail_returns) > 100:
-        # テール部分の重み付きサンプリング
-        weights = np.abs(tail_returns) / np.abs(tail_returns).sum()
-        var_95_is = np.percentile(tail_returns, 50)  # 重点サンプリング版
+        var_95_is = np.percentile(tail_returns, 50)
     else:
         var_95_is = var_95
     
-    # === EVT (Extreme Value Theory) ===
-    # 極値理論による超過確率の推定
+    # EVT (Extreme Value Theory)
     if evt_params and len(tail_returns) > 20:
         try:
             threshold = np.percentile(returns, 5)
             exceedances = returns[returns < threshold] - threshold
-            
-            # Generalized Pareto Distribution フィット
             shape, _, scale = stats.genpareto.fit(-exceedances, floc=0)
-            
-            # EVTベースのVaR推定
-            p = 0.01  # 99% VaR
+            p = 0.01
             n_exceedances = len(exceedances)
             n_total = len(returns)
             
@@ -242,7 +233,7 @@ def calculate_risk_metrics(S0: float, final_prices: np.ndarray, evt_params: dict
     else:
         evt_var_99 = var_99
     
-    # === Bootstrap信頼区間 ===
+    # Bootstrap信頼区間
     n_bootstrap = 1000
     var_95_bootstrap = []
     
@@ -282,10 +273,8 @@ def create_fan_chart(paths: np.ndarray, asset_name: str, T: float, dist_name: st
     
     fig = go.Figure()
     
-    # 面のカラー設定 (Student-tの場合は少し色を変える)
     base_color = "100, 149, 237" if "Normal" in dist_name else "255, 127, 80"
     
-    # 5-95% band
     fig.add_trace(go.Scatter(
         x=np.concatenate([x, x[::-1]]),
         y=np.concatenate([p95, p5[::-1]]),
@@ -296,7 +285,6 @@ def create_fan_chart(paths: np.ndarray, asset_name: str, T: float, dist_name: st
         showlegend=True
     ))
     
-    # 10-90% band
     fig.add_trace(go.Scatter(
         x=np.concatenate([x, x[::-1]]),
         y=np.concatenate([p90, p10[::-1]]),
@@ -307,7 +295,6 @@ def create_fan_chart(paths: np.ndarray, asset_name: str, T: float, dist_name: st
         showlegend=True
     ))
     
-    # 25-75% band
     fig.add_trace(go.Scatter(
         x=np.concatenate([x, x[::-1]]),
         y=np.concatenate([p75, p25[::-1]]),
@@ -318,23 +305,21 @@ def create_fan_chart(paths: np.ndarray, asset_name: str, T: float, dist_name: st
         showlegend=True
     ))
     
-    # 中央値ライン
     fig.add_trace(go.Scatter(
         x=x,
         y=p50,
         mode='lines',
         line=dict(color='white' if "Normal" in dist_name else "gold", width=3),
-        name='中央値 (Median)'
+        name='Median'
     ))
     
-    # 現在価格ライン
     fig.add_hline(y=paths[0, 0], line_dash="dash", line_color="gray", 
-                  annotation_text=f"現状維持: {paths[0, 0]:,.0f}")
+                  annotation_text=f"Current: {paths[0, 0]:,.0f}")
     
     fig.update_layout(
-        title=f"📊 {asset_name} - {T}年価格シミュレーション ({dist_name})",
-        xaxis_title="期間 (年)",
-        yaxis_title="価格",
+        title=f"📊 {asset_name} - {T}Y Price Simulation ({dist_name})",
+        xaxis_title="Period (Years)",
+        yaxis_title="Price",
         template="plotly_dark",
         height=600,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
@@ -346,48 +331,48 @@ def create_fan_chart(paths: np.ndarray, asset_name: str, T: float, dist_name: st
 # =============================================================================
 # ページコンテンツ
 # =============================================================================
-st.subheader("🎲 Monte Carlo Simulation")
-st.caption("💡 金融工学に基づいた資産価格シミュレーション（12の高度な手法搭載）")
+st.subheader(t('mc_title'))
+st.caption(t('mc_subtitle'))
 
 # === 設定エリア（メインコンテンツ内） ===
-with st.expander("⚙️ シミュレーション設定", expanded=True):
+with st.expander(t('mc_settings'), expanded=True):
     col_asset, col_model, col_params = st.columns(3)
     
     with col_asset:
-        st.markdown("**📈 資産選択**")
+        st.markdown(f"**📈 {t('mc_asset')}**")
         selected_assets = st.multiselect(
-            "プリセット資産",
+            t('mc_preset_assets'),
             options=list(ASSETS.keys()),
-            default=['S&P500'],
+            default=['S&P 500'],
             label_visibility="collapsed"
         )
         custom_tickers = st.text_input(
-            "カスタムティッカー",
-            placeholder="例: AAPL, 7203.T, ETH-USD",
-            help="yfinanceティッカーをカンマ区切りで入力"
+            t('mc_custom_ticker'),
+            placeholder=t('mc_custom_placeholder'),
+            help=t('mc_custom_help')
         )
     
     with col_model:
-        st.markdown("**🎲 計算モデル**")
+        st.markdown(f"**🎲 {t('mc_model')}**")
         dist_type = st.radio(
-            "分布構造",
+            t('mc_distribution'),
             options=["Normal (Gaussian)", "Student-t (Fat-tail)", "Jump-Diffusion (Merton)"],
             index=0,
-            help="Normal: 標準的なGBM。Student-t: Fat-tail対応。Jump-Diffusion: ブラックスワン級イベント考慮。",
+            help=t('mc_dist_help'),
             label_visibility="collapsed"
         )
     
     with col_params:
-        st.markdown("**📊 パラメータ**")
-        T = st.slider("予測期間 (年後)", 1, 10, 1)
+        st.markdown(f"**{t('mc_parameters')}**")
+        T = st.slider(t('mc_period_years'), 1, 10, 1)
         n_sim = st.selectbox(
-            "試行回数",
+            t('mc_trials'),
             options=[10000, 50000, 100000, 200000],
             index=2
         )
 
-# 実行ボタン（目立つ位置に）
-run_button = st.button("🚀 プロ計算を開始", type="primary", use_container_width=True)
+# 実行ボタン
+run_button = st.button(t('mc_run'), type="primary", use_container_width=True)
 
 st.markdown("---")
 
@@ -396,24 +381,25 @@ simulation_targets = []
 for name in selected_assets:
     simulation_targets.append((name, ASSETS[name]))
 if custom_tickers.strip():
-    for t in custom_tickers.split(','):
-        t = t.strip().upper()
-        if t: simulation_targets.append((t, t))
+    for ticker_item in custom_tickers.split(','):
+        ticker_item = ticker_item.strip().upper()
+        if ticker_item: 
+            simulation_targets.append((ticker_item, ticker_item))
 
 # メインエリア表示
 if not simulation_targets:
-    st.info("👆 上の設定エリアで資産を選んでください。")
+    st.info(t('mc_start_instruction'))
 elif run_button:
     for asset_name, ticker in simulation_targets:
         with st.container():
-            st.markdown(f"### 📊 {asset_name} ({ticker}) の分析")
+            st.markdown(t('mc_analysis_of', asset=asset_name, ticker=ticker))
             
             # データ取得
-            with st.spinner(f"取得中: {ticker}..."):
+            with st.spinner(t('loading')):
                 df = fetch_asset_data(ticker)
             
             if df.empty:
-                st.error(f"データ取得失敗: {ticker}")
+                st.error(t('mc_fetch_failed', ticker=ticker))
                 continue
             
             # パラメータ計算
@@ -421,8 +407,9 @@ elif run_button:
             S0 = float(df['Close'].iloc[-1].squeeze())
             
             # レジーム表示
-            regime_emoji = {"高ボラ": "🔥", "低ボラ": "❄️", "通常": "📊", "不明": "❓"}
-            st.caption(f"{regime_emoji.get(params['regime'], '📊')} 市場レジーム: **{params['regime']}**")
+            regime_info = REGIME_MAP.get(params['regime'], REGIME_MAP['unknown'])
+            regime_display = t(regime_info['key'])
+            st.caption(f"{regime_info['emoji']} {t('mc_market_regime')}: **{regime_display}**")
             
             # ジャンプパラメータ
             jump_params = {
@@ -432,7 +419,7 @@ elif run_button:
             }
             
             # シミュレーション実行
-            with st.spinner(f"計算中: {n_sim:,} 回のパスを生成..."):
+            with st.spinner(t('mc_running')):
                 paths = run_monte_carlo(
                     S0, params["mu"], params["sigma"], T, 
                     dist_type=dist_type, df_t=params["df_t"],
@@ -457,66 +444,50 @@ elif run_button:
             risk = calculate_risk_metrics(S0, final_prices, evt_params)
             
             change_pct = (p50 - S0) / S0 * 100
-            future_str = (datetime.now() + timedelta(days=T*365)).strftime("%Y/%m")
             
             # 結果グリッド
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.metric("期待価格 (中央値)", f"{p50:,.0f}", f"{change_pct:+.2f}%")
-                st.write(f"**強気 (上位10%):** {p90:,.0f}")
-                st.write(f"**弱気 (下位10%):** {p10:,.0f}")
+                st.metric(t('mc_expected_price'), f"{p50:,.0f}", f"{change_pct:+.2f}%")
+                st.write(f"{t('mc_bullish_label')} {p90:,.0f}")
+                st.write(f"{t('mc_bearish_label')} {p10:,.0f}")
             
             with col2:
-                st.write("🛡 **リスク指標**")
+                st.write(t('mc_risk_metrics'))
                 st.write(f"**VaR 95%:** {risk['VaR 95%']*100:.2f}%")
                 st.write(f"**CVaR 95%:** {risk['CVaR 95%']*100:.2f}%")
                 st.write(f"**EVT VaR 99%:** {risk['EVT VaR 99%']*100:.2f}%")
                 ci_lower, ci_upper = risk['VaR 95% CI']
-                st.caption(f"VaR 95% 信頼区間: [{ci_lower*100:.2f}%, {ci_upper*100:.2f}%]")
+                st.caption(t('mc_var_ci_label', lower=ci_lower*100, upper=ci_upper*100))
             
             with col3:
-                st.write("📊 **ヒストリカル・スタッツ**")
-                st.write(f"**年率化リターン:** {params['mu']*100:.2f}%")
-                st.write(f"**年率化ボラ:** {params['sigma']*100:.2f}%")
+                st.write(t('mc_historical_stats'))
+                st.write(f"{t('mc_annualized_return')} {params['mu']*100:.2f}%")
+                st.write(f"{t('mc_annualized_vol')} {params['sigma']*100:.2f}%")
                 if "Student-t" in dist_type:
-                    st.write(f"**自由度(推定):** {params['df_t']:.2f}")
-                    st.caption("自由度が低いほどFat-tail（波乱含み）")
+                    st.write(f"{t('mc_df_estimated')} {params['df_t']:.2f}")
+                    st.caption(t('mc_df_note'))
                 if "Jump" in dist_type:
-                    annual_jump_freq = params['jump_intensity'] * 252  # 年率に変換
-                    st.write(f"**ジャンプ頻度:** 年{annual_jump_freq:.1f}回")
-                    st.caption(f"平均ジャンプ: {params['jump_mean']*100:.1f}%")
+                    annual_jump_freq = params['jump_intensity'] * 252
+                    st.write(t('mc_jump_freq', freq=annual_jump_freq))
+                    st.caption(t('mc_jump_avg', avg=params['jump_mean']*100))
 
             st.divider()
 
 else:
-    st.markdown("""
-    ### 🎲 Monte Carlo Simulation へようこそ
-    
-    このページでは、**金融工学に基づいた**資産価格シミュレーションを提供します。
-    
-    **🎯 モデルの選び方（推奨）:**
-    
-    | モデル | こんな時に使う | 対象資産 |
-    |--------|--------------|---------|
-    | **Normal** ⭐推奨 | 通常の予測・初めての方 | 株式、インデックス |
-    | **Student-t** | 暴落リスクを考慮したい | ボラティリティの高い資産 |
-    | **Jump-Diffusion** | 最悪のシナリオを見たい | 暗号資産、新興国株 |
-    
-    > 💡 **迷ったらNormalでOKです。** Student-tやJump-Diffusionはより悲観的な予測になります。
-    
-    ---
-    
-    **搭載技術（12個の高度な手法）:**
-    - 分散削減技法（Antithetic Variates, QMC, Stratified Sampling）
-    - リスク分析（VaR, CVaR, EVT, Bootstrap）
-    - 市場分析（Regime Detection, Jump Parameter Estimation）
-    
-    ---
-    
-    ⚠️ **免責事項:**
-    - このアプリの出力は**投資助言ではありません**
-    - 過去のデータに基づくシミュレーションであり、**将来を保証するものではありません**
-    - 投資判断は必ず**自己責任**で行ってください
-    
-    👆 上の設定エリアで資産を選んでシミュレーションを開始してください。
-    """)
+    # Welcome message using translation keys
+    st.markdown(t('mc_welcome_title'))
+    st.markdown(t('mc_welcome_intro'))
+    st.markdown("")
+    st.markdown(t('mc_model_guide_title'))
+    st.markdown(t('mc_model_table'))
+    st.markdown("")
+    st.markdown(f"> {t('mc_model_tip')}")
+    st.markdown("---")
+    st.markdown(t('mc_tech_title'))
+    st.markdown(t('mc_tech_list'))
+    st.markdown("---")
+    st.markdown(t('mc_disclaimer_title'))
+    st.markdown(t('mc_disclaimer_list'))
+    st.markdown("")
+    st.markdown(t('mc_start_instruction'))

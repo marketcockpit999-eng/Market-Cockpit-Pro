@@ -23,6 +23,7 @@ from utils import (
     plot_soma_composition,
     EXPLANATIONS,
     DATA_FREQUENCY,
+    t,
 )
 
 # Get data from session state
@@ -30,18 +31,29 @@ df = st.session_state.get('df')
 df_original = st.session_state.get('df_original')
 
 if df is None:
-    st.error("データが読み込まれていません。main.pyから起動してください。")
+    st.error(t('error_data_not_loaded'))
     st.stop()
 
 # ========== PAGE CONTENT ==========
-st.subheader("🏦 Liquidity & The Fed")
+st.subheader(t('liquidity_title'))
 
 # === VALUATION & LEVERAGE SECTION ===
-st.markdown("#### 📊 バリュエーション & レバレッジ指標")
-st.caption("市場の過熱度とレバレッジ状況を一目で確認")
+st.markdown(f"#### {t('valuation_leverage')}")
+st.caption(t('valuation_leverage_desc'))
 
 pe_data = get_pe_ratios()
 leverage_data = get_crypto_leverage_data()
+
+# Show data source timestamps
+data_sources = []
+if pe_data and pe_data.get('timestamp'):
+    data_sources.append(f"P/E: {pe_data['timestamp'][:16]}")
+if leverage_data and leverage_data.get('timestamp'):
+    data_sources.append(f"Leverage: {leverage_data['timestamp'][:16]}")
+if leverage_data and leverage_data.get('data_source'):
+    data_sources.append(f"Source: {leverage_data['data_source']}")
+if data_sources:
+    st.caption(f"🔄 {t('source_update')}: {' | '.join(data_sources)}")
 
 col_val1, col_val2, col_val3, col_val4 = st.columns(4)
 
@@ -52,71 +64,71 @@ with col_val1:
         delta = pe - avg
         color = "🔴" if pe > 25 else "🟡" if pe > 20 else "🟢"
         st.metric(
-            f"{color} S&P 500 P/E",
+            f"{color} {t('sp500_pe')}",
             f"{pe:.1f}",
-            delta=f"{delta:+.1f} vs avg ({avg:.1f})",
-            help="歴史的平均は約19.5。25以上は過熱、15以下は割安"
+            delta=f"{delta:+.1f} {t('vs_avg')} ({avg:.1f})",
+            help=t('sp500_pe_help')
         )
     else:
-        st.metric("S&P 500 P/E", "取得中...")
+        st.metric(t('sp500_pe'), t('loading'))
 
 with col_val2:
     if pe_data and pe_data.get('nasdaq_pe'):
         pe = pe_data['nasdaq_pe']
         color = "🔴" if pe > 35 else "🟡" if pe > 28 else "🟢"
         st.metric(
-            f"{color} NASDAQ P/E (QQQ)",
+            f"{color} {t('nasdaq_pe')}",
             f"{pe:.1f}",
-            help="ハイテク株のバリュエーション指標"
+            help=t('nasdaq_pe_help')
         )
     else:
-        st.metric("NASDAQ P/E", "取得中...")
+        st.metric(t('nasdaq_pe'), t('loading'))
 
 with col_val3:
     if leverage_data and leverage_data.get('btc_funding_rate') is not None:
         fr = leverage_data['btc_funding_rate']
         if fr > 0.05:
             color = "🔴"
-            status = "ロング過多"
+            status = t('long_heavy')
         elif fr < -0.05:
             color = "🔵"
-            status = "ショート過多"
+            status = t('short_heavy')
         else:
             color = "🟢"
-            status = "中立"
+            status = t('neutral')
         st.metric(
-            f"{color} BTC Funding Rate",
+            f"{color} {t('btc_funding_rate')}",
             f"{fr:.4f}%",
             delta=status,
-            help="Funding Rate > 0.1% はロングポジション過多（過熱）。< -0.1% はショート過多"
+            help=t('funding_rate_help')
         )
     else:
-        st.metric("BTC Funding Rate", "取得中...")
+        st.metric(t('btc_funding_rate'), t('loading'))
 
 with col_val4:
     if leverage_data and leverage_data.get('btc_long_short_ratio'):
         ratio = leverage_data['btc_long_short_ratio']
         if ratio > 1.5:
             color = "🔴"
-            status = "ロング偏り"
+            status = t('long_biased')
         elif ratio < 0.7:
             color = "🔵"
-            status = "ショート偏り"
+            status = t('short_biased')
         else:
             color = "🟢"
-            status = "均衡"
+            status = t('balanced')
         st.metric(
-            f"{color} BTC Long/Short Ratio",
+            f"{color} {t('btc_ls_ratio')}",
             f"{ratio:.2f}",
             delta=status,
-            help="ロング口座/ショート口座の比率。1.0が均衡"
+            help=t('ls_ratio_help')
         )
     else:
-        st.metric("BTC L/S Ratio", "取得中...")
+        st.metric(t('btc_ls_ratio'), t('loading'))
 
 # === Open Interest ===
 if leverage_data:
-    st.markdown("#### 📈 Open Interest (レバレッジ積み上がり)")
+    st.markdown(f"#### {t('open_interest_title')}")
     
     col_btc, col_eth = st.columns(2)
     
@@ -131,26 +143,32 @@ if leverage_data:
             
             if pct_vs_avg > 20:
                 color = "🔴"
-                status = "危険ゾーン"
+                status = t('danger_zone')
             elif pct_vs_avg > 5:
                 color = "🟡"
-                status = "高め"
+                status = t('elevated')
             elif pct_vs_avg < -20:
                 color = "🔵"
-                status = "低め"
+                status = t('low')
             else:
                 color = "🟢"
-                status = "正常"
+                status = t('normal')
             
             st.metric(
-                f"{color} BTC Open Interest",
+                f"{color} {t('btc_open_interest')}",
                 f"{oi:,.0f} BTC",
-                delta=f"{pct_vs_avg:+.1f}% vs 30日平均",
-                help=f"30日平均: {avg:,.0f} BTC | ATH: {ath:,.0f} BTC ({pct_vs_ath:.0f}%)"
+                delta=f"{pct_vs_avg:+.1f}% {t('vs_30d_avg')}",
+                help=f"30d avg: {avg:,.0f} BTC | 30d high: {ath:,.0f} BTC ({pct_vs_ath:.0f}%)"
             )
-            st.caption(f"📊 ATH比: **{pct_vs_ath:.0f}%** | 状態: **{status}**")
+            oi_source = leverage_data.get('btc_oi_data_source', 'Bybit/OKX')
+            st.caption(f"📊 {t('ath_ratio')}: **{pct_vs_ath:.0f}%** | {t('status')}: **{status}** | {t('source')}: {oi_source}")
         else:
-            st.metric("BTC Open Interest", f"{oi:,.0f} BTC" if oi else "取得中...")
+            days = leverage_data.get('btc_oi_days_available', 0)
+            st.metric(t('btc_open_interest'), f"{oi:,.0f} BTC" if oi else t('loading'))
+            if oi and days > 0:
+                st.caption(t('accumulating_data', days=days))
+            elif oi:
+                st.caption(t('accumulating_data', days=0))
     
     with col_eth:
         oi = leverage_data.get('eth_open_interest', 0)
@@ -163,44 +181,52 @@ if leverage_data:
             
             if pct_vs_avg > 20:
                 color = "🔴"
-                status = "危険ゾーン"
+                status = t('danger_zone')
             elif pct_vs_avg > 5:
                 color = "🟡"
-                status = "高め"
+                status = t('elevated')
             elif pct_vs_avg < -20:
                 color = "🔵"
-                status = "低め"
+                status = t('low')
             else:
                 color = "🟢"
-                status = "正常"
+                status = t('normal')
             
             st.metric(
-                f"{color} ETH Open Interest",
+                f"{color} {t('eth_open_interest')}",
                 f"{oi:,.0f} ETH",
-                delta=f"{pct_vs_avg:+.1f}% vs 30日平均",
-                help=f"30日平均: {avg:,.0f} ETH | ATH: {ath:,.0f} ETH ({pct_vs_ath:.0f}%)"
+                delta=f"{pct_vs_avg:+.1f}% {t('vs_30d_avg')}",
+                help=f"30d avg: {avg:,.0f} ETH | 30d high: {ath:,.0f} ETH ({pct_vs_ath:.0f}%)"
             )
-            st.caption(f"📊 ATH比: **{pct_vs_ath:.0f}%** | 状態: **{status}**")
+            oi_source = leverage_data.get('eth_oi_data_source', 'Bybit/OKX')
+            st.caption(f"📊 {t('ath_ratio')}: **{pct_vs_ath:.0f}%** | {t('status')}: **{status}** | {t('source')}: {oi_source}")
         else:
-            st.metric("ETH Open Interest", f"{oi:,.0f} ETH" if oi else "取得中...")
+            days = leverage_data.get('eth_oi_days_available', 0)
+            st.metric(t('eth_open_interest'), f"{oi:,.0f} ETH" if oi else t('loading'))
+            if oi and days > 0:
+                st.caption(t('accumulating_data', days=days))
+            elif oi:
+                st.caption(t('accumulating_data', days=0))
     
-    st.caption("""
-    💡 **Open Interest の見方**
-    - **30日平均比 +20%以上** 🔴: レバレッジ過多 → 清算連鎖リスク高
-    - **30日平均比 ±5%** 🟢: 正常レンジ
-    - **ATH比**: 過去30日の最高値に対する現在位置
-    """)
+    st.caption(t('open_interest_guide'))
 
 st.markdown("---")
 
 # === Net Liquidity ===
-st.markdown("#### Net Liquidity")
+st.markdown(f"#### {t('net_liquidity')}")
+
+# Show source update date for Net Liquidity
+if 'Net_Liquidity' in df.columns and not df.get('Net_Liquidity', pd.Series()).isna().all():
+    nl_series = df['Net_Liquidity'].dropna()
+    if len(nl_series) > 0:
+        last_date = nl_series.index[-1]
+        st.caption(f"🔄 {t('source_update')}: {last_date.strftime('%Y-%m-%d')} (Fed BS)")
 
 col1, col2 = st.columns([1, 3])
 with col1:
-    show_metric_with_sparkline("Net Liquidity", df.get('Net_Liquidity'), 'Net_Liquidity', "B", "Net_Liquidity", notes="市場の真の燃料")
+    show_metric_with_sparkline(t('net_liquidity'), df.get('Net_Liquidity'), 'Net_Liquidity', "B", "Net_Liquidity", notes=t('net_liquidity_notes'))
 with col2:
-    st.markdown("##### Net Liquidity vs S&P 500 (過去2年間)")
+    st.markdown(f"##### {t('net_liquidity_chart_title')}")
     plot_dual_axis(df, 'Net_Liquidity', 'SP500', 'Net Liquidity (L)', 'S&P 500 (R)')
 
 st.markdown("---")
@@ -209,146 +235,163 @@ st.markdown("---")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("#### ON RRP")
-    show_metric_with_sparkline("ON RRP", df.get('ON_RRP'), 'ON_RRP', "B", "ON_RRP", notes="余剰資金")
+    st.markdown(f"#### {t('on_rrp')}")
+    show_metric_with_sparkline(t('on_rrp'), df.get('ON_RRP'), 'ON_RRP', "B", "ON_RRP", notes=t('on_rrp_notes'))
     if 'ON_RRP' in df.columns and not df.get('ON_RRP', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['ON_RRP']].dropna(), height=250)
     
     st.markdown("")
     
-    st.markdown("#### TGA")
-    show_metric_with_sparkline("TGA", df.get('TGA'), 'TGA', "B", "TGA", notes="政府口座")
+    st.markdown(f"#### {t('tga')}")
+    show_metric_with_sparkline(t('tga'), df.get('TGA'), 'TGA', "B", "TGA", notes=t('tga_notes'))
     if 'TGA' in df.columns and not df.get('TGA', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['TGA']].dropna(), height=250)
 
 with col2:
-    st.markdown("#### Reserves")
-    show_metric_with_sparkline("Reserves", df.get('Reserves'), 'Reserves', "B", "Reserves", notes="銀行準備預金")
+    st.markdown(f"#### {t('reserves')}")
+    show_metric_with_sparkline(t('reserves'), df.get('Reserves'), 'Reserves', "B", "Reserves", notes=t('reserves_notes'))
     if 'Reserves' in df.columns and not df.get('Reserves', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['Reserves']].dropna(), height=250)
 
 st.markdown("---")
-st.subheader("🔧 Market Plumbing (Repo & Liquidity)")
+st.subheader(t('market_plumbing'))
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("#### SRF")
-    show_metric_with_sparkline("SRF", df.get('SRF'), 'SRF', "B", "SRF", notes="国内リポ市場")
+    st.markdown(f"#### {t('srf')}")
+    show_metric_with_sparkline(t('srf'), df.get('SRF'), 'SRF', "B", "SRF", notes=t('srf_notes'))
     if 'SRF' in df.columns and not df.get('SRF', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['SRF']].dropna(), height=200)
     
     st.markdown("")
     
-    st.markdown("#### SOFR")
-    show_metric_with_sparkline("SOFR", df.get('SOFR'), 'SOFR', "%", "SOFR", notes="担保付金利", decimal_places=3)
+    st.markdown(f"#### {t('sofr')}")
+    show_metric_with_sparkline(t('sofr'), df.get('SOFR'), 'SOFR', "%", "SOFR", notes=t('sofr_notes'), decimal_places=3)
     if 'SOFR' in df.columns and not df.get('SOFR', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['SOFR']].dropna(), height=200)
 
 with col2:
-    st.markdown("#### FIMA")
-    show_metric_with_sparkline("FIMA", df.get('FIMA'), 'FIMA', "B", "FIMA", notes="海外ドル流動性")
+    st.markdown(f"#### {t('fima')}")
+    show_metric_with_sparkline(t('fima'), df.get('FIMA'), 'FIMA', "B", "FIMA", notes=t('fima_notes'))
     if 'FIMA' in df.columns and not df.get('FIMA', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['FIMA']].dropna(), height=200)
     
     st.markdown("")
     
-    st.markdown("#### EFFR - IORB")
+    st.markdown(f"#### {t('effr_iorb')}")
     diff = None
     if 'EFFR' in df.columns and 'IORB' in df.columns:
         diff = (df['EFFR'] - df['IORB']) * 100
-    show_metric("EFFR - IORB", diff, "bps", notes="連銀準備金状況")
+    show_metric(t('effr_iorb'), diff, "bps", notes=t('effr_iorb_notes'))
     
     rate_cols = ['EFFR', 'IORB']
     valid_rates = [c for c in rate_cols if c in df.columns and not df.get(c, pd.Series()).isna().all()]
     if valid_rates:
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[valid_rates].dropna(), height=200)
 
 st.markdown("---")
-st.subheader("🏛️ Fed Balance Sheet (SOMA)")
+st.subheader(t('fed_balance_sheet'))
 
-# RMP Status
-rmp_status_series = df.get('RMP_Status_Text')
-rmp_status = rmp_status_series.iloc[-1] if hasattr(rmp_status_series, 'iloc') and len(rmp_status_series) > 0 else "データ取得中..."
+# RMP Status (i18n support)
+# Get status type and weekly change from data
+rmp_status_type_series = df.get('RMP_Status_Type')
+rmp_status_type = rmp_status_type_series.iloc[-1] if hasattr(rmp_status_type_series, 'iloc') and len(rmp_status_type_series) > 0 else 'monitoring'
+rmp_weekly_change_series = df.get('RMP_Weekly_Change')
+rmp_weekly_change = rmp_weekly_change_series.iloc[-1] if hasattr(rmp_weekly_change_series, 'iloc') and len(rmp_weekly_change_series) > 0 else None
 rmp_active_series = df.get('RMP_Alert_Active', pd.Series([False]))
 rmp_active = rmp_active_series.iloc[-1] if hasattr(rmp_active_series, 'iloc') and len(rmp_active_series) > 0 else False
 
-if rmp_active:
-    st.info(f"📊 **RMP状況**: {rmp_status}")
+# Build translated RMP status text
+if rmp_status_type == 'monitoring' or rmp_weekly_change is None:
+    rmp_status = t('rmp_monitoring')
+elif rmp_status_type == 'active':
+    rmp_status = t('rmp_active').replace('${value}', f'{rmp_weekly_change:.1f}')
+elif rmp_status_type == 'accelerating':
+    rmp_status = t('rmp_accelerating').replace('${value}', f'{rmp_weekly_change:.1f}')
+elif rmp_status_type == 'slowing':
+    rmp_status = t('rmp_slowing').replace('${value}', f'{rmp_weekly_change:.1f}')
+elif rmp_status_type == 'selling':
+    rmp_status = t('rmp_selling').replace('${value}', f'{rmp_weekly_change:.1f}')
 else:
-    st.warning(f"ℹ️ **RMP状況**: {rmp_status}")
+    rmp_status = t('rmp_monitoring')
 
-st.markdown("##### SOMA Composition (Total & Bills Ratio)")
+if rmp_active:
+    st.info(f"{t('rmp_status')}: {rmp_status}")
+else:
+    st.warning(f"ℹ️ {t('rmp_status')}: {rmp_status}")
+
+st.markdown(f"##### {t('soma_composition')}")
 plot_soma_composition(df)
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.markdown("#### SOMA Total")
-    show_metric_with_sparkline("SOMA Total", df.get('SOMA_Total'), 'SOMA_Total', "B", "SOMA_Total", notes="保有資産総額")
+    st.markdown(f"#### {t('soma_total')}")
+    show_metric_with_sparkline(t('soma_total'), df.get('SOMA_Total'), 'SOMA_Total', "B", "SOMA_Total", notes=t('soma_total_notes'))
 
 with col2:
-    st.markdown("#### SOMA Bills")
-    show_metric_with_sparkline("SOMA Bills", df.get('SOMA_Bills'), 'SOMA_Bills', "B", "SOMA_Bills", notes="短期国債保有高")
+    st.markdown(f"#### {t('soma_bills')}")
+    show_metric_with_sparkline(t('soma_bills'), df.get('SOMA_Bills'), 'SOMA_Bills', "B", "SOMA_Bills", notes=t('soma_bills_notes'))
     if 'SOMA_Bills' in df.columns and not df.get('SOMA_Bills', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['SOMA_Bills']].dropna(), height=200)
 
 with col3:
-    st.markdown("#### Bills Ratio")
-    show_metric_with_sparkline("Bills Ratio", df.get('SomaBillsRatio'), 'SomaBillsRatio', "%", "SomaBillsRatio", notes="短期国債構成比")
+    st.markdown(f"#### {t('bills_ratio')}")
+    show_metric_with_sparkline(t('bills_ratio'), df.get('SomaBillsRatio'), 'SomaBillsRatio', "%", "SomaBillsRatio", notes=t('bills_ratio_notes'))
 
 st.markdown("---")
-st.subheader("🚨 Emergency Loans (Discount Window)")
+st.subheader(t('emergency_loans'))
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("#### Total Loans")
-    show_metric_with_sparkline("Total Loans", df.get('Total_Loans'), 'Total_Loans', "B", "Window", notes="緊急貸出総額")
+    st.markdown(f"#### {t('total_loans')}")
+    show_metric_with_sparkline(t('total_loans'), df.get('Total_Loans'), 'Total_Loans', "B", "Window", notes=t('total_loans_notes'))
     if 'Total_Loans' in df.columns and not df.get('Total_Loans', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['Total_Loans']].dropna(), height=250)
 
 with col2:
-    st.markdown("#### Primary Credit")
-    show_metric_with_sparkline("Primary Credit", df.get('Primary_Credit'), 'Primary_Credit', "B", "Primary", notes="健全行向け", alert_func=lambda x: x>1)
+    st.markdown(f"#### {t('primary_credit')}")
+    show_metric_with_sparkline(t('primary_credit'), df.get('Primary_Credit'), 'Primary_Credit', "B", "Primary", notes=t('primary_credit_notes'), alert_func=lambda x: x>1)
     if 'Primary_Credit' in df.columns and not df.get('Primary_Credit', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['Primary_Credit']].dropna(), height=250)
 
 
 st.markdown("---")
 st.markdown("---")
-st.subheader("⚠️ Risk & Bonds")
-st.caption("💡 市場のリスク状態と債券市場の動向を監視")
+st.subheader(t('risk_bonds'))
+st.caption(t('risk_bonds_desc'))
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.markdown("#### VIX Index")
-    show_metric_with_sparkline("VIX Index", df.get('VIX'), 'VIX', "pt", "VIX", notes="恐怖指数", alert_func=lambda x: x>20)
+    st.markdown(f"#### {t('vix_index')}")
+    show_metric_with_sparkline(t('vix_index'), df.get('VIX'), 'VIX', "pt", "VIX", notes=t('vix_notes'), alert_func=lambda x: x>20)
     if 'VIX' in df.columns and not df.get('VIX', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['VIX']].dropna(), height=200)
 
 with col2:
-    st.markdown("#### Credit Spread")
-    show_metric_with_sparkline("Credit Spread", df.get('Credit_Spread'), 'Credit_Spread', "%", notes="ジャンク債スプレッド", decimal_places=3)
+    st.markdown(f"#### {t('credit_spread')}")
+    show_metric_with_sparkline(t('credit_spread'), df.get('Credit_Spread'), 'Credit_Spread', "%", "Credit_Spread", notes=t('credit_spread_notes'), decimal_places=3)
     if 'Credit_Spread' in df.columns and not df.get('Credit_Spread', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['Credit_Spread']].dropna(), height=200)
 
 with col3:
-    st.markdown("#### US 10Y Yield")
-    show_metric_with_sparkline("US 10Y Yield", df.get('US_TNX'), 'US_TNX', "%", notes="長期金利", decimal_places=3)
+    st.markdown(f"#### {t('us_10y_yield')}")
+    show_metric_with_sparkline(t('us_10y_yield'), df.get('US_TNX'), 'US_TNX', "%", "US_TNX", notes=t('us_10y_notes'), decimal_places=3)
     if 'US_TNX' in df.columns and not df.get('US_TNX', pd.Series()).isna().all():
-        st.markdown("###### Long-term Trend (過去2年間)")
+        st.markdown(f"###### {t('long_term_trend')}")
         st.line_chart(df[['US_TNX']].dropna(), height=200)

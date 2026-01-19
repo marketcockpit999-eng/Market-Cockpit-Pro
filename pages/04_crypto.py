@@ -20,18 +20,19 @@ from utils import (
     get_tokenized_treasury_data,
     EXPLANATIONS,
     DATA_FREQUENCY,
+    t,
 )
 
 # Get data from session state
 df = st.session_state.get('df')
 
 if df is None:
-    st.error("データが読み込まれていません。main.pyから起動してください。")
+    st.error(t('error_data_not_loaded'))
     st.stop()
 
 # ========== PAGE CONTENT ==========
-st.subheader("🪙 Crypto Liquidity")
-st.caption("💡 クリプト市場の流動性とRWA（実世界資産）トークン化の動向")
+st.subheader(t('crypto_title'))
+st.caption(t('crypto_subtitle'))
 
 # Fetch data
 stablecoin_data = get_stablecoin_data()
@@ -52,17 +53,17 @@ if stablecoin_data or treasury_data:
     st.session_state['crypto_summary_cache'] = crypto_cache
 
 # === Stablecoin Supply Section ===
-st.markdown("### 💵 Stablecoin Supply")
-st.caption("クリプト市場の「血液」- 増加 = 資金流入")
+st.markdown(f"### {t('stablecoin_section')}")
+st.caption(t('stablecoin_desc'))
 
 if stablecoin_data:
     col1, col2, col3 = st.columns([2, 1, 1])
     
     with col1:
         total_supply = stablecoin_data['total_supply']
-        st.metric("Total Stablecoin Supply", f"${total_supply:.1f} B", help="全ステーブルコインの総供給量")
+        st.metric(t('total_stablecoin'), f"${total_supply:.1f} B", help=t('stablecoin_total_help'))
         if 'timestamp' in stablecoin_data:
-            st.caption(f"🔄 提供元更新: {stablecoin_data['timestamp'][:16].replace('T', ' ')} (DeFiLlama)")
+            st.caption(f"🔄 {t('source_update')}: {stablecoin_data['timestamp'][:16].replace('T', ' ')} (DeFiLlama)")
     
     with col2:
         top_coins = stablecoin_data['top_coins']
@@ -78,11 +79,11 @@ if stablecoin_data:
             st.metric("USDC Supply", f"${usdc['circulating']:.1f} B", delta=f"{delta_1d:+.2f} B (24h)")
     
     # Historical Chart
-    st.markdown("#### 📈 Stablecoin Supply History")
+    st.markdown(f"#### {t('stablecoin_history')}")
     if stablecoin_hist is not None and not stablecoin_hist.empty:
         col_short, col_long = st.columns(2)
         with col_short:
-            st.markdown("##### 短期 (90日)")
+            st.markdown(f"##### {t('short_term')}")
             recent_90d = stablecoin_hist.tail(90)
             fig = go.Figure()
             fig.add_trace(go.Scatter(x=recent_90d.index, y=recent_90d['Total'], 
@@ -94,7 +95,7 @@ if stablecoin_data:
             st.plotly_chart(fig, use_container_width=True, key="stbl_short")
         
         with col_long:
-            st.markdown("##### 長期 (全期間)")
+            st.markdown(f"##### {t('long_term_all')}")
             fig = go.Figure()
             fig.add_trace(go.Scatter(x=stablecoin_hist.index, y=stablecoin_hist['Total'], 
                                     mode='lines', fill='tozeroy', 
@@ -105,7 +106,7 @@ if stablecoin_data:
             st.plotly_chart(fig, use_container_width=True, key="stbl_long")
     
     # Top Stablecoins Table
-    st.markdown("#### Top 10 Stablecoins by Supply")
+    st.markdown(f"#### {t('top_stablecoins')}")
     top_10 = stablecoin_data['top_coins'][:10]
     
     stablecoin_df = pd.DataFrame([
@@ -122,7 +123,7 @@ if stablecoin_data:
     st.dataframe(stablecoin_df, use_container_width=True, hide_index=True)
     
     # Pie Chart
-    st.markdown("#### Supply Distribution")
+    st.markdown(f"#### {t('supply_distribution')}")
     fig = go.Figure(data=[
         go.Pie(
             labels=[c['symbol'] for c in top_10[:6]] + ['Others'],
@@ -134,9 +135,9 @@ if stablecoin_data:
     fig.update_layout(template='plotly_dark', height=350, showlegend=True, legend=dict(orientation='h', y=-0.1))
     st.plotly_chart(fig, use_container_width=True, key="stablecoin_pie")
     
-    st.caption(f"📅 最終更新: {stablecoin_data['timestamp'][:19]}")
+    st.caption(f"{t('last_update')}: {stablecoin_data['timestamp'][:19]}")
 else:
-    st.warning("⚠️ ステーブルコインデータの取得に失敗しました。")
+    st.warning(t('stablecoin_fetch_failed'))
 
 st.markdown("---")
 
@@ -144,21 +145,21 @@ st.markdown("---")
 if treasury_data:
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown("### 📜 Tokenized Treasuries")
-        st.metric("Treasury TVL", f"${treasury_data['treasury']['total_tvl']:.2f} B", help="トークン化米国債")
+        st.markdown(f"### {t('tokenized_treasury')}")
+        st.metric(t('treasury_tvl'), f"${treasury_data['treasury']['total_tvl']:.2f} B", help=t('treasury_help'))
     with col2:
-        st.markdown("### 🪙 Tokenized Gold")
-        st.metric("Gold TVL", f"${treasury_data['gold']['total_tvl']:.2f} B", help="トークン化金")
+        st.markdown(f"### {t('tokenized_gold')}")
+        st.metric(t('gold_tvl'), f"${treasury_data['gold']['total_tvl']:.2f} B", help=t('gold_help'))
     with col3:
-        st.markdown("### 🏢 Other RWA")
-        st.metric("Other RWA TVL", f"${treasury_data['other_rwa']['total_tvl']:.2f} B", help="その他実世界資産")
+        st.markdown(f"### {t('other_rwa')}")
+        st.metric(t('other_rwa_tvl'), f"${treasury_data['other_rwa']['total_tvl']:.2f} B", help=t('other_rwa_help'))
     
     if 'timestamp' in treasury_data:
-        st.caption(f"🔄 提供元更新: {treasury_data['timestamp'][:16].replace('T', ' ')} (DeFiLlama)")
+        st.caption(f"🔄 {t('source_update')}: {treasury_data['timestamp'][:16].replace('T', ' ')} (DeFiLlama)")
     
     # Treasury Protocols
     st.markdown("---")
-    st.markdown("#### 📜 Tokenized US Treasuries")
+    st.markdown(f"#### {t('tokenized_us_treasury')}")
     treasury_protocols = treasury_data['treasury']['protocols']
     if treasury_protocols:
         treasury_df = pd.DataFrame([
@@ -181,7 +182,7 @@ if treasury_data:
     
     # Gold Protocols
     st.markdown("---")
-    st.markdown("#### 🪙 Tokenized Gold")
+    st.markdown(f"#### {t('tokenized_gold')}")
     gold_protocols = treasury_data['gold']['protocols']
     if gold_protocols:
         gold_df = pd.DataFrame([
@@ -191,7 +192,7 @@ if treasury_data:
         st.dataframe(gold_df, use_container_width=True, hide_index=True)
     
     # Other RWA
-    with st.expander("🏢 Other RWA Protocols"):
+    with st.expander(f"{t('other_rwa')} Protocols"):
         other_protocols = treasury_data['other_rwa']['protocols']
         if other_protocols:
             other_df = pd.DataFrame([
@@ -200,14 +201,14 @@ if treasury_data:
             ])
             st.dataframe(other_df, use_container_width=True, hide_index=True)
     
-    st.caption(f"📅 最終更新: {treasury_data['timestamp'][:19]}")
+    st.caption(f"{t('last_update')}: {treasury_data['timestamp'][:19]}")
 else:
-    st.warning("⚠️ RWAデータの取得に失敗しました。")
+    st.warning(t('rwa_fetch_failed'))
 
 # === Market Depth Section ===
 st.markdown("---")
-st.subheader("💧 Market Depth (Liquidity Quality)")
-st.caption("Centralized (CEX) vs Decentralized (DEX) Liquidity Cost")
+st.subheader(t('market_depth'))
+st.caption(t('market_depth_desc'))
 
 import requests
 
@@ -226,10 +227,10 @@ def fetch_btc_depth():
         tickers = r_cex.get('tickers', [])
         # Filter top exchanges
         targets = ['Binance', 'Coinbase Exchange', 'Kraken', 'Bybit', 'Bitfinex']
-        for t in tickers:
-            market = t['market']['name']
-            if market in targets and t['target'] in ['USDT', 'USD']:
-                spread = t.get('bid_ask_spread_percentage')
+        for ticker in tickers:
+            market = ticker['market']['name']
+            if market in targets and ticker['target'] in ['USDT', 'USD']:
+                spread = ticker.get('bid_ask_spread_percentage')
                 if spread:
                     data.append({'Type': 'CEX', 'Market': market, 'Spread (%)': spread})
                     
@@ -237,10 +238,10 @@ def fetch_btc_depth():
         r_dex = requests.get(dex_url, timeout=5).json()
         tickers = r_dex.get('tickers', [])
         # Filter Uniswap/Curve
-        for t in tickers:
-            market = t['market']['name']
-            if ('Uniswap' in market or 'Curve' in market) and t['target'] in ['USDT', 'USDC', 'DAI', 'WETH']:
-                spread = t.get('bid_ask_spread_percentage')
+        for ticker in tickers:
+            market = ticker['market']['name']
+            if ('Uniswap' in market or 'Curve' in market) and ticker['target'] in ['USDT', 'USDC', 'DAI', 'WETH']:
+                spread = ticker.get('bid_ask_spread_percentage')
                 if spread:
                      data.append({'Type': 'DEX', 'Market': market, 'Spread (%)': spread})
     except:
@@ -259,11 +260,12 @@ if not depth_df.empty and 'Spread (%)' in depth_df.columns:
     
     col1, col2 = st.columns([1, 2])
     with col1:
-        st.metric("Avg CEX Spread", f"{avg_cex:.4f}%", help="Binance, Coinbase, Kraken...")
+        st.metric(t('avg_cex_spread'), f"{avg_cex:.4f}%", help="Binance, Coinbase, Kraken...")
         if avg_cex > 0:
-            st.metric("Avg DEX Spread", f"{avg_dex:.4f}%", delta=f"{(avg_dex/avg_cex):.1f}x Higher Cost", delta_color="inverse", help="Uniswap, Curve (WBTC)")
+            ratio = avg_dex/avg_cex
+            st.metric(t('avg_dex_spread'), f"{avg_dex:.4f}%", delta=t('higher_cost', ratio=f"{ratio:.1f}"), delta_color="inverse", help="Uniswap, Curve (WBTC)")
         else:
-             st.metric("Avg DEX Spread", f"{avg_dex:.4f}%")
+             st.metric(t('avg_dex_spread'), f"{avg_dex:.4f}%")
     
     with col2:
         # Bar chart
@@ -275,14 +277,9 @@ if not depth_df.empty and 'Spread (%)' in depth_df.columns:
         dex_sorted = dex_rows.sort_values('Spread (%)').head(5) # Limit to top 5 DEX pools
         fig.add_trace(go.Bar(x=dex_sorted['Market'], y=dex_sorted['Spread (%)'], name='DEX', marker_color='#ff1744'))
         
-        fig.update_layout(title="Bid-Ask Spread (%) Comparison", template='plotly_dark', height=300)
+        fig.update_layout(title='Bid-Ask Spread (%) Comparison', template='plotly_dark', height=300)
         st.plotly_chart(fig, use_container_width=True)
 else:
-    st.info("Market Depth data unavailable (CoinGecko API limit or timeout)")
+    st.info(t('market_depth_unavail'))
 
-st.info("""
-💡 **なぜこれが重要？**
-- **ステーブルコイン**: クリプト市場への資金流入/流出を測定
-- **トークン化国債**: 機関投資家の参入度合い
-- **トークン化金**: 伝統的安全資産のデジタル化
-""")
+st.info(t('crypto_why_important'))

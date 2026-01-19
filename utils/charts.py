@@ -10,13 +10,15 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import uuid
 
-from .config import EXPLANATIONS, DATA_FREQUENCY
+from .config import DATA_FREQUENCY
 from .data_processor import get_freshness_badge, get_mom_yoy
+from .i18n import t
 
 
 def show_metric(label, series, unit="", explanation_key="", notes="", alert_func=None):
     """メトリック表示ヘルパー（更新マーク対応）"""
     df = st.session_state.get('df')
+    df_original = st.session_state.get('df_original')  # Use non-forward-filled data for delta
     
     if series is None or (hasattr(series, 'isna') and series.isna().all()):
         val = None
@@ -25,10 +27,17 @@ def show_metric(label, series, unit="", explanation_key="", notes="", alert_func
         release_date = None
     else:
         val = series.iloc[-1] if hasattr(series, 'iloc') else series
-        if hasattr(series, 'iloc') and len(series) > 1:
+        
+        # Calculate delta from df_original (actual data points, not forward-filled)
+        delta = None
+        col_name = series.name if hasattr(series, 'name') else explanation_key
+        if df_original is not None and col_name in df_original.columns:
+            orig_series = df_original[col_name].dropna()
+            if len(orig_series) >= 2:
+                delta = orig_series.iloc[-1] - orig_series.iloc[-2]
+        elif hasattr(series, 'iloc') and len(series) > 1:
+            # Fallback to original logic if no df_original
             delta = val - series.iloc[-2]
-        else:
-            delta = None
         
         latest_date = None
         release_date = None
@@ -39,7 +48,12 @@ def show_metric(label, series, unit="", explanation_key="", notes="", alert_func
             if 'fred_release_dates' in df.attrs and col_name in df.attrs['fred_release_dates']:
                 release_date = df.attrs['fred_release_dates'][col_name]
     
-    help_text = EXPLANATIONS.get(explanation_key, "")
+    # Import help texts with language support
+    from .help_texts import HELP_EN, HELP_JA
+    from .i18n import get_current_language
+    help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
+    help_key = f'help_{explanation_key}' if explanation_key else ''
+    help_text = help_dict.get(help_key, '')
     
     freshness_badge = get_freshness_badge(release_date or latest_date) if (release_date or latest_date) else ""
     display_label = f"{freshness_badge} {label}" if freshness_badge else label
@@ -55,10 +69,13 @@ def show_metric(label, series, unit="", explanation_key="", notes="", alert_func
     
     if latest_date:
         freq_label = DATA_FREQUENCY.get(explanation_key, '')
-        st.caption(f"📅 対象期間: {latest_date} ({freq_label})" if freq_label else f"📅 対象日: {latest_date}")
+        if freq_label:
+            st.caption(f"📅 {t('data_period')}: {latest_date} ({freq_label})")
+        else:
+            st.caption(f"📅 {t('data_date')}: {latest_date}")
     
     if release_date:
-        st.caption(f"🔄 提供元更新日: {release_date}")
+        st.caption(f"🔄 {t('source_update')}: {release_date}")
     
     if notes:
         st.caption(notes)
@@ -67,6 +84,7 @@ def show_metric(label, series, unit="", explanation_key="", notes="", alert_func
 def show_metric_with_sparkline(label, series, df_column, unit="", explanation_key="", notes="", alert_func=None, decimal_places=1):
     """メトリック + スパークライン（ミニトレンドチャート）を表示"""
     df = st.session_state.get('df')
+    df_original = st.session_state.get('df_original')  # Use non-forward-filled data for delta
 
     if series is None or (hasattr(series, 'isna') and series.isna().all()):
         val = None
@@ -75,10 +93,17 @@ def show_metric_with_sparkline(label, series, df_column, unit="", explanation_ke
         release_date = None
     else:
         val = series.iloc[-1] if hasattr(series, 'iloc') else series
-        if hasattr(series, 'iloc') and len(series) > 1:
+        
+        # Calculate delta from df_original (actual data points, not forward-filled)
+        # This gives accurate week-over-week or month-over-month changes
+        delta = None
+        if df_original is not None and df_column in df_original.columns:
+            orig_series = df_original[df_column].dropna()
+            if len(orig_series) >= 2:
+                delta = orig_series.iloc[-1] - orig_series.iloc[-2]
+        elif hasattr(series, 'iloc') and len(series) > 1:
+            # Fallback to original logic if no df_original
             delta = val - series.iloc[-2]
-        else:
-            delta = None
         
         latest_date = None
         release_date = None
@@ -88,7 +113,12 @@ def show_metric_with_sparkline(label, series, df_column, unit="", explanation_ke
             if 'fred_release_dates' in df.attrs and df_column in df.attrs['fred_release_dates']:
                 release_date = df.attrs['fred_release_dates'][df_column]
     
-    help_text = EXPLANATIONS.get(explanation_key, "")
+    # Import help texts with language support
+    from .help_texts import HELP_EN, HELP_JA
+    from .i18n import get_current_language
+    help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
+    help_key = f'help_{explanation_key}' if explanation_key else ''
+    help_text = help_dict.get(help_key, '')
     
     freshness_badge = get_freshness_badge(release_date or latest_date) if (release_date or latest_date) else ""
     display_label = f"{freshness_badge} {label}" if freshness_badge else label
@@ -107,10 +137,13 @@ def show_metric_with_sparkline(label, series, df_column, unit="", explanation_ke
     
     if latest_date:
         freq_label = DATA_FREQUENCY.get(df_column, '')
-        st.caption(f"📅 対象期間: {latest_date} ({freq_label})" if freq_label else f"📅 対象日: {latest_date}")
+        if freq_label:
+            st.caption(f"📅 {t('data_period')}: {latest_date} ({freq_label})")
+        else:
+            st.caption(f"📅 {t('data_date')}: {latest_date}")
     
     if release_date:
-        st.caption(f"🔄 提供元更新日: {release_date}")
+        st.caption(f"🔄 {t('source_update')}: {release_date}")
     
     if notes:
         st.caption(notes)
@@ -119,7 +152,7 @@ def show_metric_with_sparkline(label, series, df_column, unit="", explanation_ke
     if df is not None and df_column in df.columns and not df.get(df_column, pd.Series()).isna().all():
         recent_data = df[df_column].tail(60)
         
-        st.caption("📊 過去60日間のトレンド")
+        st.caption(f"📊 {t('sparkline_label')}")
         
         fig = go.Figure()
         fig.add_trace(go.Scatter(
@@ -220,9 +253,9 @@ def display_macro_card(title, series, df_column, df_original=None, unit="", note
     # Metrics Row
     m_col1, m_col2 = st.columns(2)
     if mom is not None:
-        m_col1.metric("前月比", f"{mom:+.1f}%")
+        m_col1.metric(t('mom'), f"{mom:+.1f}%")
     if yoy is not None:
-        m_col2.metric("前年比", f"{yoy:+.1f}%")
+        m_col2.metric(t('yoy'), f"{yoy:+.1f}%")
     
     # Main Metric with Sparkline
     if show_level:

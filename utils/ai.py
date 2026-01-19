@@ -84,10 +84,23 @@ def get_market_summary(df):
     add_metric("SOMA Total", "SOMA_Total", "B", is_level=True)
     add_metric("SOMA Bills", "SOMA_Bills", "B", True, is_level=True)
     
-    # RMP Status
-    if 'RMP_Status_Text' in df.columns:
-        rmp_text = df['RMP_Status_Text'].dropna().iloc[-1]
-        summary_parts.append(f"RMP状況: {rmp_text}")
+    # RMP Status (supports new i18n format)
+    rmp_status_type = df['RMP_Status_Type'].dropna().iloc[-1] if 'RMP_Status_Type' in df.columns and len(df['RMP_Status_Type'].dropna()) > 0 else 'monitoring'
+    rmp_weekly_change = df['RMP_Weekly_Change'].dropna().iloc[-1] if 'RMP_Weekly_Change' in df.columns and len(df['RMP_Weekly_Change'].dropna()) > 0 else None
+    
+    if rmp_status_type == 'monitoring' or rmp_weekly_change is None:
+        rmp_text = "RMP Monitoring (Started Dec 12, 2025)"
+    elif rmp_status_type == 'active':
+        rmp_text = f"RMP Active: +${rmp_weekly_change:.1f}B/week (target pace)"
+    elif rmp_status_type == 'accelerating':
+        rmp_text = f"RMP Accelerating: +${rmp_weekly_change:.1f}B/week (exceeds normal!)"
+    elif rmp_status_type == 'slowing':
+        rmp_text = f"RMP Slowing: +${rmp_weekly_change:.1f}B/week (pace deceleration)"
+    elif rmp_status_type == 'selling':
+        rmp_text = f"Bills Selling: ${rmp_weekly_change:.1f}B/week (RMP stopped?)"
+    else:
+        rmp_text = "RMP Monitoring"
+    summary_parts.append(f"RMP状況: {rmp_text}")
     
     # Economic Indicators
     summary_parts.append("\n【米経済指標】")

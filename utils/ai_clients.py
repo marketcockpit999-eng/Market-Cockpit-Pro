@@ -147,6 +147,41 @@ def get_market_summary(df):
     add_metric("Bitcoin", "BTC", "$", with_change=True, is_level=True)
     add_metric("Ethereum", "ETH", "$", with_change=True, is_level=True)
     
+    # Crypto Leverage (DEX Data)
+    summary_parts.append("\n【仮想通貨レバレッジ (DEX)】")
+    try:
+        from .data_fetcher import get_crypto_leverage_data
+        leverage_data = get_crypto_leverage_data()
+        if leverage_data:
+            # BTC Open Interest
+            if leverage_data.get('btc_open_interest'):
+                oi_val = leverage_data['btc_open_interest'] / 1e9  # Convert to Billions
+                summary_parts.append(f"BTC Open Interest: {oi_val:.2f}B USD")
+            # ETH Open Interest
+            if leverage_data.get('eth_open_interest'):
+                oi_val = leverage_data['eth_open_interest'] / 1e9
+                summary_parts.append(f"ETH Open Interest: {oi_val:.2f}B USD")
+            # BTC Funding Rate
+            if leverage_data.get('btc_funding_rate') is not None:
+                fr = leverage_data['btc_funding_rate'] * 100  # Convert to percentage
+                fr_label = "LONG優勢" if fr > 0.01 else ("SHORT優勢" if fr < -0.01 else "中立")
+                summary_parts.append(f"BTC Funding Rate: {fr:.4f}% ({fr_label})")
+            # ETH Funding Rate
+            if leverage_data.get('eth_funding_rate') is not None:
+                fr = leverage_data['eth_funding_rate'] * 100
+                fr_label = "LONG優勢" if fr > 0.01 else ("SHORT優勢" if fr < -0.01 else "中立")
+                summary_parts.append(f"ETH Funding Rate: {fr:.4f}% ({fr_label})")
+            # Long/Short Ratio
+            if leverage_data.get('btc_long_short_ratio'):
+                ls = leverage_data['btc_long_short_ratio']
+                ls_label = "ロング偏重" if ls > 1.2 else ("ショート偏重" if ls < 0.8 else "均衡")
+                summary_parts.append(f"BTC Long/Short Ratio: {ls:.2f} ({ls_label})")
+            # Data Source
+            if leverage_data.get('data_source'):
+                summary_parts.append(f"データソース: {leverage_data['data_source']}")
+    except Exception as e:
+        summary_parts.append(f"レバレッジデータ取得エラー: {str(e)}")
+    
     # Economic
     summary_parts.append("\n【経済指標】")
     add_metric("NFP", "NFP", "K", is_level=True)
@@ -157,10 +192,24 @@ def get_market_summary(df):
     add_metric("Real GDP", "RealGDP", "B", is_level=True)
     add_metric("Consumer Sentiment", "ConsumerSent", "")
     
-    # RMP Status
-    if 'RMP_Status_Text' in df.columns:
-        rmp_status = df['RMP_Status_Text'].iloc[-1]
-        summary_parts.append(f"\n【RMP状況】\n{rmp_status}")
+    # RMP Status (i18n support - uses RMP_Status_Type and RMP_Weekly_Change)
+    rmp_status_type = df['RMP_Status_Type'].iloc[-1] if 'RMP_Status_Type' in df.columns and len(df['RMP_Status_Type'].dropna()) > 0 else 'monitoring'
+    rmp_weekly_change = df['RMP_Weekly_Change'].iloc[-1] if 'RMP_Weekly_Change' in df.columns and len(df['RMP_Weekly_Change'].dropna()) > 0 else None
+    
+    # Build RMP status text (English for AI context)
+    if rmp_status_type == 'monitoring' or rmp_weekly_change is None:
+        rmp_status = "RMP Monitoring (Started Dec 12, 2025)"
+    elif rmp_status_type == 'active':
+        rmp_status = f"RMP Active: +${rmp_weekly_change:.1f}B/week (target pace)"
+    elif rmp_status_type == 'accelerating':
+        rmp_status = f"RMP Accelerating: +${rmp_weekly_change:.1f}B/week (exceeds normal!)"
+    elif rmp_status_type == 'slowing':
+        rmp_status = f"RMP Slowing: +${rmp_weekly_change:.1f}B/week (pace deceleration)"
+    elif rmp_status_type == 'selling':
+        rmp_status = f"Bills Selling: ${rmp_weekly_change:.1f}B/week (RMP stopped?)"
+    else:
+        rmp_status = "RMP Monitoring"
+    summary_parts.append(f"\n【RMP状況】\n{rmp_status}")
     
     return "\n".join(summary_parts)
 

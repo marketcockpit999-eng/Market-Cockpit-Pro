@@ -44,6 +44,103 @@ MAX_WORKERS_FRED = 10    # Max parallel FRED API requests
 MAX_WORKERS_YAHOO = 5    # Max parallel Yahoo API requests (yf.download handles batching)
 FRED_REQUEST_TIMEOUT = 30  # Timeout for individual FRED requests (seconds)
 
+# DEX OI History Storage
+DEX_OI_HISTORY_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'dex_oi_history.csv')
+
+# ========== DEX OI HISTORY STORAGE ==========
+
+def _save_dex_oi_to_history(symbol: str, oi_value: float, source: str):
+    """Auto-save DEX OI value to CSV for historical accumulation
+    
+    Saves one record per day per symbol. If already recorded today, skips.
+    """
+    try:
+        # Ensure data directory exists
+        os.makedirs(os.path.dirname(DEX_OI_HISTORY_FILE), exist_ok=True)
+        
+        today = datetime.date.today().isoformat()
+        
+        # Load existing data or create new
+        if os.path.exists(DEX_OI_HISTORY_FILE):
+            df = pd.read_csv(DEX_OI_HISTORY_FILE)
+        else:
+            df = pd.DataFrame(columns=['date', 'symbol', 'open_interest', 'source'])
+        
+        # Check if already recorded today for this symbol
+        if not df.empty:
+            existing = df[(df['date'] == today) & (df['symbol'] == symbol)]
+            if not existing.empty:
+                return  # Already recorded today
+        
+        # Add new record
+        new_row = pd.DataFrame([{
+            'date': today,
+            'symbol': symbol,
+            'open_interest': oi_value,
+            'source': source
+        }])
+        df = pd.concat([df, new_row], ignore_index=True)
+        
+        # Keep only last 90 days to prevent file bloat
+        df['date'] = pd.to_datetime(df['date'])
+        cutoff = datetime.datetime.now() - datetime.timedelta(days=90)
+        df = df[df['date'] >= cutoff]
+        df['date'] = df['date'].dt.strftime('%Y-%m-%d')
+        
+        # Save
+        df.to_csv(DEX_OI_HISTORY_FILE, index=False)
+        
+    except Exception as e:
+        print(f"Failed to save DEX OI history: {e}")
+
+def _load_dex_oi_history(symbol: str) -> dict:
+    """Load DEX OI history and calculate statistics
+    
+    Returns:
+        dict with:
+        - days_available: number of days of data
+        - avg_7d: 7-day average (if 7+ days available)
+        - avg_30d: 30-day average (if 30+ days available)
+        - max_30d: 30-day max (if 30+ days available)
+        - history: list of (date, oi) tuples
+    """
+    try:
+        if not os.path.exists(DEX_OI_HISTORY_FILE):
+            return {'days_available': 0}
+        
+        df = pd.read_csv(DEX_OI_HISTORY_FILE)
+        df = df[df['symbol'] == symbol]
+        
+        if df.empty:
+            return {'days_available': 0}
+        
+        df['date'] = pd.to_datetime(df['date'])
+        df = df.sort_values('date', ascending=False)
+        
+        oi_values = df['open_interest'].tolist()
+        days = len(oi_values)
+        
+        result = {
+            'days_available': days,
+            'history': list(zip(df['date'].dt.strftime('%Y-%m-%d').tolist(), oi_values))
+        }
+        
+        # Calculate 7-day average if available
+        if days >= 7:
+            result['avg_7d'] = sum(oi_values[:7]) / 7
+            result['max_7d'] = max(oi_values[:7])
+        
+        # Calculate 30-day average if available
+        if days >= 30:
+            result['avg_30d'] = sum(oi_values[:30]) / 30
+            result['max_30d'] = max(oi_values[:30])
+        
+        return result
+        
+    except Exception as e:
+        print(f"Failed to load DEX OI history: {e}")
+        return {'days_available': 0}
+
 # ========== DISK CACHE ==========
 
 def _load_from_disk_cache():
@@ -226,50 +323,8 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
     # Join All Data
     df = pd.concat(fred_series + ([y_data] if not y_data.empty else []), axis=1).sort_index()
 
-    # Manual Data Injection (Override/Append)
-    if MANUAL_GLOBAL_M2:
-        for key, data in MANUAL_GLOBAL_M2.items():
-            try:
-                # Parse date (assume start of month for FRED consistency)
-                date_str = data.get('date')
-                val = data.get('value')
-                cpi_val = data.get('cpi')
-                
-                if date_str and val is not None:
-                    # Create datetime object (Day 1)
-                    dt = pd.to_datetime(date_str)
-                    dt = dt.replace(day=1)
-                    
-                    # Ensure column exists
-                    if key not in df.columns:
-                        df[key] = np.nan
-                    
-                    # Update M2 Value
-                    df.loc[dt, key] = val
-                    
-                    # Update CPI Value if provided (for Real calculation)
-                    region = key.split('_')[0] # CN, JP, EU
-                    cpi_col = f"{region}_CPI"
-                    if cpi_val is not None:
-                        if cpi_col not in df.columns:
-                            df[cpi_col] = np.nan
-                        df.loc[dt, cpi_col] = cpi_val
-            except Exception as e:
-                print(f"Manual data injection error for {key}: {e}")
-                pass
-    
-    # Sort again just in case new rows were added at the end (though loc usually handles order if index is datetime)
+    # Sort index after concat
     df = df.sort_index()
-
-    # Calculate Real M2 for Global data (using CPI from FRED)
-    for region in ['CN', 'JP', 'EU']:
-        m2_col = f'{region}_M2'
-        cpi_col = f'{region}_CPI'
-        real_col = f'{region}_M2_Real'
-        
-        if m2_col in df.columns and cpi_col in df.columns:
-            cpi_latest = df[cpi_col].dropna().iloc[-1] if not df[cpi_col].dropna().empty else 0
-            df[real_col] = df[m2_col] / (1 + cpi_latest / 100)
     
     # Unit Normalization (Million to Billion)
     mil_to_bil = ['Fed_Assets', 'TGA', 'Reserves', 'SOMA_Total', 'Bank_Cash', 
@@ -311,17 +366,22 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
     if all(c in df.columns for c in ['SOMA_Bills', 'SOMA_Total']):
         df['SomaBillsRatio'] = (df['SOMA_Bills'] / df['SOMA_Total']) * 100
     
-    # RMP Detection Logic
+    # RMP Detection Logic (週次データ対応版)
+    # Note: Stores status_type and weekly_change separately for i18n support
     if 'SOMA_Bills' in df.columns:
         df['RMP_Alert_Active'] = False
-        df['RMP_Status_Text'] = "📊 RMP監視中（2025年12月12日開始）"
+        df['RMP_Status_Type'] = 'monitoring'  # monitoring, active, accelerating, slowing, selling
+        df['RMP_Weekly_Change'] = None
         
-        bills_recent = df['SOMA_Bills'].tail(30)
+        # 週次データなので、有効な値のみを抽出して直近2つを比較
+        bills_valid = df['SOMA_Bills'].dropna()
         
-        if len(bills_recent) >= 7:
-            bills_7d_ago = bills_recent.iloc[-7] if len(bills_recent) >= 7 else bills_recent.iloc[0]
-            bills_now = bills_recent.iloc[-1]
-            weekly_change = bills_now - bills_7d_ago
+        if len(bills_valid) >= 2:
+            bills_prev = bills_valid.iloc[-2]  # 前週の値
+            bills_now = bills_valid.iloc[-1]   # 最新値
+            weekly_change = bills_now - bills_prev
+            
+            df.loc[df.index[-1], 'RMP_Weekly_Change'] = weekly_change
             
             expected_weekly_min = 4.5
             expected_weekly_max = 15.0
@@ -329,64 +389,17 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
             if weekly_change >= expected_weekly_min:
                 if weekly_change <= expected_weekly_max:
                     df.loc[df.index[-1], 'RMP_Alert_Active'] = True
-                    df.loc[df.index[-1], 'RMP_Status_Text'] = f"✅ RMP実行中: +${weekly_change:.1f}B/週（目標ペース）"
+                    df.loc[df.index[-1], 'RMP_Status_Type'] = 'active'
                 else:
                     df.loc[df.index[-1], 'RMP_Alert_Active'] = True
-                    df.loc[df.index[-1], 'RMP_Status_Text'] = f"⚠️ RMP加速: +${weekly_change:.1f}B/週（通常ペース超過！）"
+                    df.loc[df.index[-1], 'RMP_Status_Type'] = 'accelerating'
             elif weekly_change >= 0:
-                df.loc[df.index[-1], 'RMP_Status_Text'] = f"🔄 RMP縮小: +${weekly_change:.1f}B/週（ペース減速）"
+                df.loc[df.index[-1], 'RMP_Status_Type'] = 'slowing'
             else:
-                df.loc[df.index[-1], 'RMP_Status_Text'] = f"⛔ Bills売却: ${weekly_change:.1f}B/週（RMP停止？）"
+                df.loc[df.index[-1], 'RMP_Status_Type'] = 'selling'
     
-    # Calculate China Credit Impulse
-    if 'CN_Credit_Stock' in df.columns:
-        credit = df['CN_Credit_Stock'].dropna()
-        if len(credit) >= 5:
-            try:
-                credit_flow = credit.diff()
-                credit_flow_change = credit_flow - credit_flow.shift(4)
-                annual_gdp_bln_cny = 136000 # 2024 est
-                quarterly_gdp = annual_gdp_bln_cny / 4
-                credit_impulse = (credit_flow_change / quarterly_gdp) * 100
-                df['CN_Credit_Impulse'] = credit_impulse.reindex(df.index)
-            except Exception as e:
-                print(f"Error calculating Credit Impulse: {e}")
-
-    # Normalize International M2 to Trillions and Calculate Global M2
-    # Heuristic: if value > 1000, it's likely Billions (or Trillions Yen), so divide by 1000 to get Trillions (or consistent unit)
-    # CN_M2 (Trillion CNY), JP_M2 (Trillion JPY), EU_M2 (Trillion EUR)
-    for col in ['CN_M2', 'JP_M2', 'EU_M2']:
-        if col in df.columns:
-            last_val = df[col].dropna().iloc[-1] if len(df[col].dropna()) > 0 else 0
-            if last_val > 1000:
-                df[col] = df[col] / 1000
-
-    # Calculate Global M2 (USD)
-    # Global M2 = US M2 + CN M2/USDCNY + JP M2/USDJPY + EU M2 * EURUSD
-    required_cols = ['M2SL', 'CN_M2', 'JP_M2', 'EU_M2', 'USDCNY', 'USDJPY', 'EURUSD']
-    if all(c in df.columns for c in required_cols):
-        try:
-            # CN M2 (Trillion USD)
-            cn_m2_usd = df['CN_M2'].ffill().bfill() / df['USDCNY'].ffill().bfill()
-            
-            # JP M2 (Trillion USD)
-            jp_m2_usd = df['JP_M2'].ffill().bfill() / df['USDJPY'].ffill().bfill()
-            
-            # EU M2 (Trillion USD)
-            eu_m2_usd = df['EU_M2'].ffill().bfill() * df['EURUSD'].ffill().bfill()
-            
-            # Sum up (M2SL is already Trillions USD)
-            # Use US M2 as base cadence, but ffill to allow daily observation
-            us_m2 = df['M2SL'].ffill()
-            
-            # Sum with fillna(0) is dangerous, so valid addition only
-            df['Global_M2'] = us_m2 + cn_m2_usd + jp_m2_usd + eu_m2_usd
-            
-            # Forward fill the result to prevent drops at the very end if one component lags slightly
-            df['Global_M2'] = df['Global_M2'].ffill()
-            
-        except Exception as e:
-            print(f"Error calculating Global M2: {e}")
+    # NOTE: China Credit Impulse and Global M2 calculations removed
+    # Non-US M2 data sources unreliable
     
     # Store last valid dates BEFORE forward fill
     last_valid_dates = {}
@@ -409,12 +422,6 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
     
     # Forward fill
     df = df.ffill()
-    
-    # Backward fill for Global M2 (manual data is recent, need to fill historical)
-    global_m2_cols = ['CN_M2', 'JP_M2', 'EU_M2', 'CN_CPI', 'JP_CPI', 'EU_CPI']
-    for col in global_m2_cols:
-        if col in df.columns:
-            df[col] = df[col].bfill()
     
     # Store metadata
     df.attrs['last_valid_dates'] = last_valid_dates
@@ -519,6 +526,166 @@ def _fetch_open_interest_bybit(symbol: str) -> float:
                     return float(oi)
     except:
         pass
+    return None
+
+def _fetch_oi_history_bybit(symbol: str, days: int = 30) -> dict:
+    """Fetch Open Interest history from Bybit V5 API (free, no API key needed)
+    
+    NOTE: Bybit is exiting Japan - kept as last resort fallback only.
+    
+    Returns:
+        dict with 'history' (list), 'avg_30d', 'ath', 'data_source'
+    """
+    try:
+        # Bybit returns data in intervalTime units (1d = 1 day)
+        end_time = int(datetime.datetime.now().timestamp() * 1000)
+        start_time = int((datetime.datetime.now() - datetime.timedelta(days=days)).timestamp() * 1000)
+        
+        url = f"https://api.bybit.com/v5/market/open-interest?category=linear&symbol={symbol}USDT&intervalTime=1d&startTime={start_time}&endTime={end_time}"
+        r = requests.get(url, timeout=10)
+        
+        if r.status_code == 200:
+            data = r.json()
+            oi_list = data.get('result', {}).get('list', [])
+            
+            if oi_list:
+                # Extract OI values
+                oi_values = [float(item.get('openInterest', 0)) for item in oi_list if item.get('openInterest')]
+                
+                if oi_values:
+                    return {
+                        'history': oi_values,
+                        'avg_30d': sum(oi_values) / len(oi_values),
+                        'ath': max(oi_values),
+                        'min': min(oi_values),
+                        'data_source': 'Bybit',
+                        'data_points': len(oi_values)
+                    }
+    except Exception as e:
+        print(f"Bybit OI history error: {e}")
+    return None
+
+def _fetch_oi_hyperliquid(symbol: str = 'BTC') -> dict:
+    """Fetch Open Interest from Hyperliquid DEX (Decentralized, no geo-restrictions)
+    
+    Priority 1 DEX - Hyperliquid is a leading on-chain perpetual DEX
+    
+    Returns:
+        dict with current OI, funding rate, and data source
+    """
+    try:
+        url = "https://api.hyperliquid.xyz/info"
+        payload = {"type": "metaAndAssetCtxs"}
+        headers = {"Content-Type": "application/json"}
+        
+        r = requests.post(url, json=payload, headers=headers, timeout=10)
+        
+        if r.status_code == 200:
+            data = r.json()
+            # data[0] = meta (universe info), data[1] = asset contexts
+            if len(data) >= 2:
+                meta = data[0]
+                contexts = data[1]
+                universe = meta.get('universe', [])
+                
+                # Find the target symbol
+                for i, asset in enumerate(universe):
+                    if asset.get('name', '').upper() == symbol.upper():
+                        if i < len(contexts):
+                            ctx = contexts[i]
+                            oi = float(ctx.get('openInterest', 0))
+                            funding = float(ctx.get('funding', 0)) * 100  # Convert to %
+                            mark_px = float(ctx.get('markPx', 0))
+                            
+                            return {
+                                'open_interest': oi,
+                                'open_interest_usd': oi * mark_px if mark_px else oi,
+                                'funding_rate': funding,
+                                'mark_price': mark_px,
+                                'data_source': 'Hyperliquid',
+                                'is_dex': True
+                            }
+                
+                # If exact match not found, try first asset as BTC surrogate
+                if symbol.upper() == 'BTC' and len(contexts) > 0:
+                    ctx = contexts[0]
+                    oi = float(ctx.get('openInterest', 0))
+                    funding = float(ctx.get('funding', 0)) * 100
+                    mark_px = float(ctx.get('markPx', 0))
+                    
+                    return {
+                        'open_interest': oi,
+                        'open_interest_usd': oi * mark_px if mark_px else oi,
+                        'funding_rate': funding,
+                        'mark_price': mark_px,
+                        'data_source': 'Hyperliquid',
+                        'is_dex': True
+                    }
+    except Exception as e:
+        print(f"Hyperliquid OI error: {e}")
+    return None
+
+def _fetch_oi_gmx_defillama() -> dict:
+    """Fetch Open Interest from GMX via DefiLlama (DEX on Arbitrum/Avalanche)
+    
+    Priority 2 DEX - GMX is a major decentralized perpetual exchange
+    
+    Returns:
+        dict with aggregate OI data
+    """
+    try:
+        url = "https://api.llama.fi/summary/derivatives/gmx"
+        r = requests.get(url, timeout=15)
+        
+        if r.status_code == 200:
+            data = r.json()
+            # Extract relevant metrics
+            return {
+                'name': data.get('name', 'GMX'),
+                'chains': data.get('chains', []),
+                'data_source': 'GMX (DefiLlama)',
+                'is_dex': True,
+                'total_volume_24h': data.get('total24h'),
+                'total_volume_7d': data.get('total7d'),
+            }
+    except Exception as e:
+        print(f"GMX DefiLlama error: {e}")
+    return None
+
+def _get_oi_historical_data(symbol: str, days: int = 30) -> dict:
+    """Get OI data from DEX sources only (no CEX)
+    
+    Priority: 1. Hyperliquid (DEX), 2. Bybit (fallback only)
+    
+    Note: True historical data from DEXs is limited. 
+    Current implementation provides current OI from Hyperliquid.
+    For 30-day avg/max, we use CEX backup if DEX fails.
+    
+    Returns:
+        dict with avg_30d, ath, data_source or None
+    """
+    # Priority 1: Hyperliquid DEX (current OI only - no historical API)
+    hyperliquid_data = _fetch_oi_hyperliquid(symbol)
+    if hyperliquid_data:
+        current_oi = hyperliquid_data.get('open_interest', 0)
+        # For DEX, we can't get true historical data, but we return what we have
+        # The UI should indicate this is DEX current data only
+        return {
+            'current_oi': current_oi,
+            'avg_30d': current_oi,  # Placeholder - same as current
+            'ath': current_oi,  # Placeholder - same as current  
+            'data_source': 'Hyperliquid (DEX)',
+            'data_points': 1,
+            'is_dex': True,
+            'note': 'DEX current OI only (historical unavailable)'
+        }
+    
+    # Priority 2: Bybit API as last resort (CEX but may still work)
+    bybit_data = _fetch_oi_history_bybit(symbol, days)
+    if bybit_data and bybit_data.get('data_points', 0) >= 7:
+        return bybit_data
+    
+    # No data available
     return None
 
 def _fetch_long_short_ratio_bybit() -> float:
@@ -671,14 +838,80 @@ def get_crypto_leverage_data():
         # Long/Short Ratio from CoinGecko approximation
         result['btc_long_short_ratio'] = _fetch_ls_ratio_from_coingecko()
         
-        # Historical OI estimates
-        if result['btc_open_interest']:
-            result['btc_oi_avg_30d'] = result['btc_open_interest'] * 0.95
-            result['btc_oi_ath'] = result['btc_open_interest'] * 1.1
+        # === DEX OI with Local History Accumulation ===
+        # 1. Fetch current OI from Hyperliquid DEX
+        # 2. Auto-save to local CSV
+        # 3. Load historical stats from accumulated data
+        # 4. Use DEX Funding Rate (more reliable than CEX)
         
-        if result['eth_open_interest']:
-            result['eth_oi_avg_30d'] = result['eth_open_interest'] * 0.95
-            result['eth_oi_ath'] = result['eth_open_interest'] * 1.1
+        # BTC: Fetch from DEX
+        btc_dex = _fetch_oi_hyperliquid('BTC')
+        if btc_dex and btc_dex.get('open_interest'):
+            btc_oi = btc_dex.get('open_interest')
+            result['btc_open_interest'] = btc_oi
+            result['data_source'] = 'Hyperliquid (DEX)'
+            result['btc_oi_is_dex'] = True
+            
+            # Use DEX Funding Rate (overrides CEX value which may be near-zero)
+            if btc_dex.get('funding_rate') is not None:
+                result['btc_funding_rate'] = btc_dex.get('funding_rate')
+            
+            # Auto-save to history
+            _save_dex_oi_to_history('BTC', btc_oi, 'Hyperliquid')
+            
+            # Load historical stats from accumulated data
+            btc_history = _load_dex_oi_history('BTC')
+            result['btc_oi_days_available'] = btc_history.get('days_available', 0)
+            
+            if btc_history.get('avg_30d'):
+                result['btc_oi_avg_30d'] = btc_history.get('avg_30d')
+                result['btc_oi_ath'] = btc_history.get('max_30d')
+                result['btc_oi_data_source'] = 'Hyperliquid (DEX) - 30日蓄積済'
+            elif btc_history.get('avg_7d'):
+                result['btc_oi_avg_30d'] = btc_history.get('avg_7d')  # Use 7d as fallback
+                result['btc_oi_ath'] = btc_history.get('max_7d')
+                result['btc_oi_data_source'] = f"Hyperliquid (DEX) - {btc_history.get('days_available')}日蓄積"
+            else:
+                result['btc_oi_avg_30d'] = None
+                result['btc_oi_ath'] = None
+                result['btc_oi_data_source'] = f"Hyperliquid (DEX) - データ蓄積中 ({btc_history.get('days_available', 0)}日)"
+        else:
+            result['btc_oi_avg_30d'] = None
+            result['btc_oi_ath'] = None
+        
+        # ETH: Fetch from DEX
+        eth_dex = _fetch_oi_hyperliquid('ETH')
+        if eth_dex and eth_dex.get('open_interest'):
+            eth_oi = eth_dex.get('open_interest')
+            result['eth_open_interest'] = eth_oi
+            result['eth_oi_is_dex'] = True
+            
+            # Use DEX Funding Rate (overrides CEX value which may be near-zero)
+            if eth_dex.get('funding_rate') is not None:
+                result['eth_funding_rate'] = eth_dex.get('funding_rate')
+            
+            # Auto-save to history
+            _save_dex_oi_to_history('ETH', eth_oi, 'Hyperliquid')
+            
+            # Load historical stats from accumulated data
+            eth_history = _load_dex_oi_history('ETH')
+            result['eth_oi_days_available'] = eth_history.get('days_available', 0)
+            
+            if eth_history.get('avg_30d'):
+                result['eth_oi_avg_30d'] = eth_history.get('avg_30d')
+                result['eth_oi_ath'] = eth_history.get('max_30d')
+                result['eth_oi_data_source'] = 'Hyperliquid (DEX) - 30日蓄積済'
+            elif eth_history.get('avg_7d'):
+                result['eth_oi_avg_30d'] = eth_history.get('avg_7d')
+                result['eth_oi_ath'] = eth_history.get('max_7d')
+                result['eth_oi_data_source'] = f"Hyperliquid (DEX) - {eth_history.get('days_available')}日蓄積"
+            else:
+                result['eth_oi_avg_30d'] = None
+                result['eth_oi_ath'] = None
+                result['eth_oi_data_source'] = f"Hyperliquid (DEX) - データ蓄積中 ({eth_history.get('days_available', 0)}日)"
+        else:
+            result['eth_oi_avg_30d'] = None
+            result['eth_oi_ath'] = None
         
         return result
     except:

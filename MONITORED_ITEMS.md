@@ -1,115 +1,175 @@
-# 📊 Market Cockpit Pro - 監視対象66項目一覧
+# 📊 Market Cockpit Pro - 監視対象項目一覧
 
-> **Version**: v2.0.0 Modular Edition  
-> **更新日**: 2026-01-14  
-> **目的**: このファイルは監視対象の正規リストです。機能追加・修正時は必ず参照してください。
-
----
-
-## ✅ Daily (日次): 22項目
-| # | Indicator | FRED/Yahoo | 説明 |
-|---|-----------|------------|------|
-| 1 | `EFFR` | EFFR | 実効FF金利 |
-| 2 | `IORB` | IORB | 準備預金付利 |
-| 3 | `SOFR` | SOFR | 担保付翌日物金利 |
-| 4 | `SP500` | ^GSPC | S&P 500 |
-| 5 | `VIX` | ^VIX | 恐怖指数 |
-| 6 | `HYG` | HYG | ハイイールド債ETF |
-| 7 | `DXY` | DX-Y.NYB | ドル指数 |
-| 8 | `USDJPY` | JPY=X | ドル円 |
-| 9 | `EURUSD` | EURUSD=X | ユーロドル |
-| 10 | `USDCNY` | CNY=X | ドル人民元 |
-| 11 | `Gold` | GC=F | 金先物 |
-| 12 | `Silver` | SI=F | 銀先物 |
-| 13 | `Oil` | CL=F | WTI原油 |
-| 14 | `Copper` | HG=F | 銅先物 |
-| 15 | `BTC` | BTC-USD | ビットコイン |
-| 16 | `ETH` | ETH-USD | イーサリアム |
-| 17 | `Credit_Spread` | BAMLH0A0HYM2 | ハイイールドスプレッド |
-| 18 | `US_TNX` | DGS10 | 10年国債利回り |
-| 19 | `T10Y2Y` | T10Y2Y | イールドカーブ |
-| 20 | `ON_RRP` | RRPONTSYD | ON RRP |
-| 21 | `FedFundsUpper` | DFEDTARU | FF金利上限 |
-| 22 | `FedFundsLower` | DFEDTAR | FF金利下限 |
-| 23 | `USD_EUR` | DEXUSEU | ドル/ユーロレート |
-| 24 | `Global_Liquidity_Proxy` | (計算値) | 世界流動性 (Fed+ECB) |
-| 25 | `Asset_Spreads` | Yahoo | 流動性監視 (SPY, TLT, GLD, SLV, USO) |
+> **Source**: Auto-generated from `utils/indicators.py`  
+> **更新日**: 2026-01-19 17:10  
+> **⚠️ このファイルは自動生成です。直接編集せず、indicators.pyを修正後にスクリプトを再実行してください。**
 
 ---
 
-## ✅ Weekly (週次): 14項目
-| # | Indicator | FRED | 説明 |
-|---|-----------|------|------|
-| 1 | `Reserves` | WRESBAL | 銀行準備預金 |
-| 2 | `TGA` | WTREGEN | 財務省一般口座 |
-| 3 | `Fed_Assets` | WALCL | FRB総資産 |
-| 4 | `SOMA_Total` | WALCL | SOMA総資産 |
-| 5 | `SOMA_Bills` | TREAST | SOMA短期国債 |
-| 6 | `SRF` | WORAL | Standing Repo Facility |
-| 7 | `FIMA` | H41RESPPALGTRFNWW | FIMA Repo |
-| 8 | `Primary_Credit` | WLCFLPCL | 緊急融資 (一次) |
-| 9 | `Total_Loans` | WLCFLL | 緊急融資 (合計) |
-| 10 | `Bank_Cash` | CASACBW027SBOG | 銀行現金保有 |
-| 11 | `ICSA` | ICSA | 新規失業保険申請 |
-| 12 | `Net_Liquidity` | (計算値) | ネットリクイディティ |
-| 13 | `SomaBillsRatio` | (計算値) | Bills比率 |
-| 14 | `CRE_Loans` | CREACBW027SBOG | CRE融資残高 |
-| 15 | `Financial_Stress` | STLFSI4 | 金融ストレス指数 |
-| 16 | `ECB_Assets` | ECBASSETSW | ECB総資産 |
+## 📈 サマリー
+
+| 頻度 | 指標数 |
+|------|--------|
+| Daily (日次) | 25 |
+| Weekly (週次) | 18 |
+| Monthly (月次) | 16 |
+| Quarterly (四半期) | 12 |
+| **合計** | **71** |
 
 ---
 
-## ✅ Monthly (月次): 22項目
-| # | Indicator | FRED/Manual | 説明 |
-|---|-----------|-------------|------|
-| 1 | `M2SL` | M2SL | 米国M2 (名目) |
-| 2 | `M2REAL` | M2REAL | 米国M2 (実質) |
-| 3 | `CPI` | CPIAUCSL | 消費者物価指数 |
-| 4 | `CPICore` | CPILFESL | コアCPI |
-| 5 | `PPI` | PPIACO | 生産者物価指数 |
-| 6 | `Unemployment` | UNRATE | 失業率 |
-| 7 | `UNRATE` | UNRATE | 失業率 (Sahm Rule) |
-| 8 | `CorePCE` | PCETRIM12M159SFRBDAL | コアPCE |
-| 9 | `ConsumerSent` | UMCSENT | 消費者信頼感 |
-| 10 | `CN_M2` | Manual (PBoC) | 中国M2 |
-| 11 | `JP_M2` | Manual (BOJ) | 日本M2 |
-| 12 | `EU_M2` | Manual (ECB) | 欧州M2 |
-| 13 | `NFP` | PAYEMS | 非農業部門雇用者数 |
-| 14 | `ADP` | ADPWNUSNERSA | ADP雇用統計 |
-| 15 | `AvgHourlyEarnings` | CES0500000003 | 平均時給 |
-| 16 | `JOLTS` | JTSJOL | 求人数 |
-| 17 | `RetailSales` | RSAFS | 小売売上 |
-| 18 | `CN_CPI` | CHNCPIALLMINMEI / Manual | 中国CPI |
-| 19 | `JP_CPI` | Manual (BOJ) | 日本CPI |
-| 20 | `EU_CPI` | CP0000EZ19M086NEST | 欧州CPI |
-| 21 | `US_Real_M2_Index` | (計算値) | 米国実質M2指数 |
-| 22 | `CI_Loans` | BUSLOANS | C&I融資残高 |
+## ✅ Daily (日次): 25項目
+
+| # | Indicator | Source | ID | Unit | Category | Description |
+|---|-----------|--------|-----|------|----------|-------------|
+| 1 | `BTC` | YAHOO | BTC-USD | - | crypto | ビットコイン |
+| 2 | `Breakeven_10Y` | FRED | T10YIE | % | inflation_expectations | 10年期待インフレ率 |
+| 3 | `CP_Spread` | FRED | CPFF | % | financial_stress | CP-FFスプレッド（企業資金ストレス） |
+| 4 | `Credit_Spread` | FRED | BAMLH0A0HYM2 | % | rates | ハイイールドスプレッド |
+| 5 | `DXY` | YAHOO | DX-Y.NYB | - | fx | ドルインデックス |
+| 6 | `EFFR` | FRED | EFFR | % | rates | 実効FF金利 |
+| 7 | `ETH` | YAHOO | ETH-USD | - | crypto | イーサリアム |
+| 8 | `EURUSD` | YAHOO | EURUSD=X | - | fx | ユーロドル |
+| 9 | `FedFundsLower` | FRED | DFEDTAR | % | rates | FF金利下限 |
+| 10 | `FedFundsUpper` | FRED | DFEDTARU | % | rates | FF金利上限 |
+| 11 | `GBPUSD` | YAHOO | GBPUSD=X | - | fx | ポンドドル (Fiat Health Monitor) |
+| 12 | `Gold` | YAHOO | GC=F | - | commodities | 金先物 |
+| 13 | `HYG` | YAHOO | HYG | - | credit | ハイイールド債ETF（投機的社債） |
+| 14 | `IORB` | FRED | IORB | % | rates | 準備預金付利 |
+| 15 | `LQD` | YAHOO | LQD | - | credit | 投資適格社債ETF（IG社債） |
+| 16 | `MOVE` | YAHOO | ^MOVE | - | volatility | MOVE債券恐怖指数 |
+| 17 | `Oil` | YAHOO | CL=F | - | commodities | WTI原油先物 |
+| 18 | `ON_RRP` | FRED | RRPONTSYD | B | fed_liquidity | Overnight Reverse Repo (余剰資金の滞留) |
+| 19 | `SOFR` | FRED | SOFR | % | rates | SOFR |
+| 20 | `SP500` | YAHOO | ^GSPC | - | equity | S&P 500 |
+| 21 | `Silver` | YAHOO | SI=F | - | commodities | 銀先物 |
+| 22 | `T10Y2Y` | FRED | T10Y2Y | % | rates | 10年-2年スプレッド（逆イールド） |
+| 23 | `USDCNY` | YAHOO | CNY=X | - | fx | ドル人民元 |
+| 24 | `USDJPY` | YAHOO | JPY=X | - | fx | ドル円 |
+| 25 | `US_TNX` | FRED | DGS10 | % | rates | 米10年国債利回り |
+| 26 | `VIX` | YAHOO | ^VIX | - | volatility | VIX恐怖指数 |
+| 27 | `Copper` | YAHOO | HG=F | - | commodities | 銅先物（景気先行指標） |
+| 28 | `AUDUSD` | YAHOO | AUDUSD=X | - | fx | 豪ドル (Fiat Health Monitor) |
+| 29 | `USDCHF` | YAHOO | CHF=X | - | fx | ドルスイスフラン (Fiat Health Monitor) |
 
 ---
 
-## ✅ Quarterly (四半期): 9項目
-| # | Indicator | FRED | 説明 |
-|---|-----------|------|------|
-| 1 | `Lending_Standards` | DRTSCILM | 融資態度 (総合) |
-| 2 | `CI_Std_Large` | DRTSCILM | C&I融資基準 (大企業) |
-| 3 | `CI_Std_Small` | DRTSCIS | C&I融資基準 (中小) |
-| 4 | `CI_Demand` | DRTSCLCC | C&I融資需要 |
-| 5 | `CRE_Std_Construction` | SUBLPDRCSC | CRE融資基準 (建設) |
-| 6 | `CRE_Std_Office` | DRTSSP | CRE融資基準 (オフィス) |
-| 7 | `CRE_Std_Multifamily` | DRTSSP | CRE融資基準 (集合住宅) |
-| 8 | `CRE_Demand` | DRTSCLCC | CRE融資需要 |
-| 9 | `RealGDP` | GDPC1 | 実質GDP |
-| 10 | `M2_Velocity` | M2V | M2回転速度 |
+## ✅ Weekly (週次): 18項目
+
+| # | Indicator | Source | ID | Unit | Category | Description |
+|---|-----------|--------|-----|------|----------|-------------|
+| 1 | `Bank_Cash` | FRED | CASACBW027SBOG | B | banking_h8 | 銀行の現金保有 |
+| 2 | `Bank_Deposits` | FRED | DPSACBW027SBOG | B | banking_h8 | 銀行預金総額 |
+| 3 | `Bank_Securities` | FRED | H8B1002NCBCAG | B | banking_h8 | 銀行保有有価証券 |
+| 4 | `CRE_Loans` | FRED | CREACBW027SBOG | B | banking_loans | CRE融資残高 |
+| 5 | `Credit_Card_Loans` | FRED | CCLACBW027SBOG | B | banking_h8 | クレカ残高 |
+| 6 | `ECB_Assets` | FRED | ECBASSETSW | M | central_bank | ECB総資産 (Million EUR) |
+| 7 | `FIMA` | FRED | H41RESPPALGTRFNWW | B | fed_plumbing | FIMA Repo Facility |
+| 8 | `Fed_Assets` | FRED | WALCL | B | fed_liquidity | FRB総資産 |
+| 9 | `Financial_Stress` | FRED | STLFSI4 | - | financial_stress | セントルイス連銀金融ストレス指数 |
+| 10 | `ICSA` | FRED | ICSA | K | employment | 新規失業保険申請件数 |
+| 11 | `NFCI` | FRED | NFCI | - | financial_stress | シカゴ連銀金融環境指数 |
+| 12 | `Primary_Credit` | FRED | WLCFLPCL | B | fed_plumbing | 割引窓口プライマリークレジット |
+| 13 | `Reserves` | FRED | WRESBAL | B | fed_liquidity | 銀行準備預金 |
+| 14 | `SRF` | FRED | WORAL | B | fed_plumbing | Standing Repo Facility |
+| 15 | `SOMA_Bills` | FRED | TREAST | B | fed_liquidity | SOMA短期国債（RMP対象） |
+| 16 | `SOMA_Total` | FRED | WALCL | B | fed_liquidity | SOMA総資産 |
+| 17 | `SomaBillsRatio` | CALCULATED | SOMA_RATIO | % | fed_liquidity | SOMA短期国債比率 |
+| 18 | `Small_Bank_Deposits` | FRED | DPSSCBW027SBOG | B | financial_stress | 地銀預金（取り付け警報） |
+| 19 | `TGA` | FRED | WTREGEN | B | fed_liquidity | 財務省一般口座 |
+| 20 | `Total_Loans` | FRED | WLCFLL | B | fed_plumbing | FRB貸出総額 |
+| 21 | `Global_Liquidity_Proxy` | CALCULATED | GLP_USD | B USD | liquidity | グローバル流動性プロキシ (Fed+ECB-TGA-RRP) |
 
 ---
 
-## ⚠️ 注意事項
+## ✅ Monthly (月次): 16項目
 
-1. **手動更新が必要な項目**: `CN_M2`, `JP_M2`, `EU_M2`, `JP_CPI` は FRED では最新データが遅延するため、`utils/config.py` の `MANUAL_GLOBAL_M2` で手動更新が必要
-2. **計算値**: `Net_Liquidity`, `SomaBillsRatio`, `US_Real_M2_Index` は他の項目から計算される派生指標
-3. **監視ルールの定義場所**: `utils/constants.py` の `DATA_FRESHNESS_RULES`
-4. **修正時の注意**: `constants.py` と `config.py` の両方に `DATA_FRESHNESS_RULES` が存在するため、同期を維持すること
+| # | Indicator | Source | ID | Unit | Category | Description |
+|---|-----------|--------|-----|------|----------|-------------|
+| 1 | `ADP` | FRED | ADPWNUSNERSA | K | employment | ADP雇用統計 |
+| 2 | `AvgHourlyEarnings` | FRED | CES0500000003 | $/hr | employment | 平均時給 |
+| 3 | `CI_Loans` | FRED | BUSLOANS | B | banking_loans | C&I融資残高 |
+| 4 | `Consumer_Loans` | FRED | CLSACBW027NBOG | B | banking_h8 | 消費者ローン残高 |
+| 5 | `ConsumerSent` | FRED | UMCSENT | idx | sentiment | ミシガン消費者信頼感 |
+| 6 | `CPI` | FRED | CPIAUCSL | idx | inflation | 消費者物価指数 |
+| 7 | `CPICore` | FRED | CPILFESL | idx | inflation | コアCPI |
+| 8 | `CorePCE` | FRED | PCETRIM12M159SFRBDAL | % | inflation | コアPCE（Fedの最重視指標） |
+| 9 | `JOLTS` | FRED | JTSJOL | K | employment | JOLTS求人数 |
+| 10 | `M2REAL` | FRED | M2REAL | T | money_supply | 米実質M2 |
+| 11 | `M2SL` | FRED | M2SL | T | money_supply | 米M2 |
+| 12 | `NFP` | FRED | PAYEMS | K | employment | 非農業部門雇用者数 |
+| 13 | `NIKKEI` | YAHOO | ^N225 | - | equity | 日経225 |
+| 14 | `PPI` | FRED | PPIACO | idx | inflation | 生産者物価指数 |
+| 15 | `RetailSales` | FRED | RSAFS | B | consumption | 小売売上高 |
+| 16 | `UNRATE` | FRED | UNRATE | % | employment | 失業率（別名） |
 
 ---
 
-**Total: 73 items** (25 Daily + 16 Weekly + 22 Monthly + 10 Quarterly)
+## ✅ Quarterly (四半期): 12項目
+
+| # | Indicator | Source | ID | Unit | Category | Description |
+|---|-----------|--------|-----|------|----------|-------------|
+| 1 | `CC_Delinquency` | FRED | DRCCLACBS | % | financial_stress | クレカ延滞率 |
+| 2 | `CI_Demand` | FRED | DRSDCILM | pts | banking_sloos | C&I融資需要 |
+| 3 | `CI_Std_Large` | FRED | DRTSCILM | pts | banking_sloos | C&I基準（大企業） |
+| 4 | `CI_Std_Small` | FRED | DRTSCIS | pts | banking_sloos | C&I基準（小企業） |
+| 5 | `CRE_Demand` | FRED | SUBLPDRCDN | pts | banking_sloos | CRE融資需要 |
+| 6 | `CRE_Std_Construction` | FRED | SUBLPDRCSC | pts | banking_sloos | CRE基準（建設） |
+| 7 | `CRE_Std_Multifamily` | FRED | SUBLPDRCSM | pts | banking_sloos | CRE基準（集合住宅） |
+| 8 | `CRE_Std_Office` | FRED | SUBLPDRCSN | pts | banking_sloos | CRE基準（オフィス） |
+| 9 | `M2_Velocity` | FRED | M2V | - | economy | M2通貨回転率（インフレ・景気過熱） |
+| 10 | `RealGDP` | FRED | GDPC1 | B | gdp | 実質GDP |
+
+---
+
+## 📚 データソース
+
+| Source | Description |
+|--------|-------------|
+| FRED | Federal Reserve Economic Data (セントルイス連銀) |
+| YAHOO | Yahoo Finance (yfinance経由) |
+| CALCULATED | 他の指標から計算される派生値 |
+
+---
+
+## 🔧 メンテナンス
+
+### 指標の追加・修正方法
+
+1. `utils/indicators.py` の `INDICATORS` ディクショナリを編集
+2. 以下のコマンドでこのドキュメントを再生成:
+   ```bash
+   python scripts/generate_monitored_items.py
+   ```
+3. `git commit` で変更をコミット
+
+### 必須フィールド
+
+```python
+'INDICATOR_NAME': {
+    'source': 'FRED',        # FRED, YAHOO, CALCULATED
+    'id': 'SERIES_ID',       # FRED series ID or Yahoo ticker
+    'unit': '%',             # Display unit
+    'frequency': 'daily',    # daily, weekly, monthly, quarterly
+    'freshness': 'daily',    # For staleness monitoring
+    'category': 'rates',     # Grouping category
+    'ui_page': '01_liquidity', # Which page displays this
+    'ai_include': True,      # Include in AI analysis?
+    'ai_section': '金利',    # AI summary section name
+    'notes': 'Description',  # Human-readable description
+}
+```
+
+---
+
+## 🔍 SLOOS指標の正しいFRED ID（参考）
+
+| カテゴリ | 指標 | FRED ID | 説明 |
+|----------|------|---------|------|
+| **C&I Standards** | Large/Mid Firms | DRTSCILM | 大企業向け融資基準 |
+| | Small Firms | DRTSCIS | 中小企業向け融資基準 |
+| **C&I Demand** | Large/Mid Firms | DRSDCILM | 大企業向け融資需要 |
+| **CRE Standards** | Construction & Land | SUBLPDRCSC | 建設・土地開発 |
+| | Nonfarm Nonresidential | SUBLPDRCSN | オフィス等 |
+| | Multifamily | SUBLPDRCSM | 集合住宅 |
+| **CRE Demand** | Nonfarm Nonresidential | SUBLPDRCDN | オフィス等需要 |

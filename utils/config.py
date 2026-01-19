@@ -45,66 +45,47 @@ GEMINI_MODEL = "gemini-3-flash-preview"
 CLAUDE_MODEL = "claude-opus-4-5-20251101"
 
 # =============================================================================
-# MANUAL GLOBAL M2 DATA
-# FREDで取得できない国のM2データ（手動更新）
+# MANUAL GLOBAL M2 DATA (REMOVED)
+# Non-US M2 data removed due to unreliable FRED data sources
 # =============================================================================
-MANUAL_GLOBAL_M2 = {
-    'CN_M2': {
-        'value': 336.9,      # 単位: Trillion CNY
-        'date': '2025-11',   # 対象月
-        'source': 'PBoC',    # 人民銀行
-        'cpi': 0.2,          # CPIインフレ率(%)
-    },
-    'JP_M2': {
-        'value': 1260,       # 単位: Trillion JPY
-        'date': '2025-11',
-        'source': 'BOJ',
-        'cpi': 2.9,
-    },
-    'EU_M2': {
-        'value': 15.6,       # 単位: Trillion EUR
-        'date': '2025-11',
-        'source': 'ECB',
-        'cpi': 2.1,
-    },
-}
+MANUAL_GLOBAL_M2 = {}  # Empty - no longer used
 
 # =============================================================================
 # EXPLANATIONS (UI tooltip text)
 # =============================================================================
 EXPLANATIONS = {
-    "Net_Liquidity": "【ネットリクイディティ】\n市場に出回る「真の資金量」。(FRB総資産 - TGA - RRP) で計算されます。",
-    "Reserves": "【銀行準備預金】\n民間銀行がFRBに預けているお金。",
-    "TGA": "【TGA (財務省一般口座)】\n政府の銀行口座。",
-    "ON_RRP": "【ON RRP】\nMMFなどがFRBにお金を預ける場所。",
-    "VIX": "【VIX指数】\n恐怖指数。20以上で市場の不安が高まっている状態です。",
-    "Bank_Cash": "【銀行の現金保有】\n全米の銀行が保有する現金資産の推移。",
-    "Lending_Standards": "【C&I Lending Tightening】\n銀行の融資態度を示す純割合。",
-    "SRF": "【Standing Repo Facility】\n国内リポ市場の流動性。",
-    "FIMA": "【FIMA Repo Facility】\n海外の中央銀行向け融資。",
-    "SOFR": "【SOFR】\n国債を担保にした資金調達コスト。",
-    "Primary": "【Primary Credit】\n健全な銀行向けの緊急融資。",
-    "Window": "【Total Loans】\nFRBによる金融機関への貸出総額。",
-    "SOMA_Total": "【SOMA総資産】\nFRBが保有する国債やMBSの総額。",
-    "SOMA_Bills": "【SOMA Bills (短期国債)】\nFRBが保有する短期国債。",
-    "SomaBillsRatio": "【SOMA Bills比率】\nFRBの総資産に占める短期国債の割合。",
-    "M2SL": "【通貨供給量 M2】\n世の中に流通しているマネーの総量。",
-    "CI_Std_Large": "【C&I融資基準（大・中堅企業）】\n0を超えると貸し渋り。",
-    "CI_Std_Small": "【C&I融資基準（小企業）】\n中小企業の資金繰りの先行指標。",
-    "CI_Demand": "【C&I融資需要】\n企業の設備投資意欲を測定。",
-    "CI_Loans": "【C&I融資残高】\n商工業向け融資の総額。",
-    "CRE_Std_Construction": "【CRE融資基準（建設・土地開発）】\n不動産開発の蛇口。",
-    "CRE_Std_Office": "【CRE融資基準（オフィス等）】\n既存物件の借り換え難易度。",
-    "CRE_Std_Multifamily": "【CRE融資基準（集合住宅）】\n居住用不動産市場の流動性。",
-    "CRE_Demand": "【CRE融資需要】\n不動産投資意欲。",
-    "CRE_Loans": "【CRE融資残高（週次）】\n週次で追える最速のデータ。",
+    "Net_Liquidity": "Net Liquidity\nMarket's true fuel. Calculated as (Fed Assets - TGA - RRP).",
+    "Reserves": "Bank Reserves\nMoney that private banks hold at the Fed.",
+    "TGA": "TGA (Treasury General Account)\nGovernment's bank account at the Fed.",
+    "ON_RRP": "ON RRP\nWhere MMFs park excess cash at the Fed.",
+    "VIX": "VIX Index\nFear gauge. Above 20 signals elevated market anxiety.",
+    "Bank_Cash": "Bank Cash Holdings\nCash assets held by all US banks.",
+    "Lending_Standards": "C&I Lending Tightening\nNet % of banks tightening. + is tight, - is loose.",
+    "SRF": "Standing Repo Facility\nDomestic repo market liquidity backstop.",
+    "FIMA": "FIMA Repo Facility\nForeign central bank dollar lending.",
+    "SOFR": "SOFR\nSecured overnight financing rate (Treasury-collateralized).",
+    "Primary": "Primary Credit\nEmergency lending to healthy banks.",
+    "Window": "Total Loans\nTotal FRB lending to financial institutions.",
+    "SOMA_Total": "SOMA Total Assets\nFed holdings of Treasuries and MBS.",
+    "SOMA_Bills": "SOMA Bills (T-Bills)\nFed's short-term Treasury holdings.",
+    "SomaBillsRatio": "SOMA Bills Ratio\nShare of T-Bills in Fed's total assets.",
+    "M2SL": "M2 Money Supply\nTotal money circulating in the economy.",
+    "CI_Std_Large": "C&I Standards (Large/Mid)\nAbove 0 = tightening. 40%+ = strong recession signal.",
+    "CI_Std_Small": "C&I Standards (Small)\nLeading indicator for SME funding & employment.",
+    "CI_Demand": "C&I Loan Demand\nMeasures corporate capex appetite.",
+    "CI_Loans": "C&I Loan Balance\nTotal commercial & industrial loans.",
+    "CRE_Std_Construction": "CRE Standards (Construction)\nReal estate development gateway.",
+    "CRE_Std_Office": "CRE Standards (Office)\nRefinancing difficulty indicator.",
+    "CRE_Std_Multifamily": "CRE Standards (Multifamily)\nResidential real estate liquidity.",
+    "CRE_Demand": "CRE Loan Demand\nReal estate investment appetite.",
+    "CRE_Loans": "CRE Loan Balance (Weekly)\nFastest available CRE lending data.",
     # Financial Stress
-    "NFCI": "【NFCI】\nシカゴ連銀金融環境指数。+で引締、-で緩和。",
-    "MOVE": "【MOVE Index】\n債券恐怖指数。VIXより先に反応することが多い。",
-    "Small_Bank_Deposits": "【地銀預金】\n急減は取り付け騒ぎの前兆。",
-    "CC_Delinquency": "【クレカ延滞率】\n消費者ストレスの先行指標。",
-    "CP_Spread": "【CP-FFスプレッド】\n企業短期資金調達ストレス。",
-    "Breakeven_10Y": "【10年期待インフレ】\n市場のインフレ期待。",
+    "NFCI": "NFCI\nChicago Fed Financial Conditions. + is tight, - is loose.",
+    "MOVE": "MOVE Index\nBond fear index. Often reacts before VIX.",
+    "Small_Bank_Deposits": "Small Bank Deposits\nSharp decline = bank run warning.",
+    "CC_Delinquency": "Credit Card Delinquency\nLeading indicator of consumer stress.",
+    "CP_Spread": "CP-FF Spread\nCorporate short-term funding stress.",
+    "Breakeven_10Y": "10Y Breakeven\nMarket inflation expectations.",
 }
 
 # =============================================================================

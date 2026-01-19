@@ -18,7 +18,8 @@ DATA_FRESHNESS_RULES = {
     'daily': {
         'fresh': 3, 'stale': 7, 'critical': 14,
         'indicators': ['EFFR', 'IORB', 'SOFR', 'SP500', 'VIX', 'HYG', 'DXY', 'USDJPY', 
-                      'EURUSD', 'USDCNY', 'Gold', 'Silver', 'Oil', 'Copper', 'BTC', 'ETH',
+                      'EURUSD', 'USDCNY', 'GBPUSD', 'USDCHF', 'AUDUSD',
+                      'Gold', 'Silver', 'Oil', 'Copper', 'BTC', 'ETH',
                       'Credit_Spread', 'US_TNX', 'T10Y2Y', 'ON_RRP', 'FedFundsUpper', 'FedFundsLower']
     },
     'weekly': {
@@ -44,6 +45,7 @@ DATA_FRESHNESS_RULES = {
 DATA_FREQUENCY = {
     'EFFR': '日次', 'IORB': '日次', 'SOFR': '日次', 'SP500': '日次', 'VIX': '日次', 
     'HYG': '日次', 'DXY': '日次', 'USDJPY': '日次', 'EURUSD': '日次', 'USDCNY': '日次',
+    'GBPUSD': '日次', 'USDCHF': '日次', 'AUDUSD': '日次',
     'Gold': '日次', 'Silver': '日次', 'Oil': '日次', 'Copper': '日次', 'BTC': '日次', 'ETH': '日次',
     'Credit_Spread': '日次', 'US_TNX': '日次', 'T10Y2Y': '日次', 'ON_RRP': '日次',
     'FedFundsUpper': '日次', 'FedFundsLower': '日次',
@@ -88,6 +90,7 @@ FRED_INDICATORS = {
 YAHOO_INDICATORS = {
     'SP500': '^GSPC', 'VIX': '^VIX', 'HYG': 'HYG',
     'DXY': 'DX-Y.NYB', 'USDJPY': 'JPY=X', 'EURUSD': 'EURUSD=X', 'USDCNY': 'CNY=X',
+    'GBPUSD': 'GBPUSD=X', 'USDCHF': 'CHF=X', 'AUDUSD': 'AUDUSD=X',
     'Gold': 'GC=F', 'Silver': 'SI=F', 'Oil': 'CL=F', 'Copper': 'HG=F',
     'BTC': 'BTC-USD', 'ETH': 'ETH-USD',
 }

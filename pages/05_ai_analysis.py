@@ -12,6 +12,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils import (
+    t,
     GEMINI_MODEL, CLAUDE_MODEL,
     get_market_summary,
     run_gemini_analysis, run_claude_analysis,
@@ -26,12 +27,12 @@ claude_client = st.session_state.get('claude_client')
 df = st.session_state.get('df')
 
 if df is None:
-    st.error("データが読み込まれていません。main.pyから起動してください。")
+    st.error(t('error_data_not_loaded'))
     st.stop()
 
 # ========== PAGE CONTENT ==========
-st.subheader("🤖 AI Market Analysis")
-st.caption("💡 膨大な市場データから相関性と構造を抽出")
+st.subheader(t('ai_analysis_title'))
+st.caption(t('ai_analysis_desc'))
 
 # Show Data Count Status
 ai_indicators = get_indicators_for_ai()
@@ -41,28 +42,42 @@ total_count = total_freshness['summary']['total']
 
 col_info1, col_info2, col_info3 = st.columns([1, 1, 2])
 with col_info1:
-    st.metric("👁️ AI監視対象数", f"{ai_count} / {total_count}", help="AIが分析対象としているデータ数 / 全監視データ数")
+    st.metric("👁️", t('ai_data_count', ai_count=ai_count, total_count=total_count))
 with col_info2:
     if ai_count < total_count:
-        st.warning(f"⚠️ {total_count - ai_count}個のデータがAI分析から除外されています")
+        st.warning(t('ai_data_excluded', count=total_count - ai_count))
     else:
-        st.success("✅ 全データを監視中")
+        st.success(t('ai_all_monitored'))
 
 # Fetch market summary
-with st.spinner("📊 市場データを集約中..."):
+with st.spinner(t('ai_collecting_data')):
     market_summary = get_market_summary(df)
 
 # Sidebar settings
 with st.sidebar:
     st.divider()
-    st.header("⚙️ Analysis Settings")
-    selected_ai = st.multiselect("使用する AI", ["Gemini 3 Flash", "Claude 4.5 Opus"], default=["Gemini 3 Flash"])
+    st.header(t('ai_settings'))
+    selected_ai = st.multiselect(t('ai_select'), ["Gemini 3 Flash", "Claude 4.5 Opus"], default=["Gemini 3 Flash"])
     
-    st.subheader("🎯 Focus Areas")
+    st.subheader(t('ai_focus_areas'))
+    focus_options = [
+        t('ai_focus_liquidity'),
+        t('ai_focus_inflation'),
+        t('ai_focus_employment'),
+        t('ai_focus_banking'),
+        t('ai_focus_geopolitics'),
+        t('ai_focus_crypto')
+    ]
+    # Fix: Validate stored defaults against current language options
+    stored_focus = st.session_state.get('ai_focus_categories', [])
+    valid_defaults = [opt for opt in stored_focus if opt in focus_options]
+    if not valid_defaults:
+        valid_defaults = [focus_options[0]]
+    
     focus_selection = st.multiselect(
-        "AIに特に注目させる項目",
-        ["流動性 (Plumbing)", "インフレ・金利", "雇用・景気後退", "銀行・信用危機", "地政学・コモディティ", "仮想通貨"],
-        default=st.session_state.get('ai_focus_categories', ["流動性 (Plumbing)"])
+        t('ai_focus_prompt'),
+        focus_options,
+        default=valid_defaults
     )
     st.session_state['ai_focus_categories'] = focus_selection
 
@@ -74,9 +89,9 @@ policy_context = """
 col_main, col_custom = st.columns([2, 1])
 
 with col_main:
-    if st.button("🚀 最新市場データを全分析"):
+    if st.button(t('ai_full_analysis')):
         if "Gemini" in str(selected_ai):
-            with st.spinner("🔷 Gemini 3 Flash が分析中..."):
+            with st.spinner(t('ai_gemini_analyzing')):
                 try:
                     prompt = f"{policy_context}\n\n以下の市場データを構造的に分析してください:\n{market_summary}"
                     result = run_gemini_analysis(gemini_client, GEMINI_MODEL, prompt)
@@ -86,7 +101,7 @@ with col_main:
                     st.error(f"Gemini Error: {e}")
         
         if "Claude" in str(selected_ai):
-            with st.spinner("🟣 Claude 4.5 Opus が分析中..."):
+            with st.spinner(t('ai_claude_analyzing')):
                 try:
                     prompt = f"{policy_context}\n\n以下の市場データを構造的に分析してください:\n{market_summary}"
                     result = run_claude_analysis(claude_client, CLAUDE_MODEL, prompt)
@@ -96,35 +111,35 @@ with col_main:
                     st.error(f"Claude Error: {e}")
 
 with col_custom:
-    st.markdown("### 💬 カスタム質問")
+    st.markdown(f"### {t('ai_custom_analysis')}")
     user_question = st.text_area(
-        "市場データについて質問してください",
-        placeholder="例: 現在のNet Liquidityの水準は歴史的にどうですか？",
+        t('ai_custom_prompt'),
+        placeholder=t('ai_custom_placeholder'),
         height=100
     )
     
-    if st.button("📨 質問を送信") and user_question:
+    if st.button(t('ai_run_custom')) and user_question:
         news_context = ""
-        if any(kw in user_question for kw in ["ニュース", "最新", "直近", "今日", "今週", "出来事"]):
-            with st.spinner("🔍 関連するニュースを検索中..."):
+        if any(kw in user_question for kw in ["ニュース", "最新", "直近", "今日", "今週", "出来事", "news", "latest", "recent"]):
+            with st.spinner("🔍 Searching news..."):
                 news_headlines = search_google_news(user_question, num_results=3)
-                news_context = f"\n\n【最新ニュース検索結果】\n{news_headlines}"
+                news_context = f"\n\n【Latest News】\n{news_headlines}"
 
-        custom_prompt = f"{policy_context}\n\n市場データ:\n{market_summary}\n{news_context}\n\n質問: {user_question}"
+        custom_prompt = f"{policy_context}\n\nMarket Data:\n{market_summary}\n{news_context}\n\nQuestion: {user_question}"
         
         if "Gemini" in str(selected_ai):
-            with st.spinner("🔷 Gemini 3 Flash が回答中..."):
+            with st.spinner(t('ai_gemini_analyzing')):
                 try:
                     result = run_gemini_analysis(gemini_client, GEMINI_MODEL, custom_prompt)
-                    st.markdown("### 💡 Gemini 回答")
+                    st.markdown("### 💡 Gemini Response")
                     st.markdown(result)
                 except Exception as e:
                     st.error(f"Gemini Error: {e}")
         elif "Claude" in str(selected_ai):
-            with st.spinner("🟣 Claude Opus 4.5 が回答中..."):
+            with st.spinner(t('ai_claude_analyzing')):
                 try:
                     result = run_claude_analysis(claude_client, CLAUDE_MODEL, custom_prompt)
-                    st.markdown("### 💡 Claude 回答")
+                    st.markdown("### 💡 Claude Response")
                     st.markdown(result)
                 except Exception as e:
                     st.error(f"Claude Error: {e}")
