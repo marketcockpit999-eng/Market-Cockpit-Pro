@@ -245,3 +245,104 @@ tabs[7]に配置。投資家心理を可視化。
 2. 「🤖 AI Market Analysis」で新指標がデータに含まれるか
 3. ヘルスチェック（Fresh/Stale/Critical）で新指標がカウントされるか
 
+---
+
+## ⚠️ 8. FRED指標追加時の検証ルール (CRITICAL - 2026-01-21追加)
+
+### 📋 SOMA問題からの教訓
+
+**事例**: `SOMA_Bills`に`TREAST`（全国債 ~4,200B）を使用すべきところ、
+実際は`WSHOBL`（T-Billsのみ ~250B）を使うべきだった。約17倍の誤差。
+
+**根本原因**: 指標名（"Bills"）とFRED ID（全国債）の不一致を検証しなかった。
+
+### 🔒 FRED指標追加時の必須チェックリスト
+
+| # | チェック項目 | 方法 |
+|---|-------------|------|
+| 1 | **FRED公式サイトで正式名称を確認** | https://fred.stlouisfed.org/series/[ID] で確認 |
+| 2 | **指標名とFRED IDの意味が一致しているか** | 「Bills」なら「Bills」のシリーズか？ |
+| 3 | **重複FRED IDがないか** | 既存の `indicators.py` を検索 |
+| 4 | **数値の妥当性確認** | FREDサイトの最新値とアプリ表示を比較 |
+| 5 | **単位の確認** | Million/Billion/Percent等、divisor設定が正しいか |
+
+### 📝 FRED IDクイックリファレンス（国債関連）
+
+| FRED ID | 正式名称 | 内容 |
+|---------|----------|------|
+| **TREAST** | Treasury Securities: All | 全国債（Bills + Notes + Bonds + TIPS） |
+| **WSHOBL** | Treasury Securities: Bills | 短期国債のみ ✅ RMP監視用 |
+| **WSHONBNL** | Treasury Securities: Notes and Bonds | 中長期国債 |
+| **WALCL** | Total Assets (Less Eliminations) | FRB総資産 |
+| **WSHOSHO** | Securities Held Outright | SOMA保有有価証券 |
+
+### ⚠️ 既知の問題（要将来対応）
+
+| 指標名 | 現在のID | 本来のID | 影響 |
+|--------|---------|----------|------|
+| `SOMA_Total` | WALCL | WSHOSHO? | 軽微（ほぼ同じ値） |
+| `Fed_Assets` | WALCL | WALCL | なし（正しい） |
+
+**注**: `SOMA_Total`と`Fed_Assets`が同じ`WALCL`を使用している。
+概念的には`SOMA_Total`は`WSHOSHO`を使うべきだが、
+WALCLの大部分がSOMAなので実用上の影響は限定的。
+将来的な整理を検討。
+
+### ❌ 絶対にやってはいけないこと
+- FREDサイトで確認せずに「たぶんこれ」でIDを設定する
+- 指標名から推測してIDを決める（必ず公式定義を確認）
+- 既存指標と重複するIDを気づかずに追加する
+
+### ✅ 推奨ワークフロー
+
+```
+1. FREDサイトで指標を検索
+   https://fred.stlouisfed.org/searchresults?st=your+keyword
+
+2. 正式名称を確認
+   "Assets: Securities Held Outright: U.S. Treasury Securities: Bills: Wednesday Level"
+
+3. indicators.pyに追加
+
+4. キャッシュクリア + 動作確認
+   del .market_data_cache.pkl
+   streamlit run market_app_nav.py
+
+5. FREDサイトの数値とアプリ表示を比較
+```
+
+### 🔧 FRED検証ツール (2026-01-21追加)
+
+**scripts/verify_fred_data.py** - 実データ取得＆値検証
+```bash
+cd C:\Users\81802\.gemini\antigravity\scratch\market_monitor
+python scripts/verify_fred_data.py
+```
+チェック内容:
+- FREDからデータ取得可能か
+- 最新データの日付（古すぎないか）
+- バリデーション範囲内か
+- 重複FRED IDの検出
+
+**scripts/check_fred_status.py** - FREDメタデータ確認
+```bash
+python scripts/check_fred_status.py
+```
+チェック内容:
+- シリーズがDISCONTINUEDでないか
+- シリーズが存在するか（404エラー）
+- 最終データ日付
+
+**VERIFY_FRED.bat** - 両方のスクリプトを実行
+```bash
+.\VERIFY_FRED.bat
+```
+
+### 📅 定期検証推奨スケジュール
+
+| 頻度 | 作業 |
+|------|------|
+| 月次 | `VERIFY_FRED.bat` を実行し、エラー・警告を確認 |
+| 新指標追加時 | 追加後すぐに検証スクリプト実行 |
+| FRED ID変更の噂を聞いたとき | 即座に検証 |
+

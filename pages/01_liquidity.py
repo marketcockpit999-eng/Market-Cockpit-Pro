@@ -21,6 +21,7 @@ from utils import (
     show_metric_with_sparkline,
     plot_dual_axis,
     plot_soma_composition,
+    styled_line_chart,
     EXPLANATIONS,
     DATA_FREQUENCY,
     t,
@@ -239,7 +240,7 @@ with col1:
     show_metric_with_sparkline(t('on_rrp'), df.get('ON_RRP'), 'ON_RRP', "B", "ON_RRP", notes=t('on_rrp_notes'))
     if 'ON_RRP' in df.columns and not df.get('ON_RRP', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['ON_RRP']].dropna(), height=250)
+        styled_line_chart(df[['ON_RRP']], height=250)
     
     st.markdown("")
     
@@ -247,14 +248,14 @@ with col1:
     show_metric_with_sparkline(t('tga'), df.get('TGA'), 'TGA', "B", "TGA", notes=t('tga_notes'))
     if 'TGA' in df.columns and not df.get('TGA', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['TGA']].dropna(), height=250)
+        styled_line_chart(df[['TGA']], height=250)
 
 with col2:
     st.markdown(f"#### {t('reserves')}")
     show_metric_with_sparkline(t('reserves'), df.get('Reserves'), 'Reserves', "B", "Reserves", notes=t('reserves_notes'))
     if 'Reserves' in df.columns and not df.get('Reserves', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['Reserves']].dropna(), height=250)
+        styled_line_chart(df[['Reserves']], height=250)
 
 st.markdown("---")
 st.subheader(t('market_plumbing'))
@@ -266,7 +267,7 @@ with col1:
     show_metric_with_sparkline(t('srf'), df.get('SRF'), 'SRF', "B", "SRF", notes=t('srf_notes'))
     if 'SRF' in df.columns and not df.get('SRF', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['SRF']].dropna(), height=200)
+        styled_line_chart(df[['SRF']], height=200)
     
     st.markdown("")
     
@@ -274,14 +275,14 @@ with col1:
     show_metric_with_sparkline(t('sofr'), df.get('SOFR'), 'SOFR', "%", "SOFR", notes=t('sofr_notes'), decimal_places=3)
     if 'SOFR' in df.columns and not df.get('SOFR', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['SOFR']].dropna(), height=200)
+        styled_line_chart(df[['SOFR']], height=200)
 
 with col2:
     st.markdown(f"#### {t('fima')}")
     show_metric_with_sparkline(t('fima'), df.get('FIMA'), 'FIMA', "B", "FIMA", notes=t('fima_notes'))
     if 'FIMA' in df.columns and not df.get('FIMA', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['FIMA']].dropna(), height=200)
+        styled_line_chart(df[['FIMA']], height=200)
     
     st.markdown("")
     
@@ -289,13 +290,25 @@ with col2:
     diff = None
     if 'EFFR' in df.columns and 'IORB' in df.columns:
         diff = (df['EFFR'] - df['IORB']) * 100
-    show_metric(t('effr_iorb'), diff, "bps", notes=t('effr_iorb_notes'))
+    show_metric(t('effr_iorb'), diff, "bps", explanation_key="EFFR_IORB", notes=t('effr_iorb_notes'))
     
     rate_cols = ['EFFR', 'IORB']
     valid_rates = [c for c in rate_cols if c in df.columns and not df.get(c, pd.Series()).isna().all()]
     if valid_rates:
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[valid_rates].dropna(), height=200)
+        styled_line_chart(df[valid_rates], height=200)
+
+# === FF Target Rate (Upper/Lower) ===
+st.markdown("")
+col_ff1, col_ff2 = st.columns(2)
+
+with col_ff1:
+    st.markdown(f"#### {t('ff_upper')}")
+    show_metric_with_sparkline(t('ff_upper'), df.get('FedFundsUpper'), 'FedFundsUpper', "%", "FF_Upper", notes=t('ff_upper_notes'), decimal_places=2)
+
+with col_ff2:
+    st.markdown(f"#### {t('ff_lower')}")
+    show_metric_with_sparkline(t('ff_lower'), df.get('FedFundsLower'), 'FedFundsLower', "%", "FF_Lower", notes=t('ff_lower_notes'), decimal_places=2)
 
 st.markdown("---")
 st.subheader(t('fed_balance_sheet'))
@@ -338,15 +351,18 @@ with col1:
     show_metric_with_sparkline(t('soma_total'), df.get('SOMA_Total'), 'SOMA_Total', "B", "SOMA_Total", notes=t('soma_total_notes'))
 
 with col2:
+    st.markdown(f"#### {t('soma_treasury')}")
+    show_metric_with_sparkline(t('soma_treasury'), df.get('SOMA_Treasury'), 'SOMA_Treasury', "B", "SOMA_Treasury", notes=t('soma_treasury_notes'))
+    if 'SOMA_Treasury' in df.columns and not df.get('SOMA_Treasury', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        styled_line_chart(df[['SOMA_Treasury']], height=200)
+
+with col3:
     st.markdown(f"#### {t('soma_bills')}")
     show_metric_with_sparkline(t('soma_bills'), df.get('SOMA_Bills'), 'SOMA_Bills', "B", "SOMA_Bills", notes=t('soma_bills_notes'))
     if 'SOMA_Bills' in df.columns and not df.get('SOMA_Bills', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['SOMA_Bills']].dropna(), height=200)
-
-with col3:
-    st.markdown(f"#### {t('bills_ratio')}")
-    show_metric_with_sparkline(t('bills_ratio'), df.get('SomaBillsRatio'), 'SomaBillsRatio', "%", "SomaBillsRatio", notes=t('bills_ratio_notes'))
+        styled_line_chart(df[['SOMA_Bills']], height=200)
 
 st.markdown("---")
 st.subheader(t('emergency_loans'))
@@ -358,14 +374,14 @@ with col1:
     show_metric_with_sparkline(t('total_loans'), df.get('Total_Loans'), 'Total_Loans', "B", "Window", notes=t('total_loans_notes'))
     if 'Total_Loans' in df.columns and not df.get('Total_Loans', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['Total_Loans']].dropna(), height=250)
+        styled_line_chart(df[['Total_Loans']], height=250)
 
 with col2:
     st.markdown(f"#### {t('primary_credit')}")
     show_metric_with_sparkline(t('primary_credit'), df.get('Primary_Credit'), 'Primary_Credit', "B", "Primary", notes=t('primary_credit_notes'), alert_func=lambda x: x>1)
     if 'Primary_Credit' in df.columns and not df.get('Primary_Credit', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['Primary_Credit']].dropna(), height=250)
+        styled_line_chart(df[['Primary_Credit']], height=250)
 
 
 st.markdown("---")
@@ -380,18 +396,18 @@ with col1:
     show_metric_with_sparkline(t('vix_index'), df.get('VIX'), 'VIX', "pt", "VIX", notes=t('vix_notes'), alert_func=lambda x: x>20)
     if 'VIX' in df.columns and not df.get('VIX', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['VIX']].dropna(), height=200)
+        styled_line_chart(df[['VIX']], height=200)
 
 with col2:
     st.markdown(f"#### {t('credit_spread')}")
     show_metric_with_sparkline(t('credit_spread'), df.get('Credit_Spread'), 'Credit_Spread', "%", "Credit_Spread", notes=t('credit_spread_notes'), decimal_places=3)
     if 'Credit_Spread' in df.columns and not df.get('Credit_Spread', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['Credit_Spread']].dropna(), height=200)
+        styled_line_chart(df[['Credit_Spread']], height=200)
 
 with col3:
     st.markdown(f"#### {t('us_10y_yield')}")
     show_metric_with_sparkline(t('us_10y_yield'), df.get('US_TNX'), 'US_TNX', "%", "US_TNX", notes=t('us_10y_notes'), decimal_places=3)
     if 'US_TNX' in df.columns and not df.get('US_TNX', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['US_TNX']].dropna(), height=200)
+        styled_line_chart(df[['US_TNX']], height=200)

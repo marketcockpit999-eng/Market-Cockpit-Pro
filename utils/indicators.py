@@ -102,7 +102,7 @@ INDICATORS = {
         'validation': (4000, 12000),
         'divisor': 1000,
     },
-    'SOMA_Bills': {
+    'SOMA_Treasury': {
         'source': 'FRED',
         'id': 'TREAST',
         'unit': 'B',
@@ -112,21 +112,23 @@ INDICATORS = {
         'ui_page': '01_liquidity',
         'ai_include': True,
         'ai_section': 'FRB流動性',
-        'notes': 'SOMA短期国債（RMP対象）',
+        'notes': 'SOMA国債保有総額（Treasury Securities Held Outright）',
         'divisor': 1000,
     },
-    'SomaBillsRatio': {
-        'source': 'CALCULATED',
-        'id': 'SOMA_RATIO',
-        'unit': '%',
+    'SOMA_Bills': {
+        'source': 'FRED',
+        'id': 'WSHOBL',
+        'unit': 'B',
         'frequency': 'weekly',
         'freshness': 'weekly',
         'category': 'fed_liquidity',
         'ui_page': '01_liquidity',
         'ai_include': True,
         'ai_section': 'FRB流動性',
-        'notes': 'SOMA短期国債比率',
+        'notes': 'SOMA短期国債保有（RMP監視の核心指標）',
+        'divisor': 1000,
     },
+
     'SRF': {
         'source': 'FRED',
         'id': 'WORAL',
@@ -235,7 +237,7 @@ INDICATORS = {
     },
     'FedFundsLower': {
         'source': 'FRED',
-        'id': 'DFEDTAR',
+        'id': 'DFEDTARL',  # Updated 2026-01-21: Old DFEDTAR was DISCONTINUED in 2008
         'unit': '%',
         'frequency': 'daily',
         'freshness': 'daily',
@@ -646,7 +648,7 @@ INDICATORS = {
     },
     'Bank_Securities': {
         'source': 'FRED',
-        'id': 'H8B1002NCBCAG',
+        'id': 'TASACBW027SBOG',  # Updated 2026-01-21: Old H8B1002NCBCAG was annual, this is weekly
         'unit': 'B',
         'frequency': 'weekly',
         'freshness': 'weekly',
@@ -654,7 +656,7 @@ INDICATORS = {
         'ui_page': '09_banking',
         'ai_include': True,
         'ai_section': '銀行セクター',
-        'notes': '銀行保有有価証券',
+        'notes': '銀行保有有価証券（国債＋政府機関債）',
     },
     'Bank_Deposits': {
         'source': 'FRED',

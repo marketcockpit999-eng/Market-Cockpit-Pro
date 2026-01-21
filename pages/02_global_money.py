@@ -15,7 +15,7 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils import show_metric_with_sparkline, EXPLANATIONS, DATA_FREQUENCY, t
+from utils import show_metric_with_sparkline, styled_line_chart, EXPLANATIONS, DATA_FREQUENCY, t
 
 # Get data from session state
 df = st.session_state.get('df')
@@ -41,14 +41,14 @@ with col1:
     show_metric_with_sparkline("US M2", df.get('M2SL'), 'M2SL', "T", "M2SL", notes="名目M2")
     if 'M2SL' in df.columns and not df.get('M2SL', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['M2SL']].dropna(), height=150)
+        styled_line_chart(df[['M2SL']], height=150)
 
 with col2:
     st.markdown("#### 🇺🇸 US M2 (Real)")
     show_metric_with_sparkline("US M2 Real", df.get('M2REAL'), 'M2REAL', "T", "M2REAL", notes="実質M2 (1982-84基準)")
     if 'M2REAL' in df.columns and not df.get('M2REAL', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['M2REAL']].dropna(), height=150)
+        styled_line_chart(df[['M2REAL']], height=150)
 
 
 # === FX Section ===
@@ -62,28 +62,28 @@ with col1:
     show_metric_with_sparkline(t('dollar_index'), df.get('DXY'), 'DXY', "pt", "DXY", notes=t('dollar_strength'), decimal_places=3)
     if 'DXY' in df.columns and not df.get('DXY', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['DXY']].dropna(), height=150)
+        styled_line_chart(df[['DXY']], height=150)
 
 with col2:
     st.markdown("#### USD/JPY")
     show_metric_with_sparkline("USD/JPY", df.get('USDJPY'), 'USDJPY', "¥", "USDJPY", notes=t('yen_carry'), decimal_places=3)
     if 'USDJPY' in df.columns and not df.get('USDJPY', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['USDJPY']].dropna(), height=150)
+        styled_line_chart(df[['USDJPY']], height=150)
 
 with col3:
     st.markdown("#### EUR/USD")
     show_metric_with_sparkline("EUR/USD", df.get('EURUSD'), 'EURUSD', "$", "EURUSD", notes=t('euro_dollar'), decimal_places=3)
     if 'EURUSD' in df.columns and not df.get('EURUSD', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['EURUSD']].dropna(), height=150)
+        styled_line_chart(df[['EURUSD']], height=150)
 
 with col4:
     st.markdown("#### USD/CNY")
     show_metric_with_sparkline("USD/CNY", df.get('USDCNY'), 'USDCNY', "CNY", "USDCNY", notes=t('yuan'), decimal_places=3)
     if 'USDCNY' in df.columns and not df.get('USDCNY', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['USDCNY']].dropna(), height=150)
+        styled_line_chart(df[['USDCNY']], height=150)
 
 # === Global Indices Section ===
 st.markdown("---")
@@ -97,14 +97,14 @@ with col1:
     show_metric_with_sparkline("Nikkei 225", df.get('NIKKEI'), 'NIKKEI', "¥", "NIKKEI", notes=t('nikkei_notes'), decimal_places=0)
     if 'NIKKEI' in df.columns and not df.get('NIKKEI', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['NIKKEI']].dropna(), height=150)
+        styled_line_chart(df[['NIKKEI']], height=150)
 
 with col2:
     st.markdown("#### 🇺🇸 S&P 500")
     show_metric_with_sparkline("S&P 500", df.get('SP500'), 'SP500', "pt", "SP500", notes=t('sp500_notes'), decimal_places=0)
     if 'SP500' in df.columns and not df.get('SP500', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['SP500']].dropna(), height=150)
+        styled_line_chart(df[['SP500']], height=150)
 
 # === Commodities Section ===
 st.markdown("---")
@@ -117,28 +117,28 @@ with col1:
     show_metric_with_sparkline("Gold", df.get('Gold'), 'Gold', "$", "Gold", notes=t('gold_futures'), decimal_places=3)
     if 'Gold' in df.columns and not df.get('Gold', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['Gold']].dropna(), height=150)
+        styled_line_chart(df[['Gold']], height=150)
 
 with col2:
     st.markdown("#### Silver")
     show_metric_with_sparkline("Silver", df.get('Silver'), 'Silver', "$", "Silver", notes=t('silver_futures'), decimal_places=3)
     if 'Silver' in df.columns and not df.get('Silver', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['Silver']].dropna(), height=150)
+        styled_line_chart(df[['Silver']], height=150)
 
 with col3:
     st.markdown("#### Oil (WTI)")
     show_metric_with_sparkline("Oil", df.get('Oil'), 'Oil', "$", "Oil", notes=t('oil_futures'), decimal_places=3)
     if 'Oil' in df.columns and not df.get('Oil', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['Oil']].dropna(), height=150)
+        styled_line_chart(df[['Oil']], height=150)
 
 with col4:
     st.markdown("#### Copper")
     show_metric_with_sparkline("Copper", df.get('Copper'), 'Copper', "$", "Copper", notes=t('copper_futures'), decimal_places=3)
     if 'Copper' in df.columns and not df.get('Copper', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['Copper']].dropna(), height=150)
+        styled_line_chart(df[['Copper']], height=150)
 
 # === Crypto Section ===
 st.markdown("---")
@@ -151,14 +151,14 @@ with col1:
     show_metric_with_sparkline("BTC", df.get('BTC'), 'BTC', "$", "BTC", notes=t('risk_on_indicator'), decimal_places=3)
     if 'BTC' in df.columns and not df.get('BTC', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['BTC']].dropna(), height=200)
+        styled_line_chart(df[['BTC']], height=200)
 
 with col2:
     st.markdown("#### Ethereum (ETH)")
     show_metric_with_sparkline("ETH", df.get('ETH'), 'ETH', "$", "ETH", notes=t('defi_base'), decimal_places=3)
     if 'ETH' in df.columns and not df.get('ETH', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
-        st.line_chart(df[['ETH']].dropna(), height=200)
+        styled_line_chart(df[['ETH']], height=200)
 
 # === Fiat Health Monitor Section ===
 st.markdown("---")
@@ -231,7 +231,7 @@ if fiat_health is not None and len(fiat_health) > 0:
                 gold_normalized[col.replace('Gold_', '')] = (fiat_health[col] / base_val) * 100
     
     if not gold_normalized.empty:
-        st.line_chart(gold_normalized.dropna(), height=300)
+        styled_line_chart(gold_normalized, height=300)
         
         # Current values
         cols = st.columns(7)
@@ -254,7 +254,7 @@ if fiat_health is not None and len(fiat_health) > 0:
                 btc_normalized[col.replace('BTC_', '')] = (fiat_health[col] / base_val) * 100
     
     if not btc_normalized.empty:
-        st.line_chart(btc_normalized.dropna(), height=300)
+        styled_line_chart(btc_normalized, height=300)
         
         # Current values
         cols = st.columns(7)
@@ -279,7 +279,7 @@ if fiat_health is not None and len(fiat_health) > 0:
             with col1:
                 st.metric("1 BTC =", f"{current_oz:.1f} oz Gold", f"{change_pct:+.1f}% (2Y)")
             with col2:
-                st.line_chart(gold_btc, height=200)
+                styled_line_chart(gold_btc, height=200)
 else:
     # Show which columns are missing for debugging
     if missing_cols:

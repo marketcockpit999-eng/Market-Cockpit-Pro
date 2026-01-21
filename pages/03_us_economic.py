@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (
     show_metric_with_sparkline, 
     display_macro_card,
+    styled_line_chart,
     get_mom_yoy,
     EXPLANATIONS,
     DATA_FREQUENCY,
@@ -42,19 +43,19 @@ with col1:
     st.markdown(f"#### {t('ff_upper')}")
     show_metric_with_sparkline("FF Upper", df.get('FedFundsUpper'), 'FedFundsUpper', "%", "FF_Upper", notes=t('ff_upper_notes'), decimal_places=3)
     if 'FedFundsUpper' in df.columns:
-        st.line_chart(df[['FedFundsUpper']].dropna(), height=120)
+        styled_line_chart(df[['FedFundsUpper']], height=120)
         
 with col2:
     st.markdown("#### EFFR")
     show_metric_with_sparkline("EFFR", df.get('EFFR'), 'EFFR', "%", "EFFR", notes=t('effr_notes'), decimal_places=3)
     if 'EFFR' in df.columns:
-        st.line_chart(df[['EFFR']].dropna(), height=120)
+        styled_line_chart(df[['EFFR']], height=120)
         
 with col3:
     st.markdown("#### SOFR")
     show_metric_with_sparkline("SOFR", df.get('SOFR'), 'SOFR', "%", "SOFR", notes=t('sofr_notes_full'), decimal_places=3)
     if 'SOFR' in df.columns:
-        st.line_chart(df[['SOFR']].dropna(), height=120)
+        styled_line_chart(df[['SOFR']], height=120)
 
 # === 2. Employment ===
 st.markdown("---")
@@ -73,7 +74,7 @@ with col1:
         nfp_changes = nfp_data.diff().dropna()
         if len(nfp_changes) > 0:
             st.markdown(f"###### {t('nfp_monthly_change')}")
-            st.line_chart(nfp_changes, height=150)
+            styled_line_chart(nfp_changes, height=150)
     
     st.markdown("---")
     st.markdown(f"#### {t('unemployment_rate')}")
@@ -87,7 +88,7 @@ with col1:
         st.metric(t('unemployment_rate'), f"{unemp_curr:.1f}%", delta=f"{unemp_change:+.1f}pp {t('vs_last_month')}")
     
     if unemp_series is not None and not unemp_series.isna().all():
-        st.line_chart(unemp_series.dropna(), height=150)
+        styled_line_chart(unemp_series, height=150)
 
 with col2:
     st.markdown(f"#### {t('avg_hourly_earnings')}")
@@ -107,14 +108,14 @@ with col2:
         if yoy is not None:
             m_col2.metric(t('yoy'), f"{yoy:+.1f}%")
         
-        st.line_chart(ahe_data, height=120)
+        styled_line_chart(ahe_data, height=120)
     
     st.markdown("---")
     st.markdown("#### JOLTS Job Openings")
     jolts_series = df.get('JOLTS')
     show_metric_with_sparkline("JOLTS Level", jolts_series, 'JOLTS', "K", "JOLTS", notes=t('jolts_notes'))
     if jolts_series is not None and not jolts_series.isna().all():
-        st.line_chart(jolts_series.dropna(), height=150)
+        styled_line_chart(jolts_series, height=150)
     
     st.markdown("---")
     st.markdown(f"#### {t('icsa_title')}")
@@ -124,7 +125,7 @@ with col2:
         icsa_curr = icsa_data.iloc[-1]
         icsa_change = icsa_curr - icsa_data.iloc[-2]
         st.metric(t('latest_week'), f"{icsa_curr:,.0f}K", delta=f"{icsa_change:+,.0f}K {t('vs_last_week')}", delta_color="inverse")
-        st.line_chart(icsa_data.dropna(), height=150)
+        styled_line_chart(icsa_data, height=150)
 
 # === 3. Inflation ===
 st.markdown("---")
@@ -143,7 +144,7 @@ with col1:
         st.metric(t('current_inflation'), f"{pce_curr:.2f}%", delta=f"{pce_change:+.2f}pp {t('vs_last_month')}")
     show_metric_with_sparkline("Core PCE", pce_series, 'CorePCE', "%", "CorePCE", notes=t('core_pce_notes'))
     if pce_series is not None and not pce_series.isna().all():
-        st.line_chart(pce_series.dropna(), height=150)
+        styled_line_chart(pce_series, height=150)
         
 with col2:
     display_macro_card("Core CPI", df.get('CPICore'), 'CPICore', df_original=df_original, notes=t('core_cpi_notes'))
@@ -171,7 +172,7 @@ with col2:
         st.metric(t('qoq_annualized'), f"{annualized:+.1f}%", delta=f"{t('level')}: ${gdp_curr:,.0f}B", delta_color="off")
     show_metric_with_sparkline("GDP Level", gdp_series, 'RealGDP', "$B", "RealGDP", notes=t('gdp_notes'))
     if gdp_series is not None and not gdp_series.isna().all():
-        st.line_chart(gdp_series.dropna(), height=150)
+        styled_line_chart(gdp_series, height=150)
     
     st.markdown("---")
     st.markdown(f"#### {t('yield_curve_title')}")

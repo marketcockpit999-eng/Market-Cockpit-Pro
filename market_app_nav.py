@@ -29,9 +29,19 @@ from utils import (
 # ========== CUSTOM CSS ==========
 st.markdown("""
 <style>
+    /* Main background - lighter dark theme */
+    .stApp {
+        background-color: #1a1a2e !important;
+    }
+    
+    /* Sidebar background */
+    section[data-testid="stSidebar"] {
+        background-color: #16213e !important;
+    }
+    
     /* Dark theme adjustments */
     .stMetric {
-        background-color: rgba(28, 131, 225, 0.1);
+        background-color: rgba(78, 205, 196, 0.1);
         padding: 10px;
         border-radius: 5px;
     }
@@ -76,25 +86,29 @@ st.markdown("""
         padding-top: 1rem;
     }
     
-    /* Alert boxes */
+    /* Alert boxes - Eye-friendly colors */
     .alert-high {
-        background-color: rgba(255, 0, 0, 0.1);
-        border-left: 4px solid red;
+        background-color: rgba(255, 107, 107, 0.15);
+        border-left: 4px solid #FF6B6B;
         padding: 10px;
         margin: 5px 0;
+        border-radius: 4px;
     }
     .alert-medium {
-        background-color: rgba(255, 165, 0, 0.1);
-        border-left: 4px solid orange;
+        background-color: rgba(255, 217, 61, 0.15);
+        border-left: 4px solid #FFD93D;
         padding: 10px;
         margin: 5px 0;
+        border-radius: 4px;
     }
     .alert-info {
-        background-color: rgba(0, 123, 255, 0.1);
-        border-left: 4px solid #007bff;
+        background-color: rgba(78, 205, 196, 0.15);
+        border-left: 4px solid #4ECDC4;
         padding: 10px;
         margin: 5px 0;
+        border-radius: 4px;
     }
+    
 </style>
 
 <div id="page-top"></div>
@@ -120,6 +134,13 @@ def load_data(force_refresh=False):
 force_refresh = st.session_state.get('force_refresh', False)
 if force_refresh:
     st.cache_data.clear()
+    # Also clear disk cache
+    disk_cache_file = os.path.join(os.path.dirname(__file__), '.market_data_cache.pkl')
+    if os.path.exists(disk_cache_file):
+        try:
+            os.remove(disk_cache_file)
+        except Exception:
+            pass
     st.session_state['force_refresh'] = False
 
 # Load data

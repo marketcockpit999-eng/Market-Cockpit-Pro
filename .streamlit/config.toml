@@ -1,0 +1,15 @@
+[theme]
+# Primary color for interactive elements (buttons, links, etc.)
+primaryColor = "#4ECDC4"
+
+# Background color for the main content area
+backgroundColor = "#1E1E2E"
+
+# Background color for sidebar and secondary areas
+secondaryBackgroundColor = "#2D2D44"
+
+# Color for text content
+textColor = "#E8E8E8"
+
+# Font family (optional)
+font = "sans serif"

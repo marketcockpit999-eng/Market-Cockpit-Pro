@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (
     t,
     show_metric_with_sparkline, 
+    styled_line_chart,
     get_crypto_fear_greed, 
     get_cnn_fear_greed,
     get_aaii_sentiment, 
@@ -65,7 +66,7 @@ with col1:
         
         if cnn_fg.get('history') is not None and len(cnn_fg['history']) > 0:
             st.caption(t('sent_30d_trend'))
-            st.line_chart(cnn_fg['history']['value'], height=120)
+            styled_line_chart(cnn_fg['history']['value'], height=120)
     else:
         st.info(t('sent_cnn_unavail'))
 
@@ -93,7 +94,7 @@ with col2:
             latest_date = crypto_fg['history'].index[-1]
             st.caption(t('source_update_date', date=latest_date.strftime('%Y-%m-%d %H:%M')))
             st.caption(t('sent_30d_trend'))
-            st.line_chart(crypto_fg['history']['value'], height=120)
+            styled_line_chart(crypto_fg['history']['value'], height=120)
     else:
         st.warning(t('sent_crypto_error'))
 
@@ -116,7 +117,7 @@ with col3:
             latest_vix_date = vix_series.dropna().index[-1]
             st.caption(t('source_update_date', date=latest_vix_date.strftime('%Y-%m-%d')))
             st.caption(t('sent_60d_trend'))
-            st.line_chart(vix_series.tail(60), height=120)
+            styled_line_chart(vix_series.tail(60), height=120)
     else:
         st.warning(t('sent_vix_no_data'))
 

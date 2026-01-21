@@ -81,10 +81,10 @@ with st.sidebar:
     )
     st.session_state['ai_focus_categories'] = focus_selection
 
-policy_context = """
-あなたは伝説的なグローバル・マクロ・ストラテジストです。
-単なるニュースの要約ではなく、データの背後にある「配管（Plumbing）」、つまり流動性の動きと市場参加者のインセンティブを分析します。
-"""
+# Get localized policy context and language instruction
+policy_context = t('ai_policy_context')
+analysis_instruction = t('ai_analysis_instruction')
+response_language = t('ai_response_language')
 
 col_main, col_custom = st.columns([2, 1])
 
@@ -93,7 +93,7 @@ with col_main:
         if "Gemini" in str(selected_ai):
             with st.spinner(t('ai_gemini_analyzing')):
                 try:
-                    prompt = f"{policy_context}\n\n以下の市場データを構造的に分析してください:\n{market_summary}"
+                    prompt = f"{policy_context}\n\n{response_language}\n\n{analysis_instruction}\n{market_summary}"
                     result = run_gemini_analysis(gemini_client, GEMINI_MODEL, prompt)
                     st.markdown("### 🔷 Gemini Analysis")
                     st.markdown(result)
@@ -103,7 +103,7 @@ with col_main:
         if "Claude" in str(selected_ai):
             with st.spinner(t('ai_claude_analyzing')):
                 try:
-                    prompt = f"{policy_context}\n\n以下の市場データを構造的に分析してください:\n{market_summary}"
+                    prompt = f"{policy_context}\n\n{response_language}\n\n{analysis_instruction}\n{market_summary}"
                     result = run_claude_analysis(claude_client, CLAUDE_MODEL, prompt)
                     st.markdown("### 🟣 Claude Analysis")
                     st.markdown(result)
@@ -125,7 +125,7 @@ with col_custom:
                 news_headlines = search_google_news(user_question, num_results=3)
                 news_context = f"\n\n【Latest News】\n{news_headlines}"
 
-        custom_prompt = f"{policy_context}\n\nMarket Data:\n{market_summary}\n{news_context}\n\nQuestion: {user_question}"
+        custom_prompt = f"{policy_context}\n\n{response_language}\n\nMarket Data:\n{market_summary}\n{news_context}\n\nQuestion: {user_question}"
         
         if "Gemini" in str(selected_ai):
             with st.spinner(t('ai_gemini_analyzing')):

@@ -328,8 +328,8 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
     
     # Unit Normalization (Million to Billion)
     mil_to_bil = ['Fed_Assets', 'TGA', 'Reserves', 'SOMA_Total', 'Bank_Cash', 
-                  'SRF', 'FIMA', 'Primary_Credit', 'Total_Loans', 'SOMA_Bills', 
-                  'M2SL', 'M2REAL', 'CI_Loans', 'CRE_Loans', 'ECB_Assets']
+                  'SRF', 'FIMA', 'Primary_Credit', 'Total_Loans', 'SOMA_Treasury',
+                  'SOMA_Bills', 'M2SL', 'M2REAL', 'CI_Loans', 'CRE_Loans', 'ECB_Assets']
     for col in mil_to_bil:
         if col in df.columns:
             df[col] = df[col] / 1000
@@ -362,9 +362,7 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
         cpi_base = cpi_filled.dropna().iloc[0] if not cpi_filled.dropna().empty else 1
         df['US_Real_M2_Index'] = (df['M2SL'] / cpi_filled) * cpi_base
     
-    # Calculate SOMA Bills Ratio
-    if all(c in df.columns for c in ['SOMA_Bills', 'SOMA_Total']):
-        df['SomaBillsRatio'] = (df['SOMA_Bills'] / df['SOMA_Total']) * 100
+    # NOTE: SomaBillsRatio removed - SOMA_Bills data unreliable
     
     # RMP Detection Logic (週次データ対応版)
     # Note: Stores status_type and weekly_change separately for i18n support

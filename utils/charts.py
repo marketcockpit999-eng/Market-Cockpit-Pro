@@ -15,6 +15,78 @@ from .data_processor import get_freshness_badge, get_mom_yoy
 from .i18n import t
 
 
+# =============================================================================
+# THEME COLORS - Centralized color definitions
+# =============================================================================
+THEME_COLORS = {
+    'primary': '#00D9FF',      # Bright cyan - sparklines
+    'secondary': '#00FF88',    # Bright green - long-term trends  
+    'accent': '#FF6B9D',       # Pink - alternative
+    'warning': '#FFD93D',      # Yellow - warnings
+    'danger': '#FF6B6B',       # Coral - alerts
+    'grid': 'rgba(128,128,128,0.3)',
+}
+
+
+def styled_line_chart(data, height=200, color=None):
+    """
+    st.line_chart の代替。統一されたスタイルで描画。
+    
+    Args:
+        data: DataFrame or Series
+        height: チャートの高さ
+        color: 線の色（デフォルト: secondary blue）
+    """
+    if data is None:
+        return
+    
+    if isinstance(data, pd.DataFrame):
+        data = data.dropna(how='all')
+        if data.empty:
+            return
+    elif isinstance(data, pd.Series):
+        data = data.dropna()
+        if len(data) == 0:
+            return
+    
+    line_color = color or THEME_COLORS['secondary']
+    
+    fig = go.Figure()
+    
+    if isinstance(data, pd.DataFrame):
+        colors = [THEME_COLORS['secondary'], THEME_COLORS['primary'], THEME_COLORS['accent']]
+        for i, col in enumerate(data.columns):
+            fig.add_trace(go.Scatter(
+                x=data.index,
+                y=data[col],
+                mode='lines',
+                name=col,
+                line=dict(color=colors[i % len(colors)], width=1.5),
+            ))
+    else:
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data.values,
+            mode='lines',
+            line=dict(color=line_color, width=1.5),
+            showlegend=False
+        ))
+    
+    fig.update_layout(
+        height=height,
+        margin=dict(l=0, r=0, t=0, b=0),
+        xaxis=dict(showgrid=False),
+        yaxis=dict(showgrid=True, gridcolor=THEME_COLORS['grid']),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        showlegend=isinstance(data, pd.DataFrame) and len(data.columns) > 1,
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
+    )
+    
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False},
+                   key=f"styled_{uuid.uuid4().hex[:8]}")
+
+
 def show_metric(label, series, unit="", explanation_key="", notes="", alert_func=None):
     """メトリック表示ヘルパー（更新マーク対応）"""
     df = st.session_state.get('df')
@@ -159,9 +231,9 @@ def show_metric_with_sparkline(label, series, df_column, unit="", explanation_ke
             x=recent_data.index,
             y=recent_data.values,
             mode='lines',
-            line=dict(color='cyan', width=1),
+            line=dict(color='#FF9F43', width=2),
             fill='tozeroy',
-            fillcolor='rgba(0,255,255,0.1)',
+            fillcolor='rgba(255, 159, 67, 0.3)',
             showlegend=False
         ))
         
@@ -272,9 +344,46 @@ def display_macro_card(title, series, df_column, df_original=None, unit="", note
         yoy_series = yoy_series.dropna()
         if len(yoy_series) > 0:
             st.markdown(f"###### {title} YoY% (前年比変化率)")
-            st.line_chart(yoy_series, height=120)
+            
+            fig_yoy = go.Figure()
+            fig_yoy.add_trace(go.Scatter(
+                x=yoy_series.index,
+                y=yoy_series.values,
+                mode='lines',
+                line=dict(color='#00D9FF', width=2),
+                showlegend=False
+            ))
+            fig_yoy.update_layout(
+                height=120,
+                margin=dict(l=0, r=0, t=0, b=0),
+                xaxis=dict(showgrid=False),
+                yaxis=dict(showgrid=True, gridcolor='rgba(128,128,128,0.2)'),
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+            )
+            st.plotly_chart(fig_yoy, use_container_width=True, config={'displayModeBar': False},
+                           key=f"yoy_{uuid.uuid4().hex[:8]}")
     
     # Long-term Chart (Level)
     if series is not None and not series.isna().all():
         st.markdown(f"###### {title} Long-term Trend (Level)")
-        st.line_chart(series.dropna(), height=150)
+        
+        clean_series = series.dropna()
+        fig_long = go.Figure()
+        fig_long.add_trace(go.Scatter(
+            x=clean_series.index,
+            y=clean_series.values,
+            mode='lines',
+            line=dict(color='#00FF88', width=2),
+            showlegend=False
+        ))
+        fig_long.update_layout(
+            height=150,
+            margin=dict(l=0, r=0, t=0, b=0),
+            xaxis=dict(showgrid=False),
+            yaxis=dict(showgrid=True, gridcolor='rgba(128,128,128,0.2)'),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+        )
+        st.plotly_chart(fig_long, use_container_width=True, config={'displayModeBar': False},
+                       key=f"long_{uuid.uuid4().hex[:8]}")

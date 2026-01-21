@@ -33,6 +33,13 @@ DEFAULT_LANGUAGE = 'en'
 # =============================================================================
 TRANSLATIONS: Dict[str, Dict[str, str]] = {
     'en': {
+        # --- Time Difference Strings ---
+        'time_unknown': 'Unknown',
+        'time_just_now': 'Just now',
+        'time_minutes_ago': '{n} min ago',
+        'time_hours_ago': '{n} hours ago',
+        'time_days_ago': '{n} days ago',
+        
         # --- App Title & Navigation ---
         'app_title': 'Market Cockpit Pro',
         'app_subtitle': 'Update interval: 10 min | Sources: FRED, Yahoo Finance, DeFiLlama, Alternative.me',
@@ -116,13 +123,15 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'effr_iorb_notes': 'Fed reserve status',
         'fed_balance_sheet': '🏛️ Fed Balance Sheet (SOMA)',
         'rmp_status': '📊 RMP Status',
-        'soma_composition': 'SOMA Composition (Total & Bills Ratio)',
+        'soma_composition': 'SOMA Composition (Total & Treasury)',
         'soma_total': 'SOMA Total',
         'soma_total_notes': 'Total holdings',
+        'soma_treasury': 'SOMA Treasury',
+        'soma_treasury_notes': 'Treasury securities held',
         'soma_bills': 'SOMA Bills',
-        'soma_bills_notes': 'Short-term Treasury holdings',
-        'bills_ratio': 'Bills Ratio',
-        'bills_ratio_notes': 'Short-term Treasury share',
+        'soma_bills_notes': 'T-Bills held (RMP core metric)',
+        'treasury_share': 'Treasury Share',
+        'treasury_share_notes': 'Treasury holdings ratio',
         
         # --- RMP Status ---
         'rmp_monitoring': '📊 RMP Monitoring (Started Dec 12, 2025)',
@@ -396,6 +405,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'us_economic_section_rates': '🏦 1. Interest Rates',
         'ff_upper': 'FF Target Rate (Upper)',
         'ff_upper_notes': 'Policy rate upper bound',
+        'ff_lower': 'FF Target Rate (Lower)',
+        'ff_lower_notes': 'Policy rate lower bound',
         'effr_notes': 'Effective FF Rate',
         'sofr_notes_full': 'Secured rate (repo market)',
         'us_economic_section_employment': '👷 2. Employment',
@@ -446,6 +457,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'ai_search_news': '📰 Search Latest News',
         'ai_search_placeholder': 'e.g. Fed rate cut',
         'ai_search_button': '🔎 Search News',
+        'ai_policy_context': '''You are a legendary global macro strategist.
+Rather than simply summarizing news, you analyze the "plumbing" behind the data - the flow of liquidity and market participant incentives.''',
+        'ai_response_language': 'IMPORTANT: You must respond entirely in English, regardless of the input language.',
+        'ai_analysis_instruction': 'Please analyze the following market data structurally:',
         
         # --- Monte Carlo Page Extended ---
         'mc_title': '🎲 Monte Carlo Simulation',
@@ -871,6 +886,13 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
     },
     
     'ja': {
+        # --- Time Difference Strings ---
+        'time_unknown': '不明',
+        'time_just_now': 'たった今',
+        'time_minutes_ago': '{n}分前',
+        'time_hours_ago': '{n}時間前',
+        'time_days_ago': '{n}日前',
+        
         # --- App Title & Navigation ---
         'app_title': 'Market Cockpit Pro',
         'app_subtitle': '更新間隔: 10分 | ソース: FRED, Yahoo Finance, DeFiLlama, Alternative.me',
@@ -954,13 +976,15 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'effr_iorb_notes': 'Fed準備金状況',
         'fed_balance_sheet': '🏛️ Fedバランスシート (SOMA)',
         'rmp_status': '📊 RMPステータス',
-        'soma_composition': 'SOMA構成 (総額 & Bills比率)',
+        'soma_composition': 'SOMA構成 (総額 & 国債)',
         'soma_total': 'SOMA 総額',
         'soma_total_notes': '保有総額',
-        'soma_bills': 'SOMA Bills',
-        'soma_bills_notes': '短期国債保有',
-        'bills_ratio': 'Bills比率',
-        'bills_ratio_notes': '短期国債シェア',
+        'soma_treasury': 'SOMA 国債',
+        'soma_treasury_notes': '国債保有総額',
+        'soma_bills': 'SOMA 短期国債',
+        'soma_bills_notes': 'T-Bills保有量（RMP核心指標）',
+        'treasury_share': '国債比率',
+        'treasury_share_notes': '国債保有比率',
         
         # --- RMP Status ---
         'rmp_monitoring': '📊 RMP監視 (2025年12月12日開始)',
@@ -1234,6 +1258,8 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'us_economic_section_rates': '🏦 1. 金利',
         'ff_upper': 'FF誘導目標 (上限)',
         'ff_upper_notes': '政策金利上限',
+        'ff_lower': 'FF誘導目標 (下限)',
+        'ff_lower_notes': '政策金利下限',
         'effr_notes': '実効FF金利',
         'sofr_notes_full': '担保付金利 (レポ市場)',
         'us_economic_section_employment': '👷 2. 雇用',
@@ -1284,6 +1310,10 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'ai_search_news': '📰 最新ニュースを検索',
         'ai_search_placeholder': '例: Fed利下げ',
         'ai_search_button': '🔎 ニュース検索',
+        'ai_policy_context': '''あなたは伝説的なグローバル・マクロ・ストラテジストです。
+単なるニュースの要約ではなく、データの背後にある「配管（Plumbing）」、つまり流動性の動きと市場参加者のインセンティブを分析します。''',
+        'ai_response_language': '重要: 必ず日本語で回答してください。',
+        'ai_analysis_instruction': '以下の市場データを構造的に分析してください:',
         
         # --- Monte Carlo Page Extended ---
         'mc_title': '🎲 モンテカルロシミュレーション',
@@ -1774,11 +1804,14 @@ def render_language_selector() -> str:
     
     current_index = options.index(current_lang) if current_lang in options else 0
     
-    selected_label = st.selectbox(
-        "🌐 Language / 言語",
+    st.write("🌐 Language / 言語")
+    selected_label = st.radio(
+        "Language",
         labels,
         index=current_index,
-        key="language_selector"
+        key="language_selector",
+        horizontal=True,
+        label_visibility="collapsed"
     )
     
     selected_lang = options[labels.index(selected_label)]

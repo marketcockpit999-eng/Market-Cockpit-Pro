@@ -87,6 +87,8 @@ from .charts import (
     plot_dual_axis,
     plot_soma_composition,
     display_macro_card,
+    styled_line_chart,
+    THEME_COLORS,
 )
 
 # AI Clients
@@ -144,6 +146,7 @@ __all__ = [
     # Charts
     "show_metric", "show_metric_with_sparkline",
     "plot_dual_axis", "plot_soma_composition", "display_macro_card",
+    "styled_line_chart", "THEME_COLORS",
     # AI Clients
     "init_ai_clients", "get_market_summary",
     "run_gemini_analysis", "run_claude_analysis",
