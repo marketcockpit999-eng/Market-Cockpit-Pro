@@ -33,6 +33,9 @@ DEFAULT_LANGUAGE = 'en'
 # =============================================================================
 TRANSLATIONS: Dict[str, Dict[str, str]] = {
     'en': {
+        # --- US M2 Description ---
+        'us_m2_desc': '💡 US Money Supply - Auto-fetched from FRED',
+        
         # --- Time Difference Strings ---
         'time_unknown': 'Unknown',
         'time_just_now': 'Just now',
@@ -224,12 +227,14 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'core_cpi': 'Core CPI',
         'core_cpi_notes': 'Ex food & energy',
         'michigan_inflation_title': 'Michigan Inflation Expectations (1Y)',
+        'michigan_inflation_label': 'Inflation Exp',
         'michigan_inflation_desc': '💡 Consumer inflation expectations survey - Fed closely monitors this',
         'michigan_inflation_notes': '1-year ahead expected inflation rate',
         'fed_target': 'Fed 2% target',
         'ppi': 'PPI',
         'ppi_notes': 'Producer prices',
         'core_pce': 'Core PCE',
+        'core_pce_label': 'Core PCE',
         'core_pce_notes': "Fed's preferred measure",
         'economy': '🏭 Economy',
         'retail_sales': 'Retail Sales',
@@ -407,14 +412,20 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 ''',
         
         # --- US Economic Page Extended ---
+        'us_economic_page_title': '📈 US Economic Data',
         'us_economic_section_rates': '🏦 1. Interest Rates',
         'ff_upper': 'FF Target Rate (Upper)',
+        'ff_upper_label': 'FF Upper',
+        'effr_label': 'EFFR',
+        'sofr_label': 'SOFR',
         'ff_upper_notes': 'Policy rate upper bound',
         'ff_lower': 'FF Target Rate (Lower)',
         'ff_lower_notes': 'Policy rate lower bound',
         'effr_notes': 'Effective FF Rate',
         'sofr_notes_full': 'Secured rate (repo market)',
         'us_economic_section_employment': '👷 2. Employment',
+        'jolts_title': 'JOLTS Job Openings',
+        'jolts_label': 'JOLTS Level',
         'nfp_title': 'Non-Farm Payrolls (MoM)',
         'result': 'Result',
         'thousand_people': 'K ({val:.1f}0K people)',
@@ -426,15 +437,22 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'latest_week': 'Latest Week',
         'vs_last_week': 'vs last week',
         'us_economic_section_inflation': '⚖️ 3. Inflation',
+        'cpi_title': 'Consumer Price Index (CPI)',
+        'core_cpi_title': 'Core CPI',
+        'ppi_title': 'Producer Price Index (PPI)',
         'cpi_notes_full': 'Consumer Price Index',
         'core_pce_title': 'Core PCE Inflation (YoY)',
         'current_inflation': 'Current Inflation Rate',
         'ppi_notes_full': 'Producer Price Index',
         'us_economic_section_economy': '📈 4. Economy',
+        'retail_sales_title': 'Retail Sales',
+        'consumer_sentiment_title': 'Consumer Sentiment',
+        'gdp_label': 'GDP Level',
         'gdp_title': 'Real GDP (Annualized Growth)',
         'qoq_annualized': 'QoQ Annualized',
         'level': 'Level',
         'yield_curve_title': '🔗 Yield Curve (2Y-10Y)',
+        'yield_curve_label': '2Y-10Y Spread',
         'inversion_boundary': 'Inversion boundary',
         
         # --- US Economic Page: Leading & Housing (2026-01-22 added) ---
@@ -443,13 +461,16 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'ism_pmi_notes': 'Manufacturing health (50+ = expansion)',
         'expansion_contraction_boundary': 'Expansion/Contraction boundary',
         'leading_index_title': 'Chicago Fed Activity Index',
+        'leading_index_label': 'Chicago Fed CFNAI',
         'leading_index_notes': 'Chicago Fed CFNAI (3-month MA) - Economic activity leading indicator, Above 0 = Expansion / Below 0 = Slowdown',
         'zero_line': 'Zero line',
         'us_economic_section_housing': 'Housing',
         'housing_indicators_desc': '💡 Housing market leading indicators',
         'housing_starts_title': 'Housing Starts',
+        'housing_starts_label': 'Housing Starts',
         'housing_starts_notes': 'New housing construction (SAAR, thousands)',
         'building_permits_title': 'Building Permits',
+        'building_permits_label': 'Building Permits',
         'building_permits_notes': 'Authorized building permits (SAAR, thousands)',
         
         # --- AI Analysis Page Extended ---
@@ -916,9 +937,18 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'ai_generating_report': '🔍 Generating {category} report with web search...',
         'ai_report_generated': '📋 {category} Report',
         'ai_web_search_note': '💡 This report includes latest information via Gemini web search',
+        
+        # --- Data Frequency Labels ---
+        'freq_daily': 'Daily',
+        'freq_weekly': 'Weekly',
+        'freq_monthly': 'Monthly',
+        'freq_quarterly': 'Quarterly',
     },
     
     'ja': {
+        # --- US M2 Description ---
+        'us_m2_desc': '💡 米国のマネーサプライ - FREDから自動取得',
+        
         # --- Time Difference Strings ---
         'time_unknown': '不明',
         'time_just_now': 'たった今',
@@ -1110,12 +1140,14 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'core_cpi': 'コアCPI',
         'core_cpi_notes': '食品・エネルギー除く',
         'michigan_inflation_title': 'ミシガン大学期待インフレ率（1年先）',
+        'michigan_inflation_label': 'ミシガン大学期待インフレ率',
         'michigan_inflation_desc': '💡 消費者のインフレ予想調査 - Fedが注視する重要指標',
         'michigan_inflation_notes': '1年先の予想インフレ率',
         'fed_target': 'Fed目標 2%',
         'ppi': 'PPI',
         'ppi_notes': '生産者物価',
         'core_pce': 'コアPCE',
+        'core_pce_label': 'コアPCE物価指数',
         'core_pce_notes': 'Fedの重視指標',
         'economy': '🏭 経済',
         'retail_sales': '小売売上高',
@@ -1293,14 +1325,20 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
 ''',
         
         # --- US Economic Page Extended ---
+        'us_economic_page_title': '📈 米国経済指標',
         'us_economic_section_rates': '🏦 1. 金利',
         'ff_upper': 'FF誘導目標 (上限)',
+        'ff_upper_label': 'FF金利（上限）',
+        'effr_label': 'EFFR',
+        'sofr_label': 'SOFR',
         'ff_upper_notes': '政策金利上限',
         'ff_lower': 'FF誘導目標 (下限)',
         'ff_lower_notes': '政策金利下限',
         'effr_notes': '実効FF金利',
         'sofr_notes_full': '担保付金利 (レポ市場)',
         'us_economic_section_employment': '👷 2. 雇用',
+        'jolts_title': 'JOLTS求人件数',
+        'jolts_label': 'JOLTS求人労働異動調査',
         'nfp_title': '非農業部門雇用者数 (前月比)',
         'result': '結果',
         'thousand_people': '千人 ({val:.1f}万人)',
@@ -1312,15 +1350,22 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'latest_week': '最新週',
         'vs_last_week': '先週比',
         'us_economic_section_inflation': '⚖️ 3. インフレ',
+        'cpi_title': '消費者物価指数 (CPI)',
+        'core_cpi_title': 'コアCPI',
+        'ppi_title': '生産者物価指数 (PPI)',
         'cpi_notes_full': '消費者物価指数',
         'core_pce_title': 'コアPCEインフレ (前年比)',
         'current_inflation': '現在のインフレ率',
         'ppi_notes_full': '生産者物価指数',
         'us_economic_section_economy': '📈 4. 経済',
+        'retail_sales_title': '小売売上高',
+        'consumer_sentiment_title': 'ミシガン大学消費者信頼感指数',
+        'gdp_label': '実質GDP',
         'gdp_title': '実質GDP (年率換算成長率)',
         'qoq_annualized': '前期比年率',
         'level': '水準',
         'yield_curve_title': '🔗 イールドカーブ (2Y-10Y)',
+        'yield_curve_label': '2Y-10Yスプレッド',
         'inversion_boundary': '逆イールド境界',
         
         # --- US Economic Page: Leading & Housing (2026-01-22 added) ---
@@ -1329,13 +1374,16 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'ism_pmi_notes': '製造業の健全性（50以上=拡大）',
         'expansion_contraction_boundary': '拡大/縮小の境界',
         'leading_index_title': 'シカゴ連銀景気指数',
+        'leading_index_label': 'シカゴ連銀CFNAI',
         'leading_index_notes': 'シカゴ連銀CFNAI（3ヶ月移動平均）経済活動の先行指標、0超=拡大/0未満=減速',
         'zero_line': 'ゼロライン',
         'us_economic_section_housing': '住宅',
         'housing_indicators_desc': '💡 住宅市場の先行指標',
         'housing_starts_title': '住宅着工件数',
+        'housing_starts_label': '住宅着工件数',
         'housing_starts_notes': '新規住宅建設（年率換算、千戸）',
         'building_permits_title': '建築許可件数',
+        'building_permits_label': '建築許可件数',
         'building_permits_notes': '許可済み建築件数（年率換算、千戸）',
         
         # --- AI Analysis Page Extended ---
@@ -1799,9 +1847,15 @@ Goldより変動が激しいため、短期的な市場センチメントを反�
         'ai_category_reports': '📊 カテゴリ別レポート',
         'ai_category_reports_desc': 'Web検索を活用したカテゴリ別詳細分析',
         'ai_select_category': '分析したいカテゴリを選択:',
-        'ai_generating_report': '🔍 {category}レポートをWeb検索付きで生成中...',
+        'ai_generating_report': '🔍 {category}レポートをウェブ検索で生成中...',
         'ai_report_generated': '📋 {category}レポート',
-        'ai_web_search_note': '💡 このレポートはGemini Web検索による最新情報を含みます',
+        'ai_web_search_note': '💡 このレポートはGeminiウェブ検索による最新情報を含みます',
+        
+        # --- Data Frequency Labels ---
+        'freq_daily': '日次',
+        'freq_weekly': '週次',
+        'freq_monthly': '月次',
+        'freq_quarterly': '四半期',
     },
 }
 

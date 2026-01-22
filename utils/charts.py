@@ -140,8 +140,9 @@ def show_metric(label, series, unit="", explanation_key="", notes="", alert_func
                  help=help_text)
     
     if latest_date:
-        freq_label = DATA_FREQUENCY.get(explanation_key, '')
-        if freq_label:
+        freq_key = DATA_FREQUENCY.get(explanation_key, '')
+        if freq_key:
+            freq_label = t(f'freq_{freq_key}')
             st.caption(f"📅 {t('data_period')}: {latest_date} ({freq_label})")
         else:
             st.caption(f"📅 {t('data_date')}: {latest_date}")
@@ -208,8 +209,9 @@ def show_metric_with_sparkline(label, series, df_column, unit="", explanation_ke
                  help=help_text)
     
     if latest_date:
-        freq_label = DATA_FREQUENCY.get(df_column, '')
-        if freq_label:
+        freq_key = DATA_FREQUENCY.get(df_column, '')
+        if freq_key:
+            freq_label = t(f'freq_{freq_key}')
             st.caption(f"📅 {t('data_period')}: {latest_date} ({freq_label})")
         else:
             st.caption(f"📅 {t('data_date')}: {latest_date}")
@@ -343,7 +345,7 @@ def display_macro_card(title, series, df_column, df_original=None, unit="", note
         yoy_series = (data / data.shift(12) - 1) * 100
         yoy_series = yoy_series.dropna()
         if len(yoy_series) > 0:
-            st.markdown(f"###### {title} YoY% (前年比変化率)")
+            st.markdown(f"###### {title} YoY%")
             
             fig_yoy = go.Figure()
             fig_yoy.add_trace(go.Scatter(

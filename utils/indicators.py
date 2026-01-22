@@ -507,19 +507,7 @@ INDICATORS = {
     },
     
     # === Leading & Housing Indicators (2026-01-22 追加) ===
-    'ISM_PMI': {
-        'source': 'FRED',
-        'id': 'NAPM',
-        'unit': 'idx',
-        'frequency': 'monthly',
-        'freshness': 'monthly',
-        'category': 'economy',
-        'ui_page': '03_us_economic',
-        'ai_include': True,
-        'ai_section': '米経済指標',
-        'notes': 'ISM製造業景況感指数（50以上=拡大）',
-        'validation': (30, 70),
-    },
+    # NOTE: ISM_PMI removed - FRED discontinued NAPM series in 2016
     'Housing_Starts': {
         'source': 'FRED',
         'id': 'HOUST',
@@ -1119,9 +1107,12 @@ def get_yahoo_indicators():
     return {k: v['id'] for k, v in INDICATORS.items() if v['source'] == 'YAHOO'}
 
 def get_data_frequency():
-    """Return dict of indicator frequencies {name: frequency_label}"""
-    freq_map = {'daily': '日次', 'weekly': '週次', 'monthly': '月次', 'quarterly': '四半期'}
-    return {k: freq_map.get(v['frequency'], v['frequency']) for k, v in INDICATORS.items()}
+    """Return dict of indicator frequencies {name: frequency_key}
+    
+    Returns English frequency keys (daily, weekly, etc.)
+    Translation should be done at display time using t(f'freq_{key}')
+    """
+    return {k: v['frequency'] for k, v in INDICATORS.items()}
 
 def get_freshness_rules():
     """Return dict of freshness rules for DATA_FRESHNESS_RULES format"""
