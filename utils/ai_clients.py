@@ -10,9 +10,65 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from .config import GEMINI_MODEL, CLAUDE_MODEL
+from .indicators import INDICATORS, get_indicators_by_category
 
 # Load environment variables
 load_dotenv()
+
+
+# =============================================================================
+# SPECIALIZED REPORT CATEGORIES
+# =============================================================================
+REPORT_CATEGORIES = {
+    'fed_policy': {
+        'name_ja': '🏦 Fed政策・金融政策',
+        'name_en': '🏦 Fed Policy & Monetary Policy',
+        'indicator_categories': ['fed_liquidity', 'fed_plumbing', 'rates'],
+        'search_keywords': 'Federal Reserve policy 2026 FOMC balance sheet quantitative tightening',
+        'prompt_focus_ja': 'Fed政策の現状、金利決定の背景、バランスシート縮小の進捗',
+        'prompt_focus_en': 'Current Fed policy stance, rate decision context, balance sheet normalization progress',
+    },
+    'liquidity': {
+        'name_ja': '💧 流動性・配管',
+        'name_en': '💧 Liquidity & Plumbing',
+        'indicator_categories': ['fed_liquidity', 'fed_plumbing', 'liquidity'],
+        'search_keywords': 'market liquidity 2026 repo market ON RRP reverse repo TGA treasury',
+        'prompt_focus_ja': '流動性環境の変化、ON RRP枯渇の影響、配管リスク',
+        'prompt_focus_en': 'Liquidity conditions, ON RRP depletion impact, plumbing risks',
+    },
+    'inflation_rates': {
+        'name_ja': '📈 インフレ・金利',
+        'name_en': '📈 Inflation & Rates',
+        'indicator_categories': ['inflation', 'rates', 'inflation_expectations'],
+        'search_keywords': 'US inflation 2026 CPI PCE Treasury yields inflation expectations',
+        'prompt_focus_ja': 'インフレ動向、金利見通し、実質金利の水準',
+        'prompt_focus_en': 'Inflation trends, rate outlook, real interest rate levels',
+    },
+    'employment': {
+        'name_ja': '👷 雇用・景気',
+        'name_en': '👷 Employment & Economy',
+        'indicator_categories': ['employment', 'consumption', 'gdp', 'sentiment'],
+        'search_keywords': 'US jobs report 2026 unemployment NFP payroll GDP consumer spending',
+        'prompt_focus_ja': '雇用市場の健全性、消費動向、景気見通し',
+        'prompt_focus_en': 'Labor market health, consumer trends, economic outlook',
+    },
+    'banking': {
+        'name_ja': '🏛️ 銀行・信用',
+        'name_en': '🏛️ Banking & Credit',
+        'indicator_categories': ['banking_sloos', 'banking_h8', 'banking_loans', 'financial_stress', 'credit'],
+        'search_keywords': 'US banking 2026 bank lending standards credit conditions CRE commercial real estate',
+        'prompt_focus_ja': '銀行セクターの健全性、融資基準、CREリスク',
+        'prompt_focus_en': 'Banking sector health, lending standards, CRE risk exposure',
+    },
+    'crypto': {
+        'name_ja': '₿ 暗号資産',
+        'name_en': '₿ Crypto',
+        'indicator_categories': ['crypto'],
+        'search_keywords': 'Bitcoin 2026 crypto market BTC ETF flows stablecoin institutional adoption',
+        'prompt_focus_ja': '暗号資産市場の動向、流動性との相関、機関投資家動向',
+        'prompt_focus_en': 'Crypto market dynamics, liquidity correlation, institutional flows',
+    },
+}
 
 
 def init_ai_clients():
@@ -215,7 +271,13 @@ def get_market_summary(df):
 
 
 def run_gemini_analysis(gemini_client, model, prompt, use_search=False):
-    """Run Gemini analysis with optional web search"""
+    """Run Gemini analysis with optional web search
+    
+    Gemini 3 (gemini-3-pro-preview) requires explicit Thought Signatures 
+    configuration when using tools like Google Search.
+    
+    See: https://ai.google.dev/gemini-api/docs/thinking
+    """
     if gemini_client is None:
         return "Gemini APIが設定されていません"
     
@@ -226,7 +288,11 @@ def run_gemini_analysis(gemini_client, model, prompt, use_search=False):
                 model=model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
-                    tools=[types.Tool(google_search=types.GoogleSearch())]
+                    tools=[types.Tool(google_search=types.GoogleSearch())],
+                    # Gemini 3 requires explicit thinking_config for tool calls
+                    thinking_config=types.ThinkingConfig(
+                        mode="AUTO"  # Automatically include thought process when needed
+                    )
                 )
             )
         else:
@@ -234,9 +300,100 @@ def run_gemini_analysis(gemini_client, model, prompt, use_search=False):
                 model=model,
                 contents=prompt
             )
-        return response.text
+        
+        # Handle response - Thought Signatures may be included in response
+        # For Gemini 3, response structure might include 'thinking' attribute
+        # but we primarily need the text content for our use case
+        if hasattr(response, 'text'):
+            return response.text
+        elif hasattr(response, 'parts') and len(response.parts) > 0:
+            # Extract text from parts if text attribute is not available
+            text_parts = [part.text for part in response.parts if hasattr(part, 'text')]
+            return '\n'.join(text_parts) if text_parts else "No text content in response"
+        else:
+            return "Unexpected response format from Gemini API"
+            
     except Exception as e:
-        return f"Gemini Error: {str(e)}"
+        error_msg = str(e)
+        # Provide more helpful error messages for common Gemini 3 issues
+        if 'thought' in error_msg.lower() or 'signature' in error_msg.lower():
+            return f"Gemini Error (Thought Signatures): {error_msg}\nHint: Ensure thinking_config is properly configured for Gemini 3"
+        return f"Gemini Error: {error_msg}"
+
+
+def generate_category_report(gemini_client, model, category_key, df, lang='en'):
+    """
+    Generate a specialized report for a specific category using Gemini with web search.
+    
+    Args:
+        gemini_client: Initialized Gemini client
+        model: Model name (e.g., 'gemini-2.5-pro')
+        category_key: Key from REPORT_CATEGORIES (e.g., 'fed_policy')
+        df: DataFrame with market data
+        lang: Language code ('en' or 'ja')
+    
+    Returns:
+        Generated report text
+    """
+    if gemini_client is None:
+        return "Gemini APIが設定されていません" if lang == 'ja' else "Gemini API not configured"
+    
+    if category_key not in REPORT_CATEGORIES:
+        return f"Unknown category: {category_key}"
+    
+    cat_info = REPORT_CATEGORIES[category_key]
+    cat_name = cat_info['name_ja'] if lang == 'ja' else cat_info['name_en']
+    search_keywords = cat_info['search_keywords']
+    prompt_focus = cat_info['prompt_focus_ja'] if lang == 'ja' else cat_info['prompt_focus_en']
+    
+    # Build category-specific data summary
+    cat_data_parts = []
+    for cat in cat_info['indicator_categories']:
+        indicators = get_indicators_by_category(cat)
+        for ind_key, ind_info in indicators.items():
+            col_name = ind_info.get('column')
+            if col_name and col_name in df.columns:
+                data = df[col_name].dropna()
+                if len(data) > 0:
+                    current = data.iloc[-1]
+                    last_date = data.index[-1].strftime('%Y/%m/%d') if hasattr(data.index[-1], 'strftime') else str(data.index[-1])[:10]
+                    cat_data_parts.append(f"{ind_info.get('name', col_name)}: {current:.4g} (as of {last_date})")
+    
+    category_data = "\n".join(cat_data_parts) if cat_data_parts else "No data available for this category"
+    
+    # Language-specific instructions
+    if lang == 'ja':
+        language_instruction = """重要: 必ず日本語で回答してください。"""
+        role_prompt = """あなたは伝説的なグローバル・マクロ・ストラテジストです。
+単なるニュースの要約ではなく、データの背後にある「配管（Plumbing）」、つまり流動性の動きと市場参加者のインセンティブを分析します。"""
+    else:
+        language_instruction = """IMPORTANT: Respond entirely in English."""
+        role_prompt = """You are a legendary global macro strategist.
+Rather than simply summarizing news, you analyze the "plumbing" behind the data - the flow of liquidity and market participant incentives."""
+    
+    prompt = f"""{role_prompt}
+
+{language_instruction}
+
+## Task
+Generate a specialized {cat_name} report.
+
+## Focus Areas
+{prompt_focus}
+
+## Current Market Data ({cat_name})
+{category_data}
+
+## Instructions
+1. Use web search to find the latest news and developments related to: {search_keywords}
+2. Analyze how recent events impact the data shown above
+3. Provide actionable insights and potential scenarios
+4. Structure your report with clear sections
+
+Please provide a comprehensive analysis."""
+    
+    # Use Gemini with web search (Grounding)
+    return run_gemini_analysis(gemini_client, model, prompt, use_search=True)
 
 
 def run_claude_analysis(claude_client, model, prompt):
