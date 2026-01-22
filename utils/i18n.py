@@ -35,6 +35,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     'en': {
         # --- US M2 Description ---
         'us_m2_desc': '💡 US Money Supply - Auto-fetched from FRED',
+        'm2_nominal_notes': 'Nominal',
+        'm2_real_notes': 'Real M2 (1982-84 base)',
         
         # --- Time Difference Strings ---
         'time_unknown': 'Unknown',
@@ -948,6 +950,8 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
     'ja': {
         # --- US M2 Description ---
         'us_m2_desc': '💡 米国のマネーサプライ - FREDから自動取得',
+        'm2_nominal_notes': '名目M2',
+        'm2_real_notes': '実質M2 (1982-84基準)',
         
         # --- Time Difference Strings ---
         'time_unknown': '不明',
@@ -1011,7 +1015,7 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         # --- Data Labels (charts.py) ---
         'data_period': 'データ期間',
         'data_date': 'データ日付',
-        'source_update': '提供元更新',
+        'source_update': '提供元更新日',
         'sparkline_label': '60日推移',
         'mom': '前月比',
         'yoy': '前年比',

@@ -32,20 +32,20 @@ st.caption(t('global_money_subtitle'))
 # === US M2 Section ===
 st.markdown("---")
 st.markdown(f"### 💵 US Money Supply (M2)")
-st.caption("💡 米国のマネーサプライ - FREDから自動取得")
+st.caption(t('us_m2_desc'))
 
 col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("#### 🇺🇸 US M2 (Nominal)")
-    show_metric_with_sparkline("US M2", df.get('M2SL'), 'M2SL', "T", "M2SL", notes="名目M2")
+    show_metric_with_sparkline("US M2", df.get('M2SL'), 'M2SL', "T", "M2SL", notes=t('m2_nominal_notes'))
     if 'M2SL' in df.columns and not df.get('M2SL', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
         styled_line_chart(df[['M2SL']], height=150)
 
 with col2:
     st.markdown("#### 🇺🇸 US M2 (Real)")
-    show_metric_with_sparkline("US M2 Real", df.get('M2REAL'), 'M2REAL', "T", "M2REAL", notes="実質M2 (1982-84基準)")
+    show_metric_with_sparkline("US M2 Real", df.get('M2REAL'), 'M2REAL', "T", "M2REAL", notes=t('m2_real_notes'))
     if 'M2REAL' in df.columns and not df.get('M2REAL', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
         styled_line_chart(df[['M2REAL']], height=150)

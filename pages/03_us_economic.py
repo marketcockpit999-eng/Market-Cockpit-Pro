@@ -24,6 +24,31 @@ from utils import (
     t,
 )
 
+
+def show_date_info(df, column_name):
+    """データ期間と提供元更新日を表示するヘルパー関数"""
+    if df is None or not hasattr(df, 'attrs'):
+        return
+    
+    latest_date = None
+    release_date = None
+    
+    if 'last_valid_dates' in df.attrs and column_name in df.attrs['last_valid_dates']:
+        latest_date = df.attrs['last_valid_dates'][column_name]
+    if 'fred_release_dates' in df.attrs and column_name in df.attrs['fred_release_dates']:
+        release_date = df.attrs['fred_release_dates'][column_name]
+    
+    if latest_date:
+        freq_key = DATA_FREQUENCY.get(column_name, '')
+        if freq_key:
+            freq_label = t(f'freq_{freq_key}')
+            st.caption(f"📅 {t('data_period')}: {latest_date} ({freq_label})")
+        else:
+            st.caption(f"📅 {t('data_date')}: {latest_date}")
+    
+    if release_date:
+        st.caption(f"🔄 {t('source_update')}: {release_date}")
+
 # Get data from session state
 df = st.session_state.get('df')
 df_original = st.session_state.get('df_original')
@@ -47,6 +72,7 @@ with col1:
         nfp_data = nfp_original.dropna()
         nfp_change = nfp_data.iloc[-1] - nfp_data.iloc[-2]
         st.metric(t('result'), f"{nfp_change:+,.0f}K")
+        show_date_info(df, 'NFP')
         
         nfp_changes = nfp_data.diff().dropna()
         if len(nfp_changes) > 0:
@@ -63,6 +89,7 @@ with col1:
         unemp_curr = unemp_data.iloc[-1]
         unemp_change = unemp_curr - unemp_data.iloc[-2]
         st.metric(t('unemployment_rate'), f"{unemp_curr:.1f}%", delta=f"{unemp_change:+.1f}pp {t('vs_last_month')}")
+        show_date_info(df, 'UNRATE')
     
     if unemp_series is not None and not unemp_series.isna().all():
         styled_line_chart(unemp_series, height=150)
@@ -86,6 +113,7 @@ with col2:
             m_col2.metric(t('yoy'), f"{yoy:+.1f}%")
         
         styled_line_chart(ahe_data, height=120)
+        show_date_info(df, 'AvgHourlyEarnings')
     
     st.markdown("---")
     st.markdown(f"#### {t('jolts_title')}")
