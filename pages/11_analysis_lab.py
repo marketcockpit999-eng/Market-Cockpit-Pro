@@ -480,6 +480,26 @@ def fetch_regional_spreads(region_id):
     
     return pd.DataFrame(results)
 
+# Market Hours Reference Table (always visible)
+st.markdown("##### 📅 " + t('market_hours_reference'))
+
+market_hours_data = []
+for region_id, region_data in MARKET_REGIONS.items():
+    etf_list = ', '.join([symbol for symbol, _ in region_data['etfs']])
+    market_hours_data.append({
+        t('region'): region_data['name'],
+        t('market_hours_local'): f"{region_data['open_hour']}:00-{region_data['close_hour']}:00",
+        'ETF': etf_list
+    })
+
+st.dataframe(
+    pd.DataFrame(market_hours_data),
+    use_container_width=True,
+    hide_index=True
+)
+
+st.markdown("---")
+
 # Show current market status
 active_markets = get_active_market()
 

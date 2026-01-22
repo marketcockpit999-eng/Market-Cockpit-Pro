@@ -182,3 +182,67 @@ with col2:
         fig.add_trace(go.Scatter(x=df.index, y=df['T10Y2Y'], name='2Y-10Y Spread', line=dict(color='cyan')))
         fig.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('inversion_boundary'))
         st.plotly_chart(fig, use_container_width=True, key=f"yield_curve_{uuid.uuid4().hex[:8]}")
+
+# === Michigan Inflation Expectations ===
+st.markdown("---")
+st.markdown(f"#### {t('michigan_inflation_title')}")
+st.caption(t('michigan_inflation_desc'))
+mich_series = df.get('Michigan_Inflation_Exp')
+col1, col2 = st.columns([1, 2])
+
+with col1:
+    show_metric_with_sparkline("Inflation Exp", mich_series, 'Michigan_Inflation_Exp', "%", "Michigan_Inflation_Exp", notes=t('michigan_inflation_notes'))
+
+with col2:
+    if mich_series is not None and not mich_series.isna().all():
+        fig_mich = go.Figure()
+        fig_mich.add_trace(go.Scatter(x=mich_series.index, y=mich_series.values, name='1Y Inflation Exp', line=dict(color='#ff6b6b')))
+        fig_mich.add_hline(y=2.0, line_dash='dash', line_color='green', annotation_text=t('fed_target'))
+        fig_mich.update_layout(height=200, margin=dict(l=0, r=0, t=20, b=0))
+        st.plotly_chart(fig_mich, use_container_width=True, key=f"mich_inf_{uuid.uuid4().hex[:8]}")
+
+# === 5. Leading Indicators ===
+st.markdown("---")
+st.markdown(f"### 📈 {t('us_economic_section_leading')}")
+st.caption(t('leading_indicators_desc'))
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("#### ISM Manufacturing PMI")
+    ism_series = df.get('ISM_PMI')
+    show_metric_with_sparkline("ISM PMI", ism_series, 'ISM_PMI', "idx", "ISM_PMI", notes=t('ism_pmi_notes'))
+    if ism_series is not None and not ism_series.isna().all():
+        fig_ism = go.Figure()
+        fig_ism.add_trace(go.Scatter(x=ism_series.index, y=ism_series.values, name='ISM PMI', line=dict(color='cyan')))
+        fig_ism.add_hline(y=50, line_dash='dash', line_color='orange', annotation_text=t('expansion_contraction_boundary'))
+        st.plotly_chart(fig_ism, use_container_width=True, key=f"ism_pmi_{uuid.uuid4().hex[:8]}")
+
+with col2:
+    st.markdown(f"#### {t('leading_index_title')}")
+    lei_series = df.get('Leading_Index')
+    show_metric_with_sparkline("Chicago Fed CFNAI", lei_series, 'Leading_Index', "idx", "Leading_Index", notes=t('leading_index_notes'))
+    if lei_series is not None and not lei_series.isna().all():
+        fig_lei = go.Figure()
+        fig_lei.add_trace(go.Scatter(x=lei_series.index, y=lei_series.values, name='CFNAI (3-mo MA)', line=dict(color='#00ff88')))
+        fig_lei.add_hline(y=0, line_dash='dash', line_color='orange', annotation_text=t('zero_line'))
+        st.plotly_chart(fig_lei, use_container_width=True, key=f"leading_index_{uuid.uuid4().hex[:8]}")
+
+# === 6. Housing ===
+st.markdown("---")
+st.markdown(f"### 🏠 {t('us_economic_section_housing')}")
+st.caption(t('housing_indicators_desc'))
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown(f"#### {t('housing_starts_title')}")
+    houst_series = df.get('Housing_Starts')
+    show_metric_with_sparkline("Housing Starts", houst_series, 'Housing_Starts', "K", "Housing_Starts", notes=t('housing_starts_notes'))
+    if houst_series is not None and not houst_series.isna().all():
+        styled_line_chart(houst_series, height=150)
+
+with col2:
+    st.markdown(f"#### {t('building_permits_title')}")
+    permit_series = df.get('Building_Permits')
+    show_metric_with_sparkline("Building Permits", permit_series, 'Building_Permits', "K", "Building_Permits", notes=t('building_permits_notes'))
+    if permit_series is not None and not permit_series.isna().all():
+        styled_line_chart(permit_series, height=150)

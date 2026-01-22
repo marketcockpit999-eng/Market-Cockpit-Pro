@@ -13,17 +13,17 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils import (
     t,
-    GEMINI_MODEL, CLAUDE_MODEL,
-    get_market_summary,
-    run_gemini_analysis, run_claude_analysis,
-    search_google_news,
+    get_current_language,
+    GEMINI_MODEL,
+    run_gemini_analysis,
+    generate_category_report,
+    REPORT_CATEGORIES,
     get_indicators_for_ai,
     get_data_freshness_status,
 )
 
-# Get AI clients and data from session state
+# Get AI client and data from session state
 gemini_client = st.session_state.get('gemini_client')
-claude_client = st.session_state.get('claude_client')
 df = st.session_state.get('df')
 
 if df is None:
@@ -36,110 +36,76 @@ st.caption(t('ai_analysis_desc'))
 
 # Show Data Count Status
 ai_indicators = get_indicators_for_ai()
-ai_count = len(ai_indicators)
-total_freshness = get_data_freshness_status(df.attrs.get('last_valid_dates', {})) if hasattr(df, 'attrs') else {'summary': {'total': 0}}
-total_count = total_freshness['summary']['total']
+defined_count = len(ai_indicators)  # Total defined in INDICATORS with ai_include=True
+
+# Get actual data status
+total_freshness = get_data_freshness_status(df.attrs.get('last_valid_dates', {})) if hasattr(df, 'attrs') else {'summary': {'total': 0, 'fresh_count': 0, 'stale_count': 0, 'critical_count': 0, 'missing_count': 0}}
+# Available = Total - Missing (Fresh + Stale + Critical = データが存在するものすべて)
+available_count = total_freshness['summary']['total'] - total_freshness['summary'].get('missing_count', 0)
+missing_count = total_freshness['summary'].get('missing_count', 0)
 
 col_info1, col_info2, col_info3 = st.columns([1, 1, 2])
 with col_info1:
-    st.metric("👁️", t('ai_data_count', ai_count=ai_count, total_count=total_count))
+    st.metric("👁️", t('ai_data_count', ai_count=available_count, total_count=defined_count))
 with col_info2:
-    if ai_count < total_count:
-        st.warning(t('ai_data_excluded', count=total_count - ai_count))
+    if missing_count > 0:
+        st.warning(t('ai_data_excluded', count=missing_count))
     else:
         st.success(t('ai_all_monitored'))
 
-# Fetch market summary
-with st.spinner(t('ai_collecting_data')):
-    market_summary = get_market_summary(df)
+# ========== CATEGORY REPORTS SECTION ==========
+st.divider()
+st.subheader(t('ai_category_reports'))
+st.caption(t('ai_category_reports_desc'))
 
-# Sidebar settings
-with st.sidebar:
-    st.divider()
-    st.header(t('ai_settings'))
-    selected_ai = st.multiselect(t('ai_select'), ["Gemini 3 Flash", "Claude 4.5 Opus"], default=["Gemini 3 Flash"])
+# Get current language for category names
+current_lang = get_current_language()
+
+# Create category buttons in a grid
+st.markdown(f"**{t('ai_select_category')}**")
+
+# 3 columns x 2 rows for 6 categories
+col1, col2, col3 = st.columns(3)
+
+category_keys = list(REPORT_CATEGORIES.keys())
+
+with col1:
+    if st.button(REPORT_CATEGORIES['fed_policy']['name_ja' if current_lang == 'ja' else 'name_en'], key='cat_fed', use_container_width=True):
+        st.session_state['selected_category'] = 'fed_policy'
+    if st.button(REPORT_CATEGORIES['employment']['name_ja' if current_lang == 'ja' else 'name_en'], key='cat_emp', use_container_width=True):
+        st.session_state['selected_category'] = 'employment'
+
+with col2:
+    if st.button(REPORT_CATEGORIES['liquidity']['name_ja' if current_lang == 'ja' else 'name_en'], key='cat_liq', use_container_width=True):
+        st.session_state['selected_category'] = 'liquidity'
+    if st.button(REPORT_CATEGORIES['banking']['name_ja' if current_lang == 'ja' else 'name_en'], key='cat_bank', use_container_width=True):
+        st.session_state['selected_category'] = 'banking'
+
+with col3:
+    if st.button(REPORT_CATEGORIES['inflation_rates']['name_ja' if current_lang == 'ja' else 'name_en'], key='cat_inf', use_container_width=True):
+        st.session_state['selected_category'] = 'inflation_rates'
+    if st.button(REPORT_CATEGORIES['crypto']['name_ja' if current_lang == 'ja' else 'name_en'], key='cat_crypto', use_container_width=True):
+        st.session_state['selected_category'] = 'crypto'
+
+# Generate report if category selected
+if 'selected_category' in st.session_state and st.session_state['selected_category']:
+    selected_cat = st.session_state['selected_category']
+    cat_name = REPORT_CATEGORIES[selected_cat]['name_ja' if current_lang == 'ja' else 'name_en']
     
-    st.subheader(t('ai_focus_areas'))
-    focus_options = [
-        t('ai_focus_liquidity'),
-        t('ai_focus_inflation'),
-        t('ai_focus_employment'),
-        t('ai_focus_banking'),
-        t('ai_focus_geopolitics'),
-        t('ai_focus_crypto')
-    ]
-    # Fix: Validate stored defaults against current language options
-    stored_focus = st.session_state.get('ai_focus_categories', [])
-    valid_defaults = [opt for opt in stored_focus if opt in focus_options]
-    if not valid_defaults:
-        valid_defaults = [focus_options[0]]
+    with st.spinner(t('ai_generating_report', category=cat_name)):
+        try:
+            report = generate_category_report(
+                gemini_client,
+                GEMINI_MODEL,
+                selected_cat,
+                df,
+                lang=current_lang
+            )
+            st.markdown(f"### {t('ai_report_generated', category=cat_name)}")
+            st.info(t('ai_web_search_note'))
+            st.markdown(report)
+        except Exception as e:
+            st.error(f"Report generation error: {e}")
     
-    focus_selection = st.multiselect(
-        t('ai_focus_prompt'),
-        focus_options,
-        default=valid_defaults
-    )
-    st.session_state['ai_focus_categories'] = focus_selection
-
-# Get localized policy context and language instruction
-policy_context = t('ai_policy_context')
-analysis_instruction = t('ai_analysis_instruction')
-response_language = t('ai_response_language')
-
-col_main, col_custom = st.columns([2, 1])
-
-with col_main:
-    if st.button(t('ai_full_analysis')):
-        if "Gemini" in str(selected_ai):
-            with st.spinner(t('ai_gemini_analyzing')):
-                try:
-                    prompt = f"{policy_context}\n\n{response_language}\n\n{analysis_instruction}\n{market_summary}"
-                    result = run_gemini_analysis(gemini_client, GEMINI_MODEL, prompt)
-                    st.markdown("### 🔷 Gemini Analysis")
-                    st.markdown(result)
-                except Exception as e:
-                    st.error(f"Gemini Error: {e}")
-        
-        if "Claude" in str(selected_ai):
-            with st.spinner(t('ai_claude_analyzing')):
-                try:
-                    prompt = f"{policy_context}\n\n{response_language}\n\n{analysis_instruction}\n{market_summary}"
-                    result = run_claude_analysis(claude_client, CLAUDE_MODEL, prompt)
-                    st.markdown("### 🟣 Claude Analysis")
-                    st.markdown(result)
-                except Exception as e:
-                    st.error(f"Claude Error: {e}")
-
-with col_custom:
-    st.markdown(f"### {t('ai_custom_analysis')}")
-    user_question = st.text_area(
-        t('ai_custom_prompt'),
-        placeholder=t('ai_custom_placeholder'),
-        height=100
-    )
-    
-    if st.button(t('ai_run_custom')) and user_question:
-        news_context = ""
-        if any(kw in user_question for kw in ["ニュース", "最新", "直近", "今日", "今週", "出来事", "news", "latest", "recent"]):
-            with st.spinner("🔍 Searching news..."):
-                news_headlines = search_google_news(user_question, num_results=3)
-                news_context = f"\n\n【Latest News】\n{news_headlines}"
-
-        custom_prompt = f"{policy_context}\n\n{response_language}\n\nMarket Data:\n{market_summary}\n{news_context}\n\nQuestion: {user_question}"
-        
-        if "Gemini" in str(selected_ai):
-            with st.spinner(t('ai_gemini_analyzing')):
-                try:
-                    result = run_gemini_analysis(gemini_client, GEMINI_MODEL, custom_prompt)
-                    st.markdown("### 💡 Gemini Response")
-                    st.markdown(result)
-                except Exception as e:
-                    st.error(f"Gemini Error: {e}")
-        elif "Claude" in str(selected_ai):
-            with st.spinner(t('ai_claude_analyzing')):
-                try:
-                    result = run_claude_analysis(claude_client, CLAUDE_MODEL, custom_prompt)
-                    st.markdown("### 💡 Claude Response")
-                    st.markdown(result)
-                except Exception as e:
-                    st.error(f"Claude Error: {e}")
+    # Clear selection after displaying
+    st.session_state['selected_category'] = None

@@ -41,7 +41,7 @@ PAGE_TITLE = "Market Cockpit Pro"
 MANUAL_DATA_FILE = "manual_h41_data.csv"
 
 # AI Model Names
-GEMINI_MODEL = "gemini-3-flash-preview"
+GEMINI_MODEL = "gemini-2.5-pro"
 CLAUDE_MODEL = "claude-opus-4-5-20251101"
 
 # =============================================================================

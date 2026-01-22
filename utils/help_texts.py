@@ -83,6 +83,11 @@ HELP_EN = {
     'help_USDC': 'USD Coin (USDC) - Circle-issued regulated stablecoin.',
     'help_DAI': 'DAI - Decentralized algorithmic stablecoin.',
     'help_Total_Stablecoin': 'Total Stablecoin Supply - Crypto market liquidity proxy.',
+    # Leading & Housing (2026-01-22 added)
+    'help_ISM_PMI': 'ISM Manufacturing PMI - Above 50 signals expansion, below 50 signals contraction.',
+    'help_Housing_Starts': 'Housing Starts - New residential construction (SAAR, thousands). Leading indicator of construction activity.',
+    'help_Building_Permits': 'Building Permits - Authorized building permits (SAAR, thousands). Leading indicator of future construction.',
+    'help_Leading_Index': 'Philadelphia Fed Leading Index - State-level leading indicator. Positive = expansion expected.',
 }
 
 # Japanese help texts
@@ -164,4 +169,9 @@ HELP_JA = {
     'help_USDC': '【USDC (Circle)】\n規制準拠のステーブルコイン。',
     'help_DAI': '【DAI】\n分散型アルゴリズムステーブルコイン。',
     'help_Total_Stablecoin': '【ステーブルコイン総供給量】\n暗号資産市場の流動性指標。',
+    # Leading & Housing (2026-01-22 added)
+    'help_ISM_PMI': '【ISM製造業景気指数】\n50以上=景気拡大、50未満=景気縮小。製造業の健全性を示す最重要指標の一つ。',
+    'help_Housing_Starts': '【住宅着工件数】\n新規住宅建設（年率換算・千戸）。建設活動の先行指標。',
+    'help_Building_Permits': '【建築許可件数】\n許可済み建築件数（年率換算・千戸）。将来の建設活動を予測する先行指標。',
+    'help_Leading_Index': '【フィラデルフィア連銀景気先行指数】\n州レベルの景気先行指標。プラス=景気拡大予想、マイナス=景気後退予想。',
 }

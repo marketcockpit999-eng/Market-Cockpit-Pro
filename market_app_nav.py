@@ -193,11 +193,16 @@ with st.sidebar:
         )
         
         col1, col2 = st.columns(2)
-        col1.metric(t('sidebar_fresh'), freshness['summary']['fresh_count'])
-        col2.metric(t('sidebar_stale'), freshness['summary']['stale_count'])
+        col1.metric(t('sidebar_fresh'), freshness['summary']['fresh_count'], help="🟢 Fresh")
+        col2.metric(t('sidebar_stale'), freshness['summary']['stale_count'], help="🟡 Stale")
         
+        # Show critical warning
         if freshness['summary']['critical_count'] > 0:
             st.warning(t('sidebar_critical_warning', count=freshness['summary']['critical_count']))
+        
+        # Show missing count if any (data fetch failures)
+        if freshness['summary']['missing_count'] > 0:
+            st.caption(f"⚪ Missing: {freshness['summary']['missing_count']}")
         
         st.caption(t('sidebar_health_score', score=freshness['summary']['health_score']))
     
@@ -243,17 +248,17 @@ pages = {
 
 # Create navigation
 pg = st.navigation([
-    st.Page("pages/01_liquidity.py", title="📊 Liquidity & Rates", default=True),
-    st.Page("pages/02_global_money.py", title="🌏 Global Money & FX"),
-    st.Page("pages/03_us_economic.py", title="📈 US Economic Data"),
-    st.Page("pages/04_crypto.py", title="🪙 Crypto Liquidity"),
-    st.Page("pages/05_ai_analysis.py", title="🤖 AI Analysis"),
-    st.Page("pages/06_monte_carlo.py", title="🎲 Monte Carlo"),
-    st.Page("pages/07_market_voices.py", title="📰 Market Voices"),
-    st.Page("pages/08_sentiment.py", title="🎭 Market Sentiment"),
-    st.Page("pages/09_banking.py", title="🏦 Banking Sector"),
-    st.Page("pages/11_analysis_lab.py", title="🧪 Market Analysis Lab"),
-    st.Page("pages/12_currency_lab.py", title="💱 Currency Lab"),
+    st.Page("pages/01_liquidity.py", title=t('page_liquidity'), default=True),
+    st.Page("pages/02_global_money.py", title=t('page_global_money')),
+    st.Page("pages/03_us_economic.py", title=t('page_us_economic')),
+    st.Page("pages/04_crypto.py", title=t('page_crypto')),
+    st.Page("pages/05_ai_analysis.py", title=t('page_ai_analysis')),
+    st.Page("pages/06_monte_carlo.py", title=t('page_monte_carlo')),
+    st.Page("pages/07_market_voices.py", title=t('page_market_voices')),
+    st.Page("pages/08_sentiment.py", title=t('page_sentiment')),
+    st.Page("pages/09_banking.py", title=t('page_banking')),
+    st.Page("pages/11_analysis_lab.py", title=t('page_analysis_lab')),
+    st.Page("pages/12_currency_lab.py", title=t('page_currency_lab')),
 ])
 
 pg.run()

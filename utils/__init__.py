@@ -97,6 +97,8 @@ from .ai_clients import (
     get_market_summary,
     run_gemini_analysis,
     run_claude_analysis,
+    generate_category_report,
+    REPORT_CATEGORIES,
 )
 
 # News
@@ -150,6 +152,7 @@ __all__ = [
     # AI Clients
     "init_ai_clients", "get_market_summary",
     "run_gemini_analysis", "run_claude_analysis",
+    "generate_category_report", "REPORT_CATEGORIES",
     # News
     "get_time_diff_str", "search_google_news",
     "check_for_market_alerts", "fetch_agency_rss", "format_rss_entry",

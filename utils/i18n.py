@@ -82,6 +82,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'page_sentiment': '🎭 Market Sentiment',
         'page_banking': '🏦 Banking Sector',
         'page_analysis_lab': '🧪 Market Analysis Lab',
+        'page_currency_lab': '💱 Currency Lab',
         
         # --- Common Labels ---
         'loading': 'Loading...',
@@ -222,6 +223,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'cpi_notes': 'Consumer prices YoY',
         'core_cpi': 'Core CPI',
         'core_cpi_notes': 'Ex food & energy',
+        'michigan_inflation_title': 'Michigan Inflation Expectations (1Y)',
+        'michigan_inflation_desc': '💡 Consumer inflation expectations survey - Fed closely monitors this',
+        'michigan_inflation_notes': '1-year ahead expected inflation rate',
+        'fed_target': 'Fed 2% target',
         'ppi': 'PPI',
         'ppi_notes': 'Producer prices',
         'core_pce': 'Core PCE',
@@ -431,6 +436,21 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'level': 'Level',
         'yield_curve_title': '🔗 Yield Curve (2Y-10Y)',
         'inversion_boundary': 'Inversion boundary',
+        
+        # --- US Economic Page: Leading & Housing (2026-01-22 added) ---
+        'us_economic_section_leading': 'Leading Indicators',
+        'leading_indicators_desc': '💡 Economic leading indicators for forecasting business cycles',
+        'ism_pmi_notes': 'Manufacturing health (50+ = expansion)',
+        'expansion_contraction_boundary': 'Expansion/Contraction boundary',
+        'leading_index_title': 'Chicago Fed Activity Index',
+        'leading_index_notes': 'Chicago Fed CFNAI (3-month MA) - Economic activity leading indicator, Above 0 = Expansion / Below 0 = Slowdown',
+        'zero_line': 'Zero line',
+        'us_economic_section_housing': 'Housing',
+        'housing_indicators_desc': '💡 Housing market leading indicators',
+        'housing_starts_title': 'Housing Starts',
+        'housing_starts_notes': 'New housing construction (SAAR, thousands)',
+        'building_permits_title': 'Building Permits',
+        'building_permits_notes': 'Authorized building permits (SAAR, thousands)',
         
         # --- AI Analysis Page Extended ---
         'ai_data_count': 'AI Monitoring: {ai_count} / {total_count}',
@@ -883,6 +903,19 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'currency_lab_btc_vs_gold': 'BTC vs Gold',
         'currency_lab_insufficient_data': 'Insufficient data',
         'currency_lab_tip': '💡 **Tip**: Switch period and normalization in sidebar for different analysis perspectives',
+        
+        # --- Multi-Region Spread Monitor ---
+        'market_hours_reference': 'Market Hours Reference',
+        'region': 'Region',
+        'market_hours_local': 'Hours (Local Time)',
+        
+        # --- AI Category Reports ---
+        'ai_category_reports': '📊 Category Reports',
+        'ai_category_reports_desc': 'Deep-dive analysis with web search for each category',
+        'ai_select_category': 'Select a category for specialized analysis:',
+        'ai_generating_report': '🔍 Generating {category} report with web search...',
+        'ai_report_generated': '📋 {category} Report',
+        'ai_web_search_note': '💡 This report includes latest information via Gemini web search',
     },
     
     'ja': {
@@ -935,6 +968,7 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'page_sentiment': '🎭 市場センチメント',
         'page_banking': '🏦 銀行セクター',
         'page_analysis_lab': '🧪 分析ラボ',
+        'page_currency_lab': '💱 通貨ラボ',
         
         # --- Common Labels ---
         'loading': '読み込み中...',
@@ -1075,6 +1109,10 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'cpi_notes': '消費者物価(前年比)',
         'core_cpi': 'コアCPI',
         'core_cpi_notes': '食品・エネルギー除く',
+        'michigan_inflation_title': 'ミシガン大学期待インフレ率（1年先）',
+        'michigan_inflation_desc': '💡 消費者のインフレ予想調査 - Fedが注視する重要指標',
+        'michigan_inflation_notes': '1年先の予想インフレ率',
+        'fed_target': 'Fed目標 2%',
         'ppi': 'PPI',
         'ppi_notes': '生産者物価',
         'core_pce': 'コアPCE',
@@ -1284,6 +1322,21 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'level': '水準',
         'yield_curve_title': '🔗 イールドカーブ (2Y-10Y)',
         'inversion_boundary': '逆イールド境界',
+        
+        # --- US Economic Page: Leading & Housing (2026-01-22 added) ---
+        'us_economic_section_leading': '先行指標',
+        'leading_indicators_desc': '💡 景気サイクル予測のための先行指標',
+        'ism_pmi_notes': '製造業の健全性（50以上=拡大）',
+        'expansion_contraction_boundary': '拡大/縮小の境界',
+        'leading_index_title': 'シカゴ連銀景気指数',
+        'leading_index_notes': 'シカゴ連銀CFNAI（3ヶ月移動平均）経済活動の先行指標、0超=拡大/0未満=減速',
+        'zero_line': 'ゼロライン',
+        'us_economic_section_housing': '住宅',
+        'housing_indicators_desc': '💡 住宅市場の先行指標',
+        'housing_starts_title': '住宅着工件数',
+        'housing_starts_notes': '新規住宅建設（年率換算、千戸）',
+        'building_permits_title': '建築許可件数',
+        'building_permits_notes': '許可済み建築件数（年率換算、千戸）',
         
         # --- AI Analysis Page Extended ---
         'ai_data_count': 'AI監視中: {ai_count} / {total_count}',
@@ -1736,6 +1789,19 @@ Goldより変動が激しいため、短期的な市場センチメントを反�
         'currency_lab_btc_vs_gold': 'BTC vs Gold',
         'currency_lab_insufficient_data': 'データが不足しています',
         'currency_lab_tip': '💡 **Tip**: サイドバーで期間と正規化を切り替えて、異なる視点で分析できます',
+        
+        # --- Multi-Region Spread Monitor ---
+        'market_hours_reference': '市場時間一覧',
+        'region': 'リージョン',
+        'market_hours_local': '時間帯 (現地時間)',
+        
+        # --- AI Category Reports ---
+        'ai_category_reports': '📊 カテゴリ別レポート',
+        'ai_category_reports_desc': 'Web検索を活用したカテゴリ別詳細分析',
+        'ai_select_category': '分析したいカテゴリを選択:',
+        'ai_generating_report': '🔍 {category}レポートをWeb検索付きで生成中...',
+        'ai_report_generated': '📋 {category}レポート',
+        'ai_web_search_note': '💡 このレポートはGemini Web検索による最新情報を含みます',
     },
 }
 
