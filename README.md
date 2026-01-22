@@ -6,20 +6,15 @@ with focus on **Fed liquidity** and **macro indicators**.
 ## Screenshots
 
 ### Liquidity & Rates
-![Liquidity](スクリーンキャプチャ-localhost-8504-2026-01-22-23_09_25.png)
-
+![Liquidity](screencapture-localhost-8504-2026-01-22-23_09_25.png)
 ### AI Market Analysis
-![AI Analysis](スクリーンキャプチャ-localhost-8504-crypto-2026-01-22-23_11_08.png)
-
+![AI Analysis](screencapture-localhost-8504-crypto-2026-01-22-23_11_08.png)
 ### Global Money & FX
-![Global Money](スクリーンキャプチャ-localhost-8504-global-money-2026-01-22-23_09_53.png)
-
+![Global Money](screencapture-localhost-8504-global-money-2026-01-22-23_09_53.png)
 ### Banking Sector
-![Banking](スクリーンキャプチャ-localhost-8504-banking-2026-01-22-23_10_42.png)
-
+![Banking](screencapture-localhost-8504-banking-2026-01-22-23_10_42.png)
 ### US Economic Data
-![US Economic](スクリーンキャプチャ-localhost-8504-us-economic-2026-01-22-23_10_13.png)
-
+![US Economic](screencapture-localhost-8504-us-economic-2026-01-22-23_10_13.png)
 I wanted to understand...
 I wanted to understand the real sources of market liquidity. As a long-term 
 investor (not a day trader), my goal was to identify optimal entry points 
