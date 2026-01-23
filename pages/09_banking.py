@@ -159,7 +159,42 @@ with col4:
             ratio_series = (copper / gold) * 1000
             latest_val = ratio_series.dropna().iloc[-1] if not ratio_series.dropna().empty else 0
             st.metric(t('bank_cu_au_ratio'), f"{latest_val:.2f}", help=t('bank_cu_au_help'))
+            
+            # 日付情報を表示
+            if hasattr(df, 'attrs'):
+                copper_date = df.attrs.get('last_valid_dates', {}).get('Copper')
+                if copper_date:
+                    st.caption(f"📅 {t('data_period')}: {copper_date}")
+                    st.caption(f"🔄 {t('source_update')}: {copper_date}")  # yFinanceはlast_valid_datesを使用
+                st.caption(t('bank_cu_au_notes'))  # Rise=Risk-on, Fall=Risk-off
+            
+            # 60日推移（スパークライン）
             if not ratio_series.dropna().empty:
+                recent_60 = ratio_series.tail(60)
+                st.caption(f"📊 {t('sparkline_label')}")
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
+                    x=recent_60.index,
+                    y=recent_60.values,
+                    mode='lines',
+                    line=dict(color='#FF9F43', width=2),
+                    fill='tozeroy',
+                    fillcolor='rgba(255, 159, 67, 0.3)',
+                    showlegend=False
+                ))
+                fig.update_layout(
+                    height=100,
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    xaxis=dict(visible=False),
+                    yaxis=dict(visible=False),
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    hovermode=False
+                )
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False},
+                               key=f"spark_cu_au_{uuid.uuid4().hex[:8]}")
+                
+                # 長期推移
                 st.markdown(f"###### {t('long_term_trend')}")
                 styled_line_chart(ratio_series, height=150)
 

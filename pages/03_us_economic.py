@@ -261,13 +261,17 @@ with mfg_col2:
         current_val = richmond_data.get('current')
         change_val = richmond_data.get('change')
         data_date = richmond_data.get('date')
+        release_date = richmond_data.get('release_date')
         
         if current_val is not None:
             delta_str = f"{change_val:+.1f} pts" if change_val is not None else None
             st.metric(t('richmond_fed_mfg_label'), f"{current_val:.1f}", delta=delta_str)
         
+        # Show both data_period and source_update like other indicators
         if data_date:
-            st.caption(f"📅 {t('data_date')}: {data_date}")
+            st.caption(f"📅 {t('data_period')}: {data_date} ({t('freq_monthly')})")
+        if release_date:
+            st.caption(f"🔄 {t('source_update')}: {release_date}")
         
         st.caption(t('richmond_fed_mfg_notes'))
         
@@ -343,13 +347,17 @@ with svc_col2:
         current_val = richmond_svc_data.get('current')
         change_val = richmond_svc_data.get('change')
         data_date = richmond_svc_data.get('date')
+        release_date = richmond_svc_data.get('release_date')
         
         if current_val is not None:
             delta_str = f"{change_val:+.1f} pts" if change_val is not None else None
             st.metric(t('richmond_fed_services_label'), f"{current_val:.1f}", delta=delta_str)
         
+        # Show both data_period and source_update like other indicators
         if data_date:
-            st.caption(f"📅 {t('data_date')}: {data_date}")
+            st.caption(f"📅 {t('data_period')}: {data_date} ({t('freq_monthly')})")
+        if release_date:
+            st.caption(f"🔄 {t('source_update')}: {release_date}")
         
         st.caption(t('richmond_fed_services_notes'))
         

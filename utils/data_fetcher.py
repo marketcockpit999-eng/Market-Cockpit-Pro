@@ -1360,6 +1360,16 @@ def get_richmond_fed_survey():
         
         content = response.text
         
+        # Extract release date from page (e.g., "**December 23, 2025**")
+        release_date = None
+        release_pattern = r'\*\*([A-Z][a-z]+ \d{1,2}, \d{4})\*\*'
+        release_match = re.search(release_pattern, content)
+        if release_match:
+            try:
+                release_date = pd.to_datetime(release_match.group(1)).strftime('%Y-%m-%d')
+            except:
+                pass
+        
         # Extract embedded CSV data from page
         # CSV format: Date,Composite Index,Shipments,New Orders,...
         csv_pattern = r'Date,Composite Index[^<]+'
@@ -1399,6 +1409,7 @@ def get_richmond_fed_survey():
                         'previous': prev_value,
                         'change': current_value - prev_value if prev_value else None,
                         'date': current_date.strftime('%Y-%m-%d'),
+                        'release_date': release_date,
                         'history': history_df,
                         'source': 'Richmond Fed'
                     }
@@ -1417,6 +1428,7 @@ def get_richmond_fed_survey():
                     'previous': None,
                     'change': None,
                     'date': datetime.datetime.now().strftime('%Y-%m-%d'),
+                    'release_date': release_date,
                     'history': None,
                     'source': 'Richmond Fed (fallback)'
                 }
@@ -1433,34 +1445,43 @@ def get_richmond_fed_survey():
 
 @st.cache_data(ttl=86400, show_spinner=False)
 def get_richmond_fed_services_survey():
-    """Fetch Richmond Fed Services Survey from embedded CSV
+    """Fetch Richmond Fed Non-Manufacturing Survey from embedded CSV
+    
+    Note: The survey was renamed from 'Service Sector Survey' to 'Non-Manufacturing Survey'.
+    Uses 'Revenues' column as the primary indicator (no Composite Index exists).
     
     Returns:
-        dict with current composite index, history, and metadata
+        dict with current revenues index, history, and metadata
         or None if fetch fails
     """
     try:
-        url = "https://www.richmondfed.org/region_communities/regional_data_analysis/surveys/service_sector"
+        # Updated URL - survey was moved and renamed
+        url = "https://www.richmondfed.org/region_communities/regional_data_analysis/business_surveys/non-manufacturing"
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         response = requests.get(url, headers=headers, timeout=15)
         
         if response.status_code != 200:
-            logger.warning(f"Richmond Fed Services fetch failed: HTTP {response.status_code}")
+            logger.warning(f"Richmond Fed Non-Manufacturing fetch failed: HTTP {response.status_code}")
             return None
         
         content = response.text
         
-        # Extract embedded CSV data from page
-        # CSV format: Date,Composite Index,Revenues,Demand,...
-        csv_pattern = r'Date,Composite Index[^<]+'
-        csv_match = re.search(csv_pattern, content, re.IGNORECASE)
+        # Extract release date from page (e.g., "**December 23, 2025**")
+        release_date = None
+        release_pattern = r'\*\*([A-Z][a-z]+ \d{1,2}, \d{4})\*\*'
+        release_match = re.search(release_pattern, content)
+        if release_match:
+            try:
+                release_date = pd.to_datetime(release_match.group(1)).strftime('%Y-%m-%d')
+            except:
+                pass
         
-        if not csv_match:
-            # Try alternative pattern
-            csv_pattern = r'"Date","Composite Index"[^<]+'
-            csv_match = re.search(csv_pattern, content, re.IGNORECASE)
+        # Extract embedded CSV data from page
+        # CSV format: Date,Revenues,Demand,Employment,Wages,Local Business Conditions,Capital Expenditures
+        csv_pattern = r'Date,Revenues,Demand[^<]+'
+        csv_match = re.search(csv_pattern, content, re.IGNORECASE)
         
         if csv_match:
             csv_text = csv_match.group(0)
@@ -1470,19 +1491,20 @@ def get_richmond_fed_services_survey():
             try:
                 df = pd.read_csv(StringIO(csv_text))
                 
-                if 'Date' in df.columns and 'Composite Index' in df.columns:
+                if 'Date' in df.columns and 'Revenues' in df.columns:
                     df['Date'] = pd.to_datetime(df['Date'])
                     df = df.sort_values('Date', ascending=False)
                     
                     latest = df.iloc[0]
-                    current_value = float(latest['Composite Index'])
+                    current_value = float(latest['Revenues'])
                     current_date = latest['Date']
                     
                     # Get previous month for comparison
-                    prev_value = float(df.iloc[1]['Composite Index']) if len(df) > 1 else None
+                    prev_value = float(df.iloc[1]['Revenues']) if len(df) > 1 else None
                     
-                    # Create history DataFrame
-                    history_df = df[['Date', 'Composite Index']].copy()
+                    # Create history DataFrame with 'Composite Index' column name for UI compatibility
+                    history_df = df[['Date', 'Revenues']].copy()
+                    history_df = history_df.rename(columns={'Revenues': 'Composite Index'})
                     history_df = history_df.set_index('Date').sort_index()
                     history_df = history_df.tail(24)  # Last 2 years
                     
@@ -1491,14 +1513,15 @@ def get_richmond_fed_services_survey():
                         'previous': prev_value,
                         'change': current_value - prev_value if prev_value else None,
                         'date': current_date.strftime('%Y-%m-%d'),
+                        'release_date': release_date,
                         'history': history_df,
-                        'source': 'Richmond Fed Services'
+                        'source': 'Richmond Fed Non-Manufacturing (Revenues)'
                     }
             except Exception as parse_error:
-                logger.warning(f"Richmond Fed Services CSV parse error: {parse_error}")
+                logger.warning(f"Richmond Fed Non-Manufacturing CSV parse error: {parse_error}")
         
-        # Fallback: Try to extract just the latest value from page text
-        value_pattern = r'Composite\s*Index[^0-9-]*(-?[\d.]+)'
+        # Fallback: Try to extract revenues from page text
+        value_pattern = r'revenues\s*index[^0-9-]*(-?[\d.]+)'
         value_match = re.search(value_pattern, content, re.IGNORECASE)
         
         if value_match:
@@ -1509,15 +1532,16 @@ def get_richmond_fed_services_survey():
                     'previous': None,
                     'change': None,
                     'date': datetime.datetime.now().strftime('%Y-%m-%d'),
+                    'release_date': release_date,
                     'history': None,
-                    'source': 'Richmond Fed Services (fallback)'
+                    'source': 'Richmond Fed Non-Manufacturing (fallback)'
                 }
             except:
                 pass
         
-        logger.warning("Richmond Fed Services: Could not extract data from page")
+        logger.warning("Richmond Fed Non-Manufacturing: Could not extract data from page")
         return None
         
     except Exception as e:
-        logger.error(f"Richmond Fed Services fetch error: {e}")
+        logger.error(f"Richmond Fed Non-Manufacturing fetch error: {e}")
         return None

@@ -292,6 +292,20 @@ with col2:
         diff = (df['EFFR'] - df['IORB']) * 100
     show_metric(t('effr_iorb'), diff, "bps", explanation_key="EFFR_IORB", notes=t('effr_iorb_notes'))
     
+    # EFFR-IORB用の日付情報を手動表示
+    if 'EFFR' in df.columns and hasattr(df, 'attrs'):
+        effr_date = df.attrs.get('last_valid_dates', {}).get('EFFR')
+        effr_release = df.attrs.get('fred_release_dates', {}).get('EFFR')
+        if effr_date:
+            freq_key = DATA_FREQUENCY.get('EFFR', '')
+            if freq_key:
+                freq_label = t(f'freq_{freq_key}')
+                st.caption(f"📅 {t('data_period')}: {effr_date} ({freq_label})")
+            else:
+                st.caption(f"📅 {t('data_period')}: {effr_date}")
+        if effr_release:
+            st.caption(f"🔄 {t('source_update')}: {effr_release}")
+    
     rate_cols = ['EFFR', 'IORB']
     valid_rates = [c for c in rate_cols if c in df.columns and not df.get(c, pd.Series()).isna().all()]
     if valid_rates:

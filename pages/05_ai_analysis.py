@@ -46,7 +46,7 @@ missing_count = total_freshness['summary'].get('missing_count', 0)
 
 col_info1, col_info2, col_info3 = st.columns([1, 1, 2])
 with col_info1:
-    st.metric("👁️", t('ai_data_count', ai_count=available_count, total_count=defined_count))
+    st.metric("👁️ AI", f"{available_count} / {defined_count}")
 with col_info2:
     if missing_count > 0:
         st.warning(t('ai_data_excluded', count=missing_count))

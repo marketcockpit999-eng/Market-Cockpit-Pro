@@ -802,7 +802,8 @@ Rather than simply summarizing news, you analyze the "plumbing" behind the data 
         'bank_copper_gold': 'Copper/Gold Ratio',
         'bank_copper_gold_desc': 'Economic leading indicator',
         'bank_cu_au_ratio': 'Cu/Au Ratio',
-        'bank_cu_au_help': 'Copper($)/Gold($) * 1000',
+        'bank_cu_au_help': 'Copper/Gold ratio x1000. Copper = economic growth proxy (industrial demand), Gold = safe haven. Rising = Risk-on (economic optimism), Falling = Risk-off',
+        'bank_cu_au_notes': 'Rise = Risk-on, Fall = Risk-off',
         
         # --- Banking Page: C&I Lending SLOOS ---
         'bank_ci_std_small': 'C&I Standards (Small Firms)',
@@ -1056,7 +1057,7 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'loading': '読み込み中...',
         'no_data': 'データなし',
         'error_data_not_loaded': 'データが読み込まれていません。main.pyから起動してください。',
-        'source_update_date': '🔄 提供元更新: {date}',
+        'source_update_date': '🔄 提供元更新日: {date}',
         'long_term_trend': '長期推移 (2年)',
         'vs_avg': '平均比',
         
@@ -1764,7 +1765,8 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'bank_copper_gold': '銅/金レシオ',
         'bank_copper_gold_desc': '景気先行指標',
         'bank_cu_au_ratio': 'Cu/Auレシオ',
-        'bank_cu_au_help': '銅($)/金($) * 1000',
+        'bank_cu_au_help': '銅/金レシオ x1000。銅=経済成長の代理指標（産業需要）、金=安全資産。上昇=リスクオン（景気楽観）、下落=リスクオフ',
+        'bank_cu_au_notes': '上昇=リスクオン、下落=リスクオフ',
         
         # --- Banking Page: C&I Lending SLOOS ---
         'bank_ci_std_small': 'C&I基準 (中小企業)',
