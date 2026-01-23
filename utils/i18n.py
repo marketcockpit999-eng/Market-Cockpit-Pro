@@ -88,6 +88,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'page_banking': '🏦 Banking Sector',
         'page_analysis_lab': '🧪 Market Analysis Lab',
         'page_currency_lab': '💱 Currency Lab',
+        'page_verdict': '⚖️ Market Verdict',
         
         # --- Common Labels ---
         'loading': 'Loading...',

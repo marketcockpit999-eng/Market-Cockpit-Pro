@@ -125,7 +125,7 @@ st.title(f"📊 {PAGE_TITLE}")
 st.caption(t('app_subtitle'))
 
 # ========== INITIALIZE DATA ==========
-@st.cache_data(ttl=3600, show_spinner="📊 市場データを読み込み中...")  # 1時間キャッシュ
+@st.cache_data(ttl=3600, show_spinner="📊 Loading market data...")  # 1 hour cache
 def load_data(force_refresh=False):
     """Load market data with caching"""
     return get_market_data(_force_refresh=force_refresh)
@@ -247,18 +247,20 @@ pages = {
 }
 
 # Create navigation
+# Order: Liquidity > GlobalMoney > USEconomic > Banking > Crypto > Sentiment > AI > Labs > Monte Carlo > Voices
 pg = st.navigation([
     st.Page("pages/01_liquidity.py", title=t('page_liquidity'), default=True),
     st.Page("pages/02_global_money.py", title=t('page_global_money')),
     st.Page("pages/03_us_economic.py", title=t('page_us_economic')),
-    st.Page("pages/04_crypto.py", title=t('page_crypto')),
-    st.Page("pages/05_ai_analysis.py", title=t('page_ai_analysis')),
-    st.Page("pages/06_monte_carlo.py", title=t('page_monte_carlo')),
-    st.Page("pages/07_market_voices.py", title=t('page_market_voices')),
-    st.Page("pages/08_sentiment.py", title=t('page_sentiment')),
     st.Page("pages/09_banking.py", title=t('page_banking')),
+    st.Page("pages/04_crypto.py", title=t('page_crypto')),
+    st.Page("pages/08_sentiment.py", title=t('page_sentiment')),
+    st.Page("pages/05_ai_analysis.py", title=t('page_ai_analysis')),
     st.Page("pages/11_analysis_lab.py", title=t('page_analysis_lab')),
     st.Page("pages/12_currency_lab.py", title=t('page_currency_lab')),
+    st.Page("pages/06_monte_carlo.py", title=t('page_monte_carlo')),
+    st.Page("pages/07_market_voices.py", title=t('page_market_voices')),
+    st.Page("pages/13_verdict.py", title=t('page_verdict')),
 ])
 
 pg.run()
