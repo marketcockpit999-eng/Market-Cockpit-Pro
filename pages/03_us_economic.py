@@ -152,15 +152,7 @@ with col1:
     display_macro_card(t('cpi_title'), df.get('CPI'), 'CPI', df_original=df_original, notes=t('cpi_notes_full'))
     st.markdown("---")
     
-    st.markdown(f"#### {t('core_pce_title')}")
-    pce_series = df.get('CorePCE')
-    if pce_series is not None and len(pce_series.dropna()) >= 2:
-        pce_curr = pce_series.dropna().iloc[-1]
-        pce_change = pce_curr - pce_series.dropna().iloc[-2]
-        st.metric(t('current_inflation'), f"{pce_curr:.2f}%", delta=f"{pce_change:+.2f}pp {t('vs_last_month')}")
-    show_metric_with_sparkline(t('core_pce_label'), pce_series, 'CorePCE', "%", "CorePCE", notes=t('core_pce_notes'))
-    if pce_series is not None and not pce_series.isna().all():
-        styled_line_chart(pce_series, height=150)
+    display_macro_card(t('core_pce_title'), df.get('CorePCE'), 'CorePCE', df_original=df_original, notes=t('core_pce_notes'))
         
 with col2:
     display_macro_card(t('core_cpi_title'), df.get('CPICore'), 'CPICore', df_original=df_original, notes=t('core_cpi_notes'))
