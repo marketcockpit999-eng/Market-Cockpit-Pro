@@ -1337,3 +1337,95 @@ def fetch_h41_data():
         
     except Exception as e:
         return None, None, None, str(e)
+
+# ========== REGIONAL FED SURVEYS ==========
+@st.cache_data(ttl=86400, show_spinner=False)
+def get_richmond_fed_survey():
+    """Fetch Richmond Fed Manufacturing Survey from embedded CSV
+    
+    Returns:
+        dict with current composite index, history, and metadata
+        or None if fetch fails
+    """
+    try:
+        url = "https://www.richmondfed.org/region_communities/regional_data_analysis/surveys/manufacturing"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=15)
+        
+        if response.status_code != 200:
+            logger.warning(f"Richmond Fed fetch failed: HTTP {response.status_code}")
+            return None
+        
+        content = response.text
+        
+        # Extract embedded CSV data from page
+        # CSV format: Date,Composite Index,Shipments,New Orders,...
+        csv_pattern = r'Date,Composite Index[^<]+'
+        csv_match = re.search(csv_pattern, content, re.IGNORECASE)
+        
+        if not csv_match:
+            # Try alternative pattern
+            csv_pattern = r'"Date","Composite Index"[^<]+'
+            csv_match = re.search(csv_pattern, content, re.IGNORECASE)
+        
+        if csv_match:
+            csv_text = csv_match.group(0)
+            # Clean up the CSV text
+            csv_text = csv_text.replace('\\n', '\n').replace('\\r', '')
+            
+            try:
+                df = pd.read_csv(StringIO(csv_text))
+                
+                if 'Date' in df.columns and 'Composite Index' in df.columns:
+                    df['Date'] = pd.to_datetime(df['Date'])
+                    df = df.sort_values('Date', ascending=False)
+                    
+                    latest = df.iloc[0]
+                    current_value = float(latest['Composite Index'])
+                    current_date = latest['Date']
+                    
+                    # Get previous month for comparison
+                    prev_value = float(df.iloc[1]['Composite Index']) if len(df) > 1 else None
+                    
+                    # Create history DataFrame
+                    history_df = df[['Date', 'Composite Index']].copy()
+                    history_df = history_df.set_index('Date').sort_index()
+                    history_df = history_df.tail(24)  # Last 2 years
+                    
+                    return {
+                        'current': current_value,
+                        'previous': prev_value,
+                        'change': current_value - prev_value if prev_value else None,
+                        'date': current_date.strftime('%Y-%m-%d'),
+                        'history': history_df,
+                        'source': 'Richmond Fed'
+                    }
+            except Exception as parse_error:
+                logger.warning(f"Richmond Fed CSV parse error: {parse_error}")
+        
+        # Fallback: Try to extract just the latest value from page text
+        value_pattern = r'Composite\s*Index[^0-9-]*(-?[\d.]+)'
+        value_match = re.search(value_pattern, content, re.IGNORECASE)
+        
+        if value_match:
+            try:
+                current_value = float(value_match.group(1))
+                return {
+                    'current': current_value,
+                    'previous': None,
+                    'change': None,
+                    'date': datetime.datetime.now().strftime('%Y-%m-%d'),
+                    'history': None,
+                    'source': 'Richmond Fed (fallback)'
+                }
+            except:
+                pass
+        
+        logger.warning("Richmond Fed: Could not extract data from page")
+        return None
+        
+    except Exception as e:
+        logger.error(f"Richmond Fed fetch error: {e}")
+        return None

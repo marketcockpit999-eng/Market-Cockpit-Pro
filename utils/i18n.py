@@ -458,6 +458,28 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'yield_curve_label': '2Y-10Y Spread',
         'inversion_boundary': 'Inversion boundary',
         
+        # --- US Economic Page: Manufacturing (2026-01-23 added) ---
+        'us_economic_section_manufacturing': '🏭 Manufacturing',
+        'manufacturing_indicators_desc': '💡 Regional Fed Manufacturing Surveys (ISM PMI alternatives)',
+        'empire_state_mfg_title': 'Empire State (NY Fed)',
+        'empire_state_mfg_label': 'NY Fed Index',
+        'empire_state_mfg_notes': 'NY state manufacturing conditions',
+        'philly_fed_mfg_title': 'Philadelphia Fed',
+        'philly_fed_mfg_label': 'Philly Fed Index',
+        'philly_fed_mfg_notes': 'PA/NJ/DE manufacturing conditions',
+        'dallas_fed_mfg_title': 'Dallas Fed',
+        'dallas_fed_mfg_label': 'Dallas Fed Index',
+        'dallas_fed_mfg_notes': 'Texas manufacturing conditions',
+        'richmond_fed_mfg_title': 'Richmond Fed',
+        'richmond_fed_mfg_label': 'Richmond Fed Index',
+        'richmond_fed_mfg_notes': 'Southeast US manufacturing conditions',
+        'manufacturing_boundary': 'Expansion/Contraction (0)',
+        'manufacturing_guide': '''💡 **How to read Regional Fed Manufacturing Indices**
+- **Above 0**: Manufacturing sector expanding
+- **Below 0**: Manufacturing sector contracting
+- These are diffusion indices similar to ISM PMI but free from FRED
+- Each covers different US regions (NY, PA/NJ/DE, TX, Southeast)''',
+        
         # --- US Economic Page: Leading & Housing (2026-01-22 added) ---
         'us_economic_section_leading': 'Leading Indicators',
         'leading_indicators_desc': '💡 Economic leading indicators for forecasting business cycles',
@@ -873,6 +895,9 @@ Rather than simply summarizing news, you analyze the "plumbing" behind the data 
 | **-0.5 to 0.5** | 🟡 Normal | Normal market conditions |
 | **0.5 to 1.5** | 🟠 Caution | Stress rising, be cautious |
 | **> 1.5** | 🔴 Crisis | Financial crisis level |''',
+        
+        # --- Error Messages ---
+        'data_fetch_failed': 'Failed to fetch data',
         
         # --- Currency Lab Page ---
         'currency_lab_title': '💱 Currency Comparison Lab',
@@ -1373,6 +1398,28 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'yield_curve_label': '2Y-10Yスプレッド',
         'inversion_boundary': '逆イールド境界',
         
+        # --- US Economic Page: Manufacturing (2026-01-23 added) ---
+        'us_economic_section_manufacturing': '🏭 製造業',
+        'manufacturing_indicators_desc': '💡 地域連銀製造業景況調査（ISM PMIの代替指標）',
+        'empire_state_mfg_title': 'エンパイアステート (NY連銀)',
+        'empire_state_mfg_label': 'NY連銀指数',
+        'empire_state_mfg_notes': 'ニューヨーク州製造業景況',
+        'philly_fed_mfg_title': 'フィラデルフィア連銀',
+        'philly_fed_mfg_label': 'フィラデルフィア連銀指数',
+        'philly_fed_mfg_notes': 'PA/NJ/DE州製造業景況',
+        'dallas_fed_mfg_title': 'ダラス連銀',
+        'dallas_fed_mfg_label': 'ダラス連銀指数',
+        'dallas_fed_mfg_notes': 'テキサス州製造業景況',
+        'richmond_fed_mfg_title': 'リッチモンド連銀',
+        'richmond_fed_mfg_label': 'リッチモンド連銀指数',
+        'richmond_fed_mfg_notes': '米国南東部製造業景況',
+        'manufacturing_boundary': '拡大/縮小境界 (0)',
+        'manufacturing_guide': '''💡 **地域連銀製造業指数の読み方**
+- **0超**: 製造業セクターが拡大中
+- **0未満**: 製造業セクターが縮小中
+- ISM PMIと同様のDiffusion Indexだが、FREDから無料で取得可能
+- 各指標は異なる地域をカバー (NY, PA/NJ/DE, TX, 南東部)''',
+        
         # --- US Economic Page: Leading & Housing (2026-01-22 added) ---
         'us_economic_section_leading': '先行指標',
         'leading_indicators_desc': '💡 景気サイクル予測のための先行指標',
@@ -1861,6 +1908,9 @@ Goldより変動が激しいため、短期的な市場センチメントを反�
         'freq_weekly': '週次',
         'freq_monthly': '月次',
         'freq_quarterly': '四半期',
+        
+        # --- Error Messages ---
+        'data_fetch_failed': 'データを取得できませんでした',
     },
 }
 

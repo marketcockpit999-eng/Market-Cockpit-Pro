@@ -506,6 +506,61 @@ INDICATORS = {
         'notes': '実質GDP',
     },
     
+    # === Regional Fed Manufacturing Indices (2026-01-23 追加) ===
+    # These are ISM PMI alternatives - Free regional Fed surveys from FRED
+    'Empire_State_Mfg': {
+        'source': 'FRED',
+        'id': 'GACDISA066MSFRBNY',  # NY Fed Empire State Manufacturing Survey: General Business Conditions
+        'unit': 'idx',
+        'frequency': 'monthly',
+        'freshness': 'monthly',
+        'category': 'manufacturing',
+        'ui_page': '03_us_economic',
+        'ai_include': True,
+        'ai_section': '米経済指標',
+        'notes': 'NY連銀製造業景況指数（0超=拡大）',
+        'validation': (-80, 80),
+    },
+    'Philly_Fed_Mfg': {
+        'source': 'FRED',
+        'id': 'GACDFSA066MSFRBPHI',  # Philly Fed Manufacturing Survey: General Business Conditions
+        'unit': 'idx',
+        'frequency': 'monthly',
+        'freshness': 'monthly',
+        'category': 'manufacturing',
+        'ui_page': '03_us_economic',
+        'ai_include': True,
+        'ai_section': '米経済指標',
+        'notes': 'フィラデルフィア連銀製造業景況指数（0超=拡大）',
+        'validation': (-80, 80),
+    },
+    'Dallas_Fed_Mfg': {
+        'source': 'FRED',
+        'id': 'BACTSAMFRBDAL',  # Dallas Fed Manufacturing Survey: Business Activity
+        'unit': 'idx',
+        'frequency': 'monthly',
+        'freshness': 'monthly',
+        'category': 'manufacturing',
+        'ui_page': '03_us_economic',
+        'ai_include': True,
+        'ai_section': '米経済指標',
+        'notes': 'ダラス連銀製造業指数（0超=拡大）',
+        'validation': (-80, 80),
+    },
+    'Richmond_Fed_Mfg': {
+        'source': 'WEB',  # Not on FRED - scrape from Richmond Fed website
+        'id': 'https://www.richmondfed.org/region_communities/regional_data_analysis/surveys/manufacturing',
+        'unit': 'idx',
+        'frequency': 'monthly',
+        'freshness': 'monthly',
+        'category': 'manufacturing',
+        'ui_page': '03_us_economic',
+        'ai_include': True,
+        'ai_section': '米経済指標',
+        'notes': 'リッチモンド連銀製造業景況指数（0超=拡大）- Webスクレイピング',
+        'validation': (-80, 80),
+    },
+    
     # === Leading & Housing Indicators (2026-01-22 追加) ===
     # NOTE: ISM_PMI removed - FRED discontinued NAPM series in 2016
     'Housing_Starts': {

@@ -23,6 +23,7 @@ from utils import (
     DATA_FREQUENCY,
     t,
 )
+from utils.data_fetcher import get_richmond_fed_survey
 
 
 def show_date_info(df, column_name):
@@ -130,7 +131,17 @@ with col2:
         icsa_curr = icsa_data.iloc[-1]
         icsa_change = icsa_curr - icsa_data.iloc[-2]
         st.metric(t('latest_week'), f"{icsa_curr:,.0f}K", delta=f"{icsa_change:+,.0f}K {t('vs_last_week')}", delta_color="inverse")
+        show_date_info(df, 'ICSA')
+        st.caption(t('icsa_notes'))
+        # 60-day sparkline
+        icsa_60d = icsa_data.tail(60)
+        if len(icsa_60d) > 0:
+            st.caption(f"📊 {t('sparkline_label')}")
+            styled_line_chart(icsa_60d, height=80)
+        # Long-term trend
         styled_line_chart(icsa_data, height=150)
+    else:
+        st.info(t('no_data'))
 
 # === 2. Inflation ===
 st.markdown("---")
@@ -206,7 +217,89 @@ with col2:
         fig_mich.update_layout(height=200, margin=dict(l=0, r=0, t=20, b=0))
         st.plotly_chart(fig_mich, use_container_width=True, key=f"mich_inf_{uuid.uuid4().hex[:8]}")
 
-# === 4. Leading Indicators ===
+# === 4. Manufacturing ===
+st.markdown("---")
+st.markdown(f"### {t('us_economic_section_manufacturing')}")
+st.caption(t('manufacturing_indicators_desc'))
+
+# Manufacturing indicators in 2x2 grid
+mfg_col1, mfg_col2 = st.columns(2)
+
+with mfg_col1:
+    st.markdown(f"#### {t('empire_state_mfg_title')}")
+    empire_series = df.get('Empire_State_Mfg')
+    show_metric_with_sparkline(t('empire_state_mfg_label'), empire_series, 'Empire_State_Mfg', "idx", "Empire_State_Mfg", notes=t('empire_state_mfg_notes'))
+    if empire_series is not None and not empire_series.isna().all():
+        fig_empire = go.Figure()
+        fig_empire.add_trace(go.Scatter(x=empire_series.index, y=empire_series.values, name='Empire State', line=dict(color='#4CAF50')))
+        fig_empire.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('manufacturing_boundary'))
+        fig_empire.update_layout(height=150, margin=dict(l=0, r=0, t=20, b=0))
+        st.plotly_chart(fig_empire, use_container_width=True, key=f"empire_mfg_{uuid.uuid4().hex[:8]}")
+    
+    st.markdown("---")
+    st.markdown(f"#### {t('dallas_fed_mfg_title')}")
+    dallas_series = df.get('Dallas_Fed_Mfg')
+    show_metric_with_sparkline(t('dallas_fed_mfg_label'), dallas_series, 'Dallas_Fed_Mfg', "idx", "Dallas_Fed_Mfg", notes=t('dallas_fed_mfg_notes'))
+    if dallas_series is not None and not dallas_series.isna().all():
+        fig_dallas = go.Figure()
+        fig_dallas.add_trace(go.Scatter(x=dallas_series.index, y=dallas_series.values, name='Dallas Fed', line=dict(color='#FF9800')))
+        fig_dallas.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('manufacturing_boundary'))
+        fig_dallas.update_layout(height=150, margin=dict(l=0, r=0, t=20, b=0))
+        st.plotly_chart(fig_dallas, use_container_width=True, key=f"dallas_mfg_{uuid.uuid4().hex[:8]}")
+
+with mfg_col2:
+    st.markdown(f"#### {t('philly_fed_mfg_title')}")
+    philly_series = df.get('Philly_Fed_Mfg')
+    show_metric_with_sparkline(t('philly_fed_mfg_label'), philly_series, 'Philly_Fed_Mfg', "idx", "Philly_Fed_Mfg", notes=t('philly_fed_mfg_notes'))
+    if philly_series is not None and not philly_series.isna().all():
+        fig_philly = go.Figure()
+        fig_philly.add_trace(go.Scatter(x=philly_series.index, y=philly_series.values, name='Philly Fed', line=dict(color='#2196F3')))
+        fig_philly.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('manufacturing_boundary'))
+        fig_philly.update_layout(height=150, margin=dict(l=0, r=0, t=20, b=0))
+        st.plotly_chart(fig_philly, use_container_width=True, key=f"philly_mfg_{uuid.uuid4().hex[:8]}")
+    
+    st.markdown("---")
+    st.markdown(f"#### {t('richmond_fed_mfg_title')}")
+    
+    # Richmond Fed: Fetch from web (not in main DataFrame)
+    richmond_data = get_richmond_fed_survey()
+    
+    if richmond_data is not None:
+        # Display current value
+        current_val = richmond_data.get('current')
+        change_val = richmond_data.get('change')
+        data_date = richmond_data.get('date')
+        
+        if current_val is not None:
+            delta_str = f"{change_val:+.1f} pts" if change_val is not None else None
+            st.metric(t('richmond_fed_mfg_label'), f"{current_val:.1f}", delta=delta_str)
+        
+        if data_date:
+            st.caption(f"📅 {t('data_date')}: {data_date}")
+        
+        st.caption(t('richmond_fed_mfg_notes'))
+        
+        # Plot history if available
+        history_df = richmond_data.get('history')
+        if history_df is not None and not history_df.empty:
+            fig_richmond = go.Figure()
+            fig_richmond.add_trace(go.Scatter(
+                x=history_df.index, 
+                y=history_df['Composite Index'].values, 
+                name='Richmond Fed', 
+                line=dict(color='#9C27B0')
+            ))
+            fig_richmond.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('manufacturing_boundary'))
+            fig_richmond.update_layout(height=150, margin=dict(l=0, r=0, t=20, b=0))
+            st.plotly_chart(fig_richmond, use_container_width=True, key=f"richmond_mfg_{uuid.uuid4().hex[:8]}")
+    else:
+        st.info(t('data_fetch_failed'))
+
+# Manufacturing guide
+with st.expander(t('manufacturing_guide').split('\n')[0], expanded=False):
+    st.markdown(t('manufacturing_guide'))
+
+# === 5. Leading Indicators ===
 st.markdown("---")
 st.markdown(f"### 📈 {t('us_economic_section_leading')}")
 st.caption(t('leading_indicators_desc'))

@@ -88,6 +88,11 @@ HELP_EN = {
     'help_Housing_Starts': 'Housing Starts - New residential construction (SAAR, thousands). Leading indicator of construction activity.',
     'help_Building_Permits': 'Building Permits - Authorized building permits (SAAR, thousands). Leading indicator of future construction.',
     'help_Leading_Index': 'Philadelphia Fed Leading Index - State-level leading indicator. Positive = expansion expected.',
+    # Regional Fed Manufacturing Indices (2026-01-23 added)
+    'help_Empire_State_Mfg': 'Empire State Manufacturing Index - NY Fed survey. Above 0 = expansion, below 0 = contraction.',
+    'help_Philly_Fed_Mfg': 'Philadelphia Fed Manufacturing Index - Mid-Atlantic region survey. Above 0 = expansion.',
+    'help_Dallas_Fed_Mfg': 'Dallas Fed Manufacturing Index - Texas region survey. Above 0 = expansion.',
+    'help_Richmond_Fed_Mfg': 'Richmond Fed Manufacturing Index - Fifth District survey. Above 0 = expansion.',
 }
 
 # Japanese help texts
@@ -174,4 +179,9 @@ HELP_JA = {
     'help_Housing_Starts': '【住宅着工件数】\n新規住宅建設（年率換算・千戸）。建設活動の先行指標。',
     'help_Building_Permits': '【建築許可件数】\n許可済み建築件数（年率換算・千戸）。将来の建設活動を予測する先行指標。',
     'help_Leading_Index': '【フィラデルフィア連銀景気先行指数】\n州レベルの景気先行指標。プラス=景気拡大予想、マイナス=景気後退予想。',
+    # Regional Fed Manufacturing Indices (2026-01-23 added)
+    'help_Empire_State_Mfg': '【エンパイアステート製造業指数】\nNY連銀の製造業調査。0超=拡大、0未満=縮小。',
+    'help_Philly_Fed_Mfg': '【フィラデルフィア連銀製造業指数】\n中部大西洋地域の製造業調査。0超=拡大。',
+    'help_Dallas_Fed_Mfg': '【ダラス連銀製造業指数】\nテキサス地域の製造業調査。0超=拡大。',
+    'help_Richmond_Fed_Mfg': '【リッチモンド連銀製造業指数】\n第5地区の製造業調査。0超=拡大。',
 }
