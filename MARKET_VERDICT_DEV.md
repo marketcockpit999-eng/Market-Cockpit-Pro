@@ -40,6 +40,8 @@ MARKET VERDICT スコア =
 |-------|------|------|-------------|
 | 1 | 流動性スコア設計・計算ロジック | ✅ 完了 | Thread #2 |
 | 2 | サイクル位置の判定ロジック | ✅ 完了 | Thread #2 |
+| 2.5 | テクニカルスコア | ✅ 完了 | Thread #3 |
+| 2.6 | 統合モジュール | ✅ 完了 | Thread #3 |
 | 3 | UI実装（VERDICTページ） | ⏳ 未着手 | - |
 | 4 | WHYセクション（判定根拠表示） | ⏳ 未着手 | - |
 | 5 | 検証・調整 | ⏳ 未着手 | - |
@@ -52,6 +54,7 @@ MARKET VERDICT スコア =
 |---|------|-----|----------|--------|
 | 1 | 2026-01-23 | https://claude.ai/chat/ee4ad37a-e43c-437f-8b20-bf9d0f0b1121 | 構想立案、設計哲学確定 | ✅ コンセプト確定、DEV.md作成 |
 | 2 | 2026-01-23 | https://claude.ai/project/019bb281-b291-72ad-85c0-ceecab814cb7 | Phase 1 流動性スコア | ✅ verdict_liquidity.py作成 |
+| 3 | 2026-01-23 | https://claude.ai/project/019bb281-b291-72ad-85c0-ceecab814cb7 | Phase 2.5-2.6 | ✅ verdict_technical.py, verdict_main.py作成 |
 
 ---
 
