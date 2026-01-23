@@ -55,8 +55,9 @@ PAGE_FILES = [
     '07_market_voices.py',
     '08_sentiment.py',
     '09_banking.py',
-    '10_market_lab.py',
     '11_analysis_lab.py',
+    '12_currency_lab.py',
+    '13_verdict.py',
 ]
 
 

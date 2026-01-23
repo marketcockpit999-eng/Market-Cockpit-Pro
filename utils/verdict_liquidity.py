@@ -94,10 +94,12 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
         (総合スコア, 詳細辞書)
     """
     details = {
-        'net_liquidity': {'value': None, 'percentile': None, 'weight': 0.40},
-        'reserves': {'value': None, 'percentile': None, 'weight': 0.30},
-        'on_rrp': {'value': None, 'percentile': None, 'weight': 0.20},
-        'm2_yoy': {'value': None, 'score': None, 'weight': 0.10},
+        'fed_assets': {'value': None, 'score': None, 'weight': 0.00},  # 参考情報
+        'tga': {'value': None, 'score': None, 'weight': 0.00},  # 参考情報
+        'net_liquidity': {'value': None, 'score': None, 'weight': 0.40},
+        'reserves': {'value': None, 'score': None, 'weight': 0.30},
+        'on_rrp': {'value': None, 'score': None, 'weight': 0.20},
+        'm2_growth': {'value': None, 'score': None, 'weight': 0.10},
         'components_available': 0,
         'data_quality': 'unknown'
     }
@@ -131,6 +133,18 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
     weighted_sum = 0.0
     total_weight = 0.0
     
+    # --- 参考情報: Fed Assets, TGA ---
+    if fed_val is not None:
+        details['fed_assets']['value'] = fed_val
+        fed_pct = get_percentile_rank(fed_series, fed_val) if fed_series is not None else 50.0
+        details['fed_assets']['score'] = fed_pct
+    
+    if tga_val is not None:
+        details['tga']['value'] = tga_val
+        # TGA は低いほど良い（逆スコア）
+        tga_pct = get_percentile_rank(tga_series, tga_val) if tga_series is not None else 50.0
+        details['tga']['score'] = 100 - tga_pct  # 低TGA = 高スコア
+    
     # --- 1. Net Liquidity (40%) ---
     if all(v is not None for v in [fed_val, tga_val, rrp_val]):
         net_liq = calculate_net_liquidity(fed_val, tga_val, rrp_val)
@@ -150,7 +164,7 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
         else:
             percentile = 50.0
         
-        details['net_liquidity']['percentile'] = percentile
+        details['net_liquidity']['score'] = percentile
         weighted_sum += percentile * 0.40
         total_weight += 0.40
         details['components_available'] += 1
@@ -159,7 +173,7 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
     if res_val is not None:
         details['reserves']['value'] = res_val
         percentile = get_percentile_rank(res_series, res_val) if res_series is not None else 50.0
-        details['reserves']['percentile'] = percentile
+        details['reserves']['score'] = percentile
         weighted_sum += percentile * 0.30
         total_weight += 0.30
         details['components_available'] += 1
@@ -169,15 +183,21 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
         details['on_rrp']['value'] = rrp_val
         percentile = get_percentile_rank(rrp_series, rrp_val) if rrp_series is not None else 50.0
         inverse_percentile = 100 - percentile  # 低いほどスコア高
-        details['on_rrp']['percentile'] = inverse_percentile
+        details['on_rrp']['score'] = inverse_percentile
         weighted_sum += inverse_percentile * 0.20
         total_weight += 0.20
         details['components_available'] += 1
     
-    # --- 4. M2 YoY (10%) ---
+    # --- 4. M2 Growth (10%) ---
     if m2_series is not None and len(m2_series) > 252:
         yoy_score = get_yoy_change_score(m2_series)
-        details['m2_yoy']['score'] = yoy_score
+        # YoY変化率も計算してvalueに保存
+        current = m2_series.iloc[-1]
+        year_ago = m2_series.iloc[-252] if len(m2_series) >= 252 else m2_series.iloc[0]
+        if year_ago != 0 and not pd.isna(year_ago):
+            yoy_pct = ((current - year_ago) / abs(year_ago)) * 100
+            details['m2_growth']['value'] = yoy_pct
+        details['m2_growth']['score'] = yoy_score
         weighted_sum += yoy_score * 0.10
         total_weight += 0.10
         details['components_available'] += 1
@@ -202,18 +222,18 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
 
 def interpret_liquidity_score(score: float) -> Dict[str, str]:
     """
-    流動性スコアを解釈
+    流動性スコアを解釈（Michael Howell / CrossBorder Capital の分析手法を参考）
     
     Returns:
         {'level': 'bullish', 'label': '潤沢', 'color': 'green', 'description': '...'}
     """
     if score >= 70:
         return {
-            'level': 'bullish',
+            'level': 'abundant',
             'label': '潤沢',
             'label_en': 'Abundant',
             'color': 'green',
-            'description': '流動性は十分。リスク資産に追い風。'
+            'description': '流動性サイクル上昇期。リスクオン環境、成長株・シクリカルに追い風。'
         }
     elif score >= 50:
         return {
@@ -221,23 +241,23 @@ def interpret_liquidity_score(score: float) -> Dict[str, str]:
             'label': '中立',
             'label_en': 'Neutral',
             'color': 'yellow',
-            'description': '流動性は平均的。方向感に注意。'
+            'description': '流動性は平均的水準。セクター選別が重要な局面。'
         }
     elif score >= 30:
         return {
-            'level': 'cautious',
-            'label': '注意',
-            'label_en': 'Caution',
+            'level': 'tightening',
+            'label': 'タイト化',
+            'label_en': 'Tightening',
             'color': 'orange',
-            'description': '流動性がやや低下。慎重な姿勢を。'
+            'description': '流動性縮小局面。テック→防御セクター/コモディティへのシフト期。'
         }
     else:
         return {
-            'level': 'bearish',
-            'label': '警戒',
+            'level': 'tight',
+            'label': 'タイト',
             'label_en': 'Tight',
             'color': 'red',
-            'description': '流動性が枯渇気味。リスクオフ環境。'
+            'description': '流動性枯渇。リスクオフ環境、短期債・現金選好。'
         }
 
 

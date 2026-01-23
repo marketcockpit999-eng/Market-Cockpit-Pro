@@ -85,13 +85,16 @@ def render_pillar_details(name: str, pillar: dict, lang: str):
     indicator_names = {
         # 流動性
         'fed_assets': 'Fed総資産', 'tga': 'TGA残高', 'on_rrp': 'ON RRP',
-        'reserves': '準備預金', 'm2_growth': 'M2成長率', 'net_liquidity': '純流動性',
+        'reserves': '準備預金', 'm2_growth': 'M2成長率(YoY)', 'net_liquidity': '純流動性',
         # サイクル
         'yield_curve': 'イールドカーブ', 'unemployment': '失業率トレンド',
         'credit_spread': '信用スプレッド', 'leading_index': '先行指標',
         # テクニカル
         'ma_deviation': '200日MA乖離', 'rsi': 'RSI(14)', 'position_52w': '52週レンジ位置'
     }
+    
+    # 指標の表示順序（流動性柱用）
+    liquidity_order = ['fed_assets', 'tga', 'net_liquidity', 'reserves', 'on_rrp', 'm2_growth']
     
     with st.expander(labels.get(lang, labels['en']).get(name, f'{name} Details'), expanded=False):
         # ヘッダー
@@ -107,9 +110,16 @@ def render_pillar_details(name: str, pillar: dict, lang: str):
         
         st.markdown("---")
         
+        # 流動性柱の場合は順序を制御
+        if name == 'liquidity':
+            keys_to_show = liquidity_order
+        else:
+            keys_to_show = [k for k in details.keys() if k not in ['components_available', 'data_quality']]
+        
         # 各指標を表示
-        for key, info in details.items():
-            if not isinstance(info, dict) or key in ['components_available', 'data_quality']:
+        for key in keys_to_show:
+            info = details.get(key)
+            if not isinstance(info, dict):
                 continue
             
             score = info.get('score')
@@ -119,26 +129,35 @@ def render_pillar_details(name: str, pillar: dict, lang: str):
                 continue
             
             # 指標ごとに適切な値とフォーマットを選択
-            if key == 'ma_deviation':
+            val = info.get('value')
+            
+            if key in ['fed_assets', 'net_liquidity', 'reserves']:
+                # 十億ドル→兆ドル表示
+                val_str = f"${val/1000:.2f}T" if val is not None else "-"
+            elif key == 'tga':
+                # TGAは十億ドル表示
+                val_str = f"${val:.0f}B" if val is not None else "-"
+            elif key == 'on_rrp':
+                # ON RRPは十億ドル表示
+                val_str = f"${val:.0f}B" if val is not None else "-"
+            elif key == 'm2_growth':
+                # M2 YoY成長率
+                val_str = f"{val:+.1f}%" if val is not None else "-"
+            elif key == 'ma_deviation':
                 val = info.get('deviation_pct')
                 val_str = f"{val:+.1f}%" if val is not None else "-"
             elif key == 'position_52w':
                 val = info.get('position_pct')
                 val_str = f"{val:.0f}%" if val is not None else "-"
             elif key == 'rsi':
-                val = info.get('value')
                 val_str = f"{val:.1f}" if val is not None else "-"
             elif key in ['yield_curve', 'credit_spread']:
-                val = info.get('value')
                 val_str = f"{val:.2f}%" if val is not None else "-"
             elif key == 'unemployment':
-                val = info.get('value')
                 val_str = f"{val:.1f}%" if val is not None else "-"
             elif key == 'leading_index':
-                val = info.get('value')
                 val_str = f"{val:+.2f}" if val is not None else "-"
             else:
-                val = info.get('value', info.get('raw', '-'))
                 val_str = f"{val:.2f}" if isinstance(val, float) else str(val) if val else "-"
             
             # スコアに基づく色
@@ -160,7 +179,11 @@ def render_pillar_details(name: str, pillar: dict, lang: str):
             with cols[2]:
                 st.markdown(f"<span style='color:{score_color};font-weight:bold;'>{score:.0f}</span>", unsafe_allow_html=True)
             with cols[3]:
-                st.text(f"{int(weight*100)}%")
+                # ウェイト0は参考情報
+                if weight == 0:
+                    st.markdown("<span style='color:#888;font-size:0.8em;'>参考</span>" if lang == 'ja' else "<span style='color:#888;font-size:0.8em;'>Ref</span>", unsafe_allow_html=True)
+                else:
+                    st.text(f"{int(weight*100)}%")
 
 
 def prepare_verdict_data(df: pd.DataFrame) -> dict:

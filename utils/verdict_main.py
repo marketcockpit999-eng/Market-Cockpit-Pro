@@ -146,7 +146,7 @@ def interpret_verdict(score: float) -> Dict[str, str]:
             'label': '強気',
             'label_en': 'Bullish',
             'color': 'green',
-            'description': '流動性・サイクル・テクニカル全てが良好。リスクオン推奨。'
+            'description': '流動性・サイクル・テクニカルが揃って良好。リスクオン環境。'
         }
     elif score >= 60:
         return {
@@ -154,7 +154,7 @@ def interpret_verdict(score: float) -> Dict[str, str]:
             'label': 'やや強気',
             'label_en': 'Moderately Bullish',
             'color': 'lightgreen',
-            'description': '概ね良好な環境。適度なリスクテイク可。'
+            'description': '概ね良好な環境。グロース株・シクリカルに妥当性。'
         }
     elif score >= 45:
         return {
@@ -166,19 +166,19 @@ def interpret_verdict(score: float) -> Dict[str, str]:
         }
     elif score >= 30:
         return {
-            'level': 'sell',
-            'label': 'やや弱気',
-            'label_en': 'Moderately Bearish',
+            'level': 'cautious',
+            'label': '注意',
+            'label_en': 'Caution',
             'color': 'orange',
-            'description': '慎重姿勢を推奨。リスク管理優先。'
+            'description': '流動性縮小局面。防御セクター・コモディティへのシフトを検討。'
         }
     else:
         return {
-            'level': 'strong_sell',
+            'level': 'bearish',
             'label': '警戒',
             'label_en': 'Bearish',
             'color': 'red',
-            'description': '複合的な悪材料。防御的ポジションを。'
+            'description': '複合的な悪材料。現金・短期債・ゴールド選好。'
         }
 
 
