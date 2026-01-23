@@ -11,10 +11,7 @@ VERDICT = 流動性(40%) + サイクル(30%) + テクニカル(30%)
 import streamlit as st
 import pandas as pd
 from utils.i18n import t
-from utils.data_fetcher import get_all_data
 from utils.verdict_main import calculate_market_verdict
-
-st.set_page_config(page_title="Market Verdict", page_icon="⚖️", layout="wide")
 
 
 def get_color_hex(color_name: str) -> str:
@@ -98,20 +95,35 @@ def render_pillar_details(name: str, pillar: dict, lang: str):
                     st.text(f"+{contrib:.1f}" if contrib >= 0 else f"{contrib:.1f}")
 
 
-def prepare_verdict_data() -> dict:
+def prepare_verdict_data(df: pd.DataFrame) -> dict:
     """VERDICTに必要なデータを準備"""
-    all_data = get_all_data()
+    if df is None:
+        return {}
     
     # 流動性データ
     liq_keys = ['Fed_Assets', 'TGA', 'ON_RRP', 'Reserves', 'M2SL']
-    liquidity_data = {k: all_data.get(k) for k in liq_keys if all_data.get(k) is not None}
+    liquidity_data = {}
+    for k in liq_keys:
+        if k in df.columns:
+            series = df[k].dropna()
+            if len(series) > 0:
+                liquidity_data[k] = series
     
     # サイクルデータ
     cycle_keys = ['T10Y2Y', 'UNRATE', 'Credit_Spread', 'Leading_Index', 'CFNAI']
-    cycle_data = {k: all_data.get(k) for k in cycle_keys if all_data.get(k) is not None}
+    cycle_data = {}
+    for k in cycle_keys:
+        if k in df.columns:
+            series = df[k].dropna()
+            if len(series) > 0:
+                cycle_data[k] = series
     
     # テクニカルデータ (S&P500)
-    price_data = all_data.get('SP500')
+    price_data = None
+    if 'SP500' in df.columns:
+        series = df['SP500'].dropna()
+        if len(series) > 0:
+            price_data = series
     
     return {
         'liquidity_data': liquidity_data,
@@ -124,6 +136,12 @@ def main():
     # 言語取得
     lang = st.session_state.get('language', 'en')
     
+    # データ取得
+    df = st.session_state.get('df')
+    if df is None:
+        st.error(t('error_data_not_loaded'))
+        st.stop()
+    
     # ヘッダー
     title = "⚖️ Market Verdict" if lang == 'en' else "⚖️ マーケット総合判定"
     subtitle = "Integrated market assessment from 3 pillars" if lang == 'en' else "3本柱による市場総合判定"
@@ -132,7 +150,7 @@ def main():
     
     # データ準備
     with st.spinner("Calculating VERDICT..." if lang == 'en' else "VERDICT計算中..."):
-        data = prepare_verdict_data()
+        data = prepare_verdict_data(df)
         verdict = calculate_market_verdict(data)
     
     # データ品質チェック
