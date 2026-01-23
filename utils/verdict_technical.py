@@ -220,7 +220,7 @@ def calculate_technical_score(data: Any) -> Tuple[float, Dict[str, Any]]:
 
 def interpret_technical_score(score: float) -> Dict[str, str]:
     """テクニカルスコアを解釈"""
-    if score >= 70:
+    if score >= 65:
         return {
             'level': 'bullish',
             'label': '強気',
@@ -228,7 +228,7 @@ def interpret_technical_score(score: float) -> Dict[str, str]:
             'color': 'green',
             'description': 'テクニカル的に良好。上昇トレンド。'
         }
-    elif score >= 50:
+    elif score >= 45:
         return {
             'level': 'neutral',
             'label': '中立',
@@ -236,7 +236,7 @@ def interpret_technical_score(score: float) -> Dict[str, str]:
             'color': 'yellow',
             'description': '方向感模索中。トレンド転換に注意。'
         }
-    elif score >= 30:
+    elif score >= 25:
         return {
             'level': 'cautious',
             'label': '弱気',

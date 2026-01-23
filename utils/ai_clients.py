@@ -273,10 +273,7 @@ def get_market_summary(df):
 def run_gemini_analysis(gemini_client, model, prompt, use_search=False):
     """Run Gemini analysis with optional web search
     
-    Gemini 3 (gemini-3-pro-preview) requires explicit Thought Signatures 
-    configuration when using tools like Google Search.
-    
-    See: https://ai.google.dev/gemini-api/docs/thinking
+    Uses Google Search grounding for real-time information.
     """
     if gemini_client is None:
         return "Gemini APIが設定されていません"
@@ -288,11 +285,7 @@ def run_gemini_analysis(gemini_client, model, prompt, use_search=False):
                 model=model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
-                    tools=[types.Tool(google_search=types.GoogleSearch())],
-                    # Gemini 3 requires explicit thinking_config for tool calls
-                    thinking_config=types.ThinkingConfig(
-                        mode="AUTO"  # Automatically include thought process when needed
-                    )
+                    tools=[types.Tool(google_search=types.GoogleSearch())]
                 )
             )
         else:
@@ -301,9 +294,7 @@ def run_gemini_analysis(gemini_client, model, prompt, use_search=False):
                 contents=prompt
             )
         
-        # Handle response - Thought Signatures may be included in response
-        # For Gemini 3, response structure might include 'thinking' attribute
-        # but we primarily need the text content for our use case
+        # Handle response
         if hasattr(response, 'text'):
             return response.text
         elif hasattr(response, 'parts') and len(response.parts) > 0:
@@ -314,11 +305,7 @@ def run_gemini_analysis(gemini_client, model, prompt, use_search=False):
             return "Unexpected response format from Gemini API"
             
     except Exception as e:
-        error_msg = str(e)
-        # Provide more helpful error messages for common Gemini 3 issues
-        if 'thought' in error_msg.lower() or 'signature' in error_msg.lower():
-            return f"Gemini Error (Thought Signatures): {error_msg}\nHint: Ensure thinking_config is properly configured for Gemini 3"
-        return f"Gemini Error: {error_msg}"
+        return f"Gemini Error: {str(e)}"
 
 
 def generate_category_report(gemini_client, model, category_key, df, lang='en'):
@@ -361,22 +348,86 @@ def generate_category_report(gemini_client, model, category_key, df, lang='en'):
     
     category_data = "\n".join(cat_data_parts) if cat_data_parts else "No data available for this category"
     
-    # Language-specific instructions
+    # Language-specific instructions and enhanced prompts
     if lang == 'ja':
         language_instruction = """重要: 必ず日本語で回答してください。"""
-        role_prompt = """あなたは伝説的なグローバル・マクロ・ストラテジストです。
-単なるニュースの要約ではなく、データの背後にある「配管（Plumbing）」、つまり流動性の動きと市場参加者のインセンティブを分析します。"""
+        role_prompt = """あなたはレイ・ダリオとスタン・ドラッケンミラーの思考を併せ持つグローバル・マクロ・ストラテジストです。
+
+## あなたの強み
+- 単なるニュースの要約ではなく、「なぜそれが起きているのか」を解き明かす
+- データの背後にある「配管（Plumbing）」- 流動性の流れと市場参加者のインセンティブを読む
+- 表面的な数字ではなく、変化の「方向」と「加速度」に注目する
+- 市場参加者の大多数が見落としている点を指摘する"""
+        
+        analysis_framework = """## 分析フレームワーク（必ず従うこと）
+
+### 1. シグナル診断
+データを以下の3段階で分類し、各項目の冒頭に絵文字を付けてください：
+- 🔴 **警戒シグナル**: 異常値、急変、歴史的な閾値超え → 即座に注目すべき
+- 🟡 **注視シグナル**: トレンドの変化の兆候、通常範囲だが方向性に注意
+- 🟢 **安定シグナル**: 正常範囲、懸念なし
+
+### 2. 因果関係マップ
+「AがBを引き起こす」という関係を明示してください：
+- 先行指標 → 遅行指標の関係
+- 政策変更 → 市場への波及経路
+- 例：「ON RRP残高の減少 → 銀行準備金への圧力 → 短期金利のボラティリティ上昇リスク」
+
+### 3. シナリオ分析（確率付き）
+今後3-6ヶ月の展開を3つのシナリオで提示：
+- **ベースケース（50-60%）**: 最も可能性の高い展開
+- **ブルケース（20-30%）**: 楽観シナリオとそのトリガー
+- **ベアケース（15-25%）**: リスクシナリオとその警戒サイン
+
+### 4. アクショナブルな結論
+- 📅 **次の注目イベント**: 具体的な日付や発表予定
+- ⏰ **変化が現れる時期**: 「いつ頃」影響が顕在化するか
+- 👁️ **監視すべき指標**: このカテゴリで特に注視すべき数値"""
     else:
         language_instruction = """IMPORTANT: Respond entirely in English."""
-        role_prompt = """You are a legendary global macro strategist.
-Rather than simply summarizing news, you analyze the "plumbing" behind the data - the flow of liquidity and market participant incentives."""
+        role_prompt = """You are a global macro strategist combining the thinking of Ray Dalio and Stan Druckenmiller.
+
+## Your Edge
+- You don't just summarize news - you explain "why it's happening"
+- You read the "plumbing" behind data - liquidity flows and market participant incentives
+- You focus on the "direction" and "acceleration" of change, not just surface numbers
+- You identify what the majority of market participants are missing"""
+        
+        analysis_framework = """## Analysis Framework (MUST FOLLOW)
+
+### 1. Signal Diagnosis
+Classify data into 3 levels with emoji prefixes:
+- 🔴 **Alert Signal**: Anomalies, rapid changes, historical threshold breaches → Immediate attention
+- 🟡 **Watch Signal**: Early signs of trend change, within normal range but directionally concerning
+- 🟢 **Stable Signal**: Normal range, no concerns
+
+### 2. Causality Map
+Explicitly state "A causes B" relationships:
+- Leading → Lagging indicator relationships
+- Policy changes → Market transmission paths
+- Example: "ON RRP decline → Pressure on bank reserves → Short-term rate volatility risk"
+
+### 3. Scenario Analysis (with probabilities)
+Present 3 scenarios for the next 3-6 months:
+- **Base Case (50-60%)**: Most likely outcome
+- **Bull Case (20-30%)**: Optimistic scenario and its triggers
+- **Bear Case (15-25%)**: Risk scenario and warning signs
+
+### 4. Actionable Conclusions
+- 📅 **Next Key Events**: Specific dates and announcements
+- ⏰ **Timing**: When impacts will materialize
+- 👁️ **Key Metrics to Watch**: Most important numbers in this category"""
     
     prompt = f"""{role_prompt}
 
 {language_instruction}
 
-## Task
-Generate a specialized {cat_name} report.
+{analysis_framework}
+
+---
+
+## Today's Task
+Generate a deep-dive {cat_name} report.
 
 ## Focus Areas
 {prompt_focus}
@@ -384,13 +435,19 @@ Generate a specialized {cat_name} report.
 ## Current Market Data ({cat_name})
 {category_data}
 
-## Instructions
-1. Use web search to find the latest news and developments related to: {search_keywords}
-2. Analyze how recent events impact the data shown above
-3. Provide actionable insights and potential scenarios
-4. Structure your report with clear sections
+## Research Instructions
+1. Use web search to find the LATEST news (last 7 days) related to: {search_keywords}
+2. Cross-reference news with the data above - look for DISCREPANCIES between narrative and numbers
+3. Identify what the consensus is missing
+4. Apply the analysis framework above STRICTLY
 
-Please provide a comprehensive analysis."""
+## Output Quality Standards
+- NO generic statements like "markets are uncertain" - be SPECIFIC
+- Every claim must connect to actual data points provided
+- Surprise me with an insight that isn't obvious from headlines
+- Be direct and opinionated - hedge fund clients pay for conviction, not hedging
+
+Begin your analysis:"""
     
     # Use Gemini with web search (Grounding)
     return run_gemini_analysis(gemini_client, model, prompt, use_search=True)

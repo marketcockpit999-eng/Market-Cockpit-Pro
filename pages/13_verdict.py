@@ -70,29 +70,97 @@ def render_pillar_card(name: str, pillar: dict, lang: str):
 
 
 def render_pillar_details(name: str, pillar: dict, lang: str):
-    """柱の詳細を折りたたみで表示"""
+    """柱の詳細を折りたたみで表示 - WHYセクション"""
     details = pillar.get('details', {})
     if not details:
         return
     
+    # 表示ラベル
     labels = {
-        'en': {'liquidity': 'Liquidity Details', 'cycle': 'Cycle Details', 'technical': 'Technical Details'},
-        'ja': {'liquidity': '流動性詳細', 'cycle': 'サイクル詳細', 'technical': 'テクニカル詳細'}
+        'en': {'liquidity': '💧 Liquidity Breakdown', 'cycle': '🔄 Cycle Breakdown', 'technical': '📈 Technical Breakdown'},
+        'ja': {'liquidity': '💧 流動性の内訳', 'cycle': '🔄 サイクルの内訳', 'technical': '📈 テクニカルの内訳'}
+    }
+    
+    # 指標名の日本語マッピング
+    indicator_names = {
+        # 流動性
+        'fed_assets': 'Fed総資産', 'tga': 'TGA残高', 'on_rrp': 'ON RRP',
+        'reserves': '準備預金', 'm2_growth': 'M2成長率', 'net_liquidity': '純流動性',
+        # サイクル
+        'yield_curve': 'イールドカーブ', 'unemployment': '失業率トレンド',
+        'credit_spread': '信用スプレッド', 'leading_index': '先行指標',
+        # テクニカル
+        'ma_deviation': '200日MA乖離', 'rsi': 'RSI(14)', 'position_52w': '52週レンジ位置'
     }
     
     with st.expander(labels.get(lang, labels['en']).get(name, f'{name} Details'), expanded=False):
+        # ヘッダー
+        header_cols = st.columns([3, 2, 2, 2])
+        with header_cols[0]:
+            st.markdown("**指標**" if lang == 'ja' else "**Indicator**")
+        with header_cols[1]:
+            st.markdown("**値**" if lang == 'ja' else "**Value**")
+        with header_cols[2]:
+            st.markdown("**スコア**" if lang == 'ja' else "**Score**")
+        with header_cols[3]:
+            st.markdown("**ウェイト**" if lang == 'ja' else "**Weight**")
+        
+        st.markdown("---")
+        
+        # 各指標を表示
         for key, info in details.items():
-            if isinstance(info, dict):
+            if not isinstance(info, dict) or key in ['components_available', 'data_quality']:
+                continue
+            
+            score = info.get('score')
+            weight = info.get('weight', 0)
+            
+            if score is None:
+                continue
+            
+            # 指標ごとに適切な値とフォーマットを選択
+            if key == 'ma_deviation':
+                val = info.get('deviation_pct')
+                val_str = f"{val:+.1f}%" if val is not None else "-"
+            elif key == 'position_52w':
+                val = info.get('position_pct')
+                val_str = f"{val:.0f}%" if val is not None else "-"
+            elif key == 'rsi':
+                val = info.get('value')
+                val_str = f"{val:.1f}" if val is not None else "-"
+            elif key in ['yield_curve', 'credit_spread']:
+                val = info.get('value')
+                val_str = f"{val:.2f}%" if val is not None else "-"
+            elif key == 'unemployment':
+                val = info.get('value')
+                val_str = f"{val:.1f}%" if val is not None else "-"
+            elif key == 'leading_index':
+                val = info.get('value')
+                val_str = f"{val:+.2f}" if val is not None else "-"
+            else:
                 val = info.get('value', info.get('raw', '-'))
-                contrib = info.get('contribution', 0)
-                status = info.get('status', '-')
-                col1, col2, col3 = st.columns([2, 1, 1])
-                with col1:
-                    st.text(key)
-                with col2:
-                    st.text(f"{val}" if not isinstance(val, float) else f"{val:.2f}")
-                with col3:
-                    st.text(f"+{contrib:.1f}" if contrib >= 0 else f"{contrib:.1f}")
+                val_str = f"{val:.2f}" if isinstance(val, float) else str(val) if val else "-"
+            
+            # スコアに基づく色
+            if score >= 65:
+                score_color = '#00c853'
+            elif score >= 45:
+                score_color = '#ffd600'
+            elif score >= 25:
+                score_color = '#ff9100'
+            else:
+                score_color = '#ff1744'
+            
+            cols = st.columns([3, 2, 2, 2])
+            with cols[0]:
+                display_name = indicator_names.get(key, key) if lang == 'ja' else key.replace('_', ' ').title()
+                st.text(display_name)
+            with cols[1]:
+                st.text(val_str)
+            with cols[2]:
+                st.markdown(f"<span style='color:{score_color};font-weight:bold;'>{score:.0f}</span>", unsafe_allow_html=True)
+            with cols[3]:
+                st.text(f"{int(weight*100)}%")
 
 
 def prepare_verdict_data(df: pd.DataFrame) -> dict:

@@ -224,7 +224,7 @@ def calculate_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
 
 def interpret_cycle_score(score: float) -> Dict[str, str]:
     """サイクルスコアを解釈"""
-    if score >= 70:
+    if score >= 65:
         return {
             'level': 'expansion',
             'label': '拡大期',
@@ -232,7 +232,7 @@ def interpret_cycle_score(score: float) -> Dict[str, str]:
             'color': 'green',
             'description': '経済は成長中。リスクオン環境。'
         }
-    elif score >= 50:
+    elif score >= 45:
         return {
             'level': 'neutral',
             'label': '中立',
@@ -240,7 +240,7 @@ def interpret_cycle_score(score: float) -> Dict[str, str]:
             'color': 'yellow',
             'description': 'サイクル転換点付近。方向感に注意。'
         }
-    elif score >= 30:
+    elif score >= 25:
         return {
             'level': 'slowdown',
             'label': '減速期',
