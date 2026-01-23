@@ -480,6 +480,28 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 - These are diffusion indices similar to ISM PMI but free from FRED
 - Each covers different US regions (NY, PA/NJ/DE, TX, Southeast)''',
         
+        # --- US Economic Page: Services/Nonmanufacturing (2026-01-23 added) ---
+        'us_economic_section_services': '💼 Services (Nonmanufacturing)',
+        'services_indicators_desc': '💡 Regional Fed Services/Nonmanufacturing Surveys (ISM NMI alternatives)',
+        'philly_fed_services_title': 'Philadelphia Fed Services',
+        'philly_fed_services_label': 'Philly Fed Services Index',
+        'philly_fed_services_notes': 'PA/NJ/DE services sector conditions',
+        'dallas_fed_services_title': 'Dallas Fed Services',
+        'dallas_fed_services_label': 'Dallas Fed Services Index',
+        'dallas_fed_services_notes': 'Texas services sector conditions',
+        'ny_fed_services_title': 'NY Fed Services',
+        'ny_fed_services_label': 'NY Fed Services Index',
+        'ny_fed_services_notes': 'NY state services sector conditions (NSA)',
+        'richmond_fed_services_title': 'Richmond Fed Services',
+        'richmond_fed_services_label': 'Richmond Fed Services Index',
+        'richmond_fed_services_notes': 'Southeast US services sector conditions',
+        'services_boundary': 'Expansion/Contraction (0)',
+        'services_guide': '''💡 **How to read Regional Fed Services Indices**
+- **Above 0**: Services sector expanding
+- **Below 0**: Services sector contracting
+- These are diffusion indices similar to ISM NMI but free from FRED
+- Services sector represents ~70% of US GDP''',
+        
         # --- US Economic Page: Leading & Housing (2026-01-22 added) ---
         'us_economic_section_leading': 'Leading Indicators',
         'leading_indicators_desc': '💡 Economic leading indicators for forecasting business cycles',
@@ -1419,6 +1441,28 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
 - **0未満**: 製造業セクターが縮小中
 - ISM PMIと同様のDiffusion Indexだが、FREDから無料で取得可能
 - 各指標は異なる地域をカバー (NY, PA/NJ/DE, TX, 南東部)''',
+        
+        # --- US Economic Page: Services/Nonmanufacturing (2026-01-23 added) ---
+        'us_economic_section_services': '💼 サービス業（非製造業）',
+        'services_indicators_desc': '💡 地域連銀サービス業景況調査（ISM NMIの代替指標）',
+        'philly_fed_services_title': 'フィラデルフィア連銀サービス業',
+        'philly_fed_services_label': 'フィラデルフィア連銀サービス業指数',
+        'philly_fed_services_notes': 'PA/NJ/DE州サービス業景況',
+        'dallas_fed_services_title': 'ダラス連銀サービス業',
+        'dallas_fed_services_label': 'ダラス連銀サービス業指数',
+        'dallas_fed_services_notes': 'テキサス州サービス業景況',
+        'ny_fed_services_title': 'NY連銀サービス業',
+        'ny_fed_services_label': 'NY連銀サービス業指数',
+        'ny_fed_services_notes': 'ニューヨーク州サービス業景況（季節調整なし）',
+        'richmond_fed_services_title': 'リッチモンド連銀サービス業',
+        'richmond_fed_services_label': 'リッチモンド連銀サービス業指数',
+        'richmond_fed_services_notes': '米国南東部サービス業景況',
+        'services_boundary': '拡大/縮小境界 (0)',
+        'services_guide': '''💡 **地域連銀サービス業指数の読み方**
+- **0超**: サービス業セクターが拡大中
+- **0未満**: サービス業セクターが縮小中
+- ISM NMIと同様のDiffusion Indexだが、FREDから無料で取得可能
+- サービス業は米国GDPの約70%を占める重要セクター''',
         
         # --- US Economic Page: Leading & Housing (2026-01-22 added) ---
         'us_economic_section_leading': '先行指標',

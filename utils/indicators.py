@@ -561,6 +561,61 @@ INDICATORS = {
         'validation': (-80, 80),
     },
     
+    # === Regional Fed Services/Nonmanufacturing Indices (2026-01-23 追加) ===
+    # Non-manufacturing sector surveys from regional Federal Reserve Banks
+    'Philly_Fed_Services': {
+        'source': 'FRED',
+        'id': 'GABNDIF066MSFRBPHI',  # Philly Fed Nonmanufacturing: General Activity (Firm Perceptions)
+        'unit': 'idx',
+        'frequency': 'monthly',
+        'freshness': 'monthly',
+        'category': 'services',
+        'ui_page': '03_us_economic',
+        'ai_include': True,
+        'ai_section': '米経済指標',
+        'notes': 'フィラデルフィア連銀非製造業景況指数（0超=拡大）季節調整済',
+        'validation': (-80, 80),
+    },
+    'Dallas_Fed_Services': {
+        'source': 'FRED',
+        'id': 'TSSOSBACTSAMFRBDAL',  # Texas Service Sector Outlook Survey: General Business Activity
+        'unit': 'idx',
+        'frequency': 'monthly',
+        'freshness': 'monthly',
+        'category': 'services',
+        'ui_page': '03_us_economic',
+        'ai_include': True,
+        'ai_section': '米経済指標',
+        'notes': 'ダラス連銀サービス業指数（0超=拡大）季節調整済',
+        'validation': (-80, 80),
+    },
+    'NY_Fed_Services': {
+        'source': 'FRED',
+        'id': 'BACDINA066MNFRBNY',  # NY Fed Business Leaders Survey: Current Business Activity
+        'unit': 'idx',
+        'frequency': 'monthly',
+        'freshness': 'monthly',
+        'category': 'services',
+        'ui_page': '03_us_economic',
+        'ai_include': True,
+        'ai_section': '米経済指標',
+        'notes': 'NY連銀サービス業景況指数（0超=拡大）※季節調整なし(NSA)',
+        'validation': (-80, 80),
+    },
+    'Richmond_Fed_Services': {
+        'source': 'WEB',  # Not on FRED - scrape from Richmond Fed website
+        'id': 'https://www.richmondfed.org/region_communities/regional_data_analysis/surveys/service_sector',
+        'unit': 'idx',
+        'frequency': 'monthly',
+        'freshness': 'monthly',
+        'category': 'services',
+        'ui_page': '03_us_economic',
+        'ai_include': True,
+        'ai_section': '米経済指標',
+        'notes': 'リッチモンド連銀サービス業景況指数（0超=拡大）- Webスクレイピング',
+        'validation': (-80, 80),
+    },
+    
     # === Leading & Housing Indicators (2026-01-22 追加) ===
     # NOTE: ISM_PMI removed - FRED discontinued NAPM series in 2016
     'Housing_Starts': {
