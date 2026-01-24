@@ -22,3 +22,10 @@ logs/*.log
 # Temporary files
 *.tmp
 *.bak
+
+# Handoff files (internal use only)
+handoffs/
+
+# Local Windows shortcuts and scripts
+*.lnk
+*.vbs
