@@ -236,6 +236,10 @@ if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy
                     margin=dict(l=0, r=0, t=10, b=0)
                 )
                 st.plotly_chart(fig, use_container_width=True)
+            # Source update for Lag Correlation
+            glp_date = df.attrs.get('last_valid_dates', {}).get('Global_Liquidity_Proxy') if hasattr(df, 'attrs') else None
+            if glp_date:
+                st.caption(f"🔄 {t('source_update')}: {glp_date} (FRED)")
         else:
             st.warning(t('lab_insufficient_data_lag'))
     else:
@@ -278,6 +282,11 @@ if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy
             fig.add_trace(go.Scatter(x=regime_df.index, y=regime_df['MA20'], name='MA20', line=dict(color='yellow', width=2)))
             fig.update_layout(template='plotly_dark', height=200, margin=dict(l=0, r=0, t=10, b=0))
             st.plotly_chart(fig, use_container_width=True)
+        
+        # Source update for Regime Detection
+        glp_date = df.attrs.get('last_valid_dates', {}).get('Global_Liquidity_Proxy') if hasattr(df, 'attrs') else None
+        if glp_date:
+            st.caption(f"🔄 {t('source_update')}: {glp_date} (FRED)")
     else:
         st.warning(t('lab_insufficient_data_short'))
 else:
@@ -364,6 +373,10 @@ if not spread_df.empty:
             margin=dict(l=0, r=0, t=10, b=0)
         )
         st.plotly_chart(fig, use_container_width=True)
+    
+    # Source update for Cross-Asset Spreads
+    from datetime import datetime
+    st.caption(f"🔄 {t('source_update')}: {datetime.now().strftime('%Y-%m-%d %H:%M')} (Yahoo Finance)")
 else:
     st.info(t('lab_spreads_no_data'))
 

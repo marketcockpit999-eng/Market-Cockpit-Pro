@@ -179,6 +179,10 @@ if treasury_data:
         ])
         fig.update_layout(template='plotly_dark', height=250, xaxis_title="Protocol", yaxis_title="TVL ($B)")
         st.plotly_chart(fig, use_container_width=True, key="treasury_bar")
+        
+        # Source update for Tokenized US Treasuries
+        if 'timestamp' in treasury_data:
+            st.caption(f"🔄 {t('source_update')}: {treasury_data['timestamp'][:16].replace('T', ' ')} (DeFiLlama)")
     
     # Gold Protocols
     st.markdown("---")
@@ -279,6 +283,9 @@ if not depth_df.empty and 'Spread (%)' in depth_df.columns:
         
         fig.update_layout(title='Bid-Ask Spread (%) Comparison', template='plotly_dark', height=300)
         st.plotly_chart(fig, use_container_width=True)
+    # Add source update date for Market Depth
+    from datetime import datetime
+    st.caption(f"🔄 {t('source_update')}: {datetime.now().strftime('%Y-%m-%d %H:%M')} (CoinGecko)")
 else:
     st.info(t('market_depth_unavail'))
 

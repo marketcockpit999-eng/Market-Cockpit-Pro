@@ -344,6 +344,10 @@ if usd_pairs:
                 change = current - base
                 with cols[i]:
                     st.metric(pair, f"{current:.1f}", f"{change:+.1f}")
+        
+        # Display source update for USD section
+        usd_data_cols = ['USDJPY', 'EURUSD', 'USDCNY', 'GBPUSD', 'USDCHF', 'AUDUSD', 'BTC', 'ETH', 'Gold', 'Silver']
+        display_source_update(df, usd_data_cols)
 else:
     st.info(t('currency_lab_select_hint'))
 
@@ -423,6 +427,10 @@ if gold_cross is not None and btc_cross is not None:
             st.metric(t('currency_lab_btc_vs_gold'), f"{ratio:.1f}", f"{ratio-100:+.1f}%")
         else:
             st.metric(t('currency_lab_btc_vs_gold'), "N/A", help=t('currency_lab_normalize'))
+    
+    # Display source update for Cross Comparison section
+    cross_data_cols = ['Gold', 'BTC', 'EURUSD', 'USDJPY', 'GBPUSD', 'USDCNY', 'USDCHF', 'AUDUSD']
+    display_source_update(df, cross_data_cols)
 else:
     st.warning(t('currency_lab_insufficient_data'))
 
