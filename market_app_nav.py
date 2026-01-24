@@ -111,6 +111,9 @@ st.markdown("""
     
 </style>
 
+<link rel="apple-touch-icon" href="./app/static/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="./app/static/apple-touch-icon.png">
+
 <div id="page-top"></div>
 
 <a href="#page-top" class="back-to-top-btn" title="Back to top">
