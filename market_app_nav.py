@@ -26,6 +26,18 @@ from utils import (
     render_language_selector,
 )
 
+# ========== GOOGLE ANALYTICS ==========
+st.markdown("""
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GJ68XJ5RZK"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GJ68XJ5RZK');
+</script>
+""", unsafe_allow_html=True)
+
 # ========== CUSTOM CSS ==========
 st.markdown("""
 <style>
