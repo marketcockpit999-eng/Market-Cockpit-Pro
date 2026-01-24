@@ -467,8 +467,9 @@ def calculate_multi_asset_verdict(data: Dict[str, Any]) -> Dict[str, Any]:
     ranking = [a[0] for a in sorted_assets]
     
     # 推奨文生成
+    from utils.i18n import t
     labels = [a[2] for a in sorted_assets]
-    recommendation = f"現環境では: {labels[0]} > {labels[1]} > {labels[2]}"
+    recommendation = t('verdict_ranking_format', first=labels[0], second=labels[1], third=labels[2])
     recommendation_en = f"Current environment favors: {sorted_assets[0][0].upper()} > {sorted_assets[1][0].upper()} > {sorted_assets[2][0].upper()}"
     
     return {

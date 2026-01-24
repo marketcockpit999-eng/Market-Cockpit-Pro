@@ -2,9 +2,9 @@
 """
 MARKET VERDICT - Main Aggregator
 ================================================================================
-3本柱のスコアを統合してMARKET VERDICTを算出
+4本柱のスコアを統合してMARKET VERDICTを算出
 
-VERDICT = 流動性(40%) + サイクル(30%) + テクニカル(30%)
+VERDICT = 流動性(35%) + サイクル(25%) + テクニカル(25%) + センチメント(15%)
 
 使用方法:
   from utils.verdict_main import calculate_market_verdict
@@ -18,13 +18,15 @@ from typing import Dict, Any, Optional
 from utils.verdict_liquidity import calculate_liquidity_score, interpret_liquidity_score
 from utils.verdict_cycle import calculate_cycle_score, interpret_cycle_score
 from utils.verdict_technical import calculate_technical_score, interpret_technical_score
+from utils.verdict_sentiment import calculate_sentiment_score, interpret_sentiment_score
 
 
-# ウェイト定義
+# ウェイト定義（4本柱）
 WEIGHTS = {
-    'liquidity': 0.40,
-    'cycle': 0.30,
-    'technical': 0.30
+    'liquidity': 0.35,
+    'cycle': 0.25,
+    'technical': 0.25,
+    'sentiment': 0.15
 }
 
 
@@ -94,7 +96,7 @@ def calculate_market_verdict(data: Dict[str, Any]) -> Dict[str, Any]:
         total_weight += WEIGHTS['cycle']
         pillars_available += 1
     
-    # --- 3. テクニカルスコア (30%) ---
+    # --- 3. テクニカルスコア (25%) ---
     price_data = data.get('price_data')
     if price_data is not None:
         tech_score, tech_details = calculate_technical_score(price_data)
@@ -107,6 +109,21 @@ def calculate_market_verdict(data: Dict[str, Any]) -> Dict[str, Any]:
         }
         weighted_sum += tech_score * WEIGHTS['technical']
         total_weight += WEIGHTS['technical']
+        pillars_available += 1
+    
+    # --- 4. センチメントスコア (15%) - Howard Marks流 ---
+    sentiment_data = data.get('sentiment_data', {})
+    if sentiment_data:
+        sent_score, sent_details = calculate_sentiment_score(sentiment_data)
+        sent_interp = interpret_sentiment_score(sent_score)
+        result['pillars']['sentiment'] = {
+            'score': sent_score,
+            'weight': WEIGHTS['sentiment'],
+            'interpretation': sent_interp,
+            'details': sent_details
+        }
+        weighted_sum += sent_score * WEIGHTS['sentiment']
+        total_weight += WEIGHTS['sentiment']
         pillars_available += 1
     
     # --- 総合VERDICT ---
@@ -125,10 +142,10 @@ def calculate_market_verdict(data: Dict[str, Any]) -> Dict[str, Any]:
     result['verdict_color'] = verdict_interp['color']
     result['verdict_description'] = verdict_interp['description']
     
-    # データ品質
-    if pillars_available == 3:
+    # データ品質（4本柱対応）
+    if pillars_available == 4:
         result['data_quality'] = 'good'
-    elif pillars_available >= 2:
+    elif pillars_available >= 3:
         result['data_quality'] = 'partial'
     else:
         result['data_quality'] = 'insufficient'
@@ -140,45 +157,47 @@ def calculate_market_verdict(data: Dict[str, Any]) -> Dict[str, Any]:
 
 def interpret_verdict(score: float) -> Dict[str, str]:
     """総合VERDICTを解釈"""
+    from utils.i18n import t
+    
     if score >= 75:
         return {
             'level': 'strong_buy',
-            'label': '強気',
+            'label': t('verdict_interp_bullish'),
             'label_en': 'Bullish',
             'color': 'green',
-            'description': '流動性・サイクル・テクニカルが揃って良好。リスクオン環境。'
+            'description': t('verdict_desc_bullish')
         }
     elif score >= 60:
         return {
             'level': 'buy',
-            'label': 'やや強気',
+            'label': t('verdict_interp_moderately_bullish'),
             'label_en': 'Moderately Bullish',
             'color': 'lightgreen',
-            'description': '概ね良好な環境。グロース株・シクリカルに妥当性。'
+            'description': t('verdict_desc_moderately_bullish')
         }
     elif score >= 45:
         return {
             'level': 'neutral',
-            'label': '中立',
+            'label': t('verdict_interp_neutral'),
             'label_en': 'Neutral',
             'color': 'yellow',
-            'description': '混在シグナル。選別的な対応を。'
+            'description': t('verdict_desc_neutral')
         }
     elif score >= 30:
         return {
             'level': 'cautious',
-            'label': '注意',
+            'label': t('verdict_interp_caution'),
             'label_en': 'Caution',
             'color': 'orange',
-            'description': '流動性縮小局面。防御セクター・コモディティへのシフトを検討。'
+            'description': t('verdict_desc_caution')
         }
     else:
         return {
             'level': 'bearish',
-            'label': '警戒',
+            'label': t('verdict_interp_bearish'),
             'label_en': 'Bearish',
             'color': 'red',
-            'description': '複合的な悪材料。現金・短期債・ゴールド選好。'
+            'description': t('verdict_desc_bearish')
         }
 
 
