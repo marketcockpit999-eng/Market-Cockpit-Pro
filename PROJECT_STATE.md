@@ -1,61 +1,65 @@
 # Market Cockpit Pro - Project State
-> Last Updated: 2026-01-23 21:30 (Claude Thread #12)
+> Last Updated: 2026-01-24 (Claude Thread #13)
 
-## ✅ 完了した作業: サービス業指標追加
+## ✅ 現在の状態
 
-### 進捗状況
-
-| # | タスク | 状態 | 備考 |
-|---|--------|------|------|
-| 1 | indicators.py にサービス業指標4件追加 | ✅ 完了 | Thread#10 |
-| 2 | i18n.py 英語翻訳キー追加 | ✅ 完了 | Thread#11 |
-| 3 | i18n.py 日本語翻訳キー追加 | ✅ 完了 | Thread#12 |
-| 4 | data_fetcher.py Richmond Fed Services関数 | ✅ 完了 | Thread#12 |
-| 5 | 03_us_economic.py サービス業UI追加 | ✅ 完了 | Thread#12 |
-| 6 | キャッシュクリア | → **Force Update必要** | |
-
-### 追加した4つのサービス業指標
-
-```python
-# indicators.py に追加済み
-'Philly_Fed_Services': 'GABNDIF066MSFRBPHI'   # SA
-'Dallas_Fed_Services': 'TSSOSBACTSAMFRBDAL'   # SA
-'NY_Fed_Services': 'BACDINA066MNFRBNY'        # NSA (季節調整なし)
-'Richmond_Fed_Services': source='WEB'          # Web scraping必要
-```
-
-### 次のステップ
-
-1. **Antigravityでgit操作**:
-   ```bash
-   git add -A
-   git commit -m "feat: Add services/nonmanufacturing indicators (4 regional Fed surveys)"
-   git push
-   ```
-
-2. **アプリでForce Update**:
-   - サイドバーの"🔄 強制更新"ボタンをクリック
-   - 新しいサービス業指標が「US Economic Data」ページに表示されることを確認
+**アプリ完成** 🎉
+- 86+ 指標を監視
+- 12 ページ構成
+- 日英バイリンガル対応
+- AI分析（Claude/Gemini/Grok）
+- MARKET VERDICT（自動判定システム）
 
 ---
 
-## 🚀 並行プロジェクト: MARKET VERDICT
+## 📊 MARKET VERDICT 進捗
 
-**状態**: Phase 4完了、Phase 5（センチメント統合）は保留中
+| Phase | 内容 | 状態 |
+|-------|------|------|
+| 1 | 流動性スコア | ✅ 完了 |
+| 2 | サイクルスコア | ✅ 完了 |
+| 2.5 | テクニカルスコア | ✅ 完了 |
+| 2.6 | センチメントスコア | ✅ 完了 |
+| 3 | UI実装（13_verdict.py） | ✅ 完了 |
+| **4** | **WHYセクション（判定根拠）** | **⏳ 次スレッド** |
+| 5 | 検証・調整 | ⏳ 未着手 |
 
-詳細は → **MARKET_VERDICT_DEV.md** を参照
+### → **次のタスク: Phase 4 WHYセクション**
+
+引き継ぎドキュメント: **`HANDOFF_VERDICT_PHASE4.md`**
+
+---
+
+## 🧠 VERDICT設計哲学（忘れないで！）
+
+VERDICTは以下の一流投資家の**共通エッセンス**を組み込んでいる：
+
+| 投資家 | 核心思想 | VERDICT反映 |
+|--------|----------|-------------|
+| **Druckenmiller** | 流動性が全てを動かす | 流動性スコア (35%) |
+| **Dalio** | サイクルの位置を知れ | サイクルスコア (25%) |
+| **Marks** | 振り子の極端を避けよ | センチメント (15%) + テクニカル (25%) |
+| **Howell** | Net Liq = Fed - TGA - RRP | 流動性計算ロジック |
+
+**共通エッセンス**:
+```
+「相場の方向性は流動性が決める」(Druckenmiller, Howell)
+「いつ動くかはサイクルの位置で決める」(Dalio)
+「どこまで動くかは極端度で判断する」(Marks)
+```
 
 ---
 
 ## 📜 スレッド履歴
 
-| # | 日付 | URL | 作業内容 |
-|---|------|-----|----------|
-| 8 | 01-23 | https://claude.ai/chat/3f892a96-3a63-45f0-a7b6-c880938d12f1 | VERDICT Phase 1-4完了 |
-| 9 | 01-23 | https://claude.ai/chat/019bb29a-c3d0-7314-b2ae-be8d2b0db48b | Thread#1設計レビュー、DBnomics/Apify/Finnhub調査 |
-| 10 | 01-23 | https://claude.ai/chat/a758ec58-c7fe-4e27-a196-85c67c98e09a | 製造業指標4件追加完了、サービス業指標追加開始 |
-| 11 | 01-23 | https://claude.ai/chat/08ff40d3-2a19-4f0e-a9fd-1d0ec0955532 | サービス業指標：英語i18n完了、日本語途中 |
-| 12 | 01-23 | (current) | サービス業指標完成、UI実装完了 |
+| # | 日付 | 作業内容 |
+|---|------|----------|
+| 8 | 01-23 | VERDICT Phase 1-4開始 |
+| 9 | 01-23 | 設計レビュー、データソース調査 |
+| 10 | 01-23 | 製造業指標4件追加 |
+| 11 | 01-23 | サービス業指標：英語i18n |
+| 12 | 01-23 | サービス業指標完成、UI実装 |
+| **13** | **01-24** | **アプリ総評、Phase 4準備** |
 
 ---
 
@@ -66,4 +70,15 @@
 3. **新スレッド開始時は前スレURL+作業内容を共有**
 4. **指標追加後はヘルスチェック必須**
 5. **スレが長くなる前に引き継ぎ準備**
-6. **新指標追加後はForce Update必須**（キャッシュクリア）
+6. **新指標追加後はForce Update必須**
+
+---
+
+## 📁 重要ファイル
+
+| ファイル | 役割 |
+|---------|------|
+| `utils/indicators.py` | 📍 Single Source of Truth |
+| `HANDOFF_VERDICT_PHASE4.md` | Phase 4 引き継ぎガイド |
+| `MARKET_VERDICT_DEV.md` | VERDICT全体の開発ログ |
+| `PROJECT_RULES.md` | 回帰防止ルール |

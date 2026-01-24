@@ -5,10 +5,12 @@ MARKET VERDICT - Cycle Position Calculator
 サイクル位置スコア（0-100）を計算するモジュール
 
 スコア構成:
-  - イールドカーブ（T10Y2Y）× 35%
-  - 失業率トレンド × 25%
-  - 信用スプレッド × 25%
-  - Leading Index × 15%
+  - イールドカーブ（T10Y2Y）× 30%
+  - 失業率トレンド × 20%
+  - 信用スプレッド × 20%
+  - Leading Index × 10%
+  - Manufacturing Composite × 10% (地区連銀製造業)
+  - Services Composite × 10% (地区連銀サービス業)
 
 使用方法:
   from utils.verdict_cycle import calculate_cycle_score
@@ -121,6 +123,70 @@ def score_leading_index(value: float, series: Optional[pd.Series] = None) -> flo
     return float(np.clip(score, 0, 100))
 
 
+def score_manufacturing_composite(data: Dict[str, Any]) -> Tuple[Optional[float], Dict]:
+    """
+    地区連銀製造業指数のCompositeスコア
+    
+    各指数: 0超=拡大、0未満=縮小
+    範囲: 約-40 ～ +40 を 0-100 にマップ
+    """
+    mfg_keys = ['Empire_State_Mfg', 'Philly_Fed_Mfg', 'Dallas_Fed_Mfg', 'Richmond_Fed_Mfg']
+    values = []
+    
+    for key in mfg_keys:
+        item = data.get(key)
+        if item is None:
+            continue
+        if isinstance(item, pd.Series) and len(item) > 0:
+            val = item.iloc[-1]
+        elif isinstance(item, (int, float)):
+            val = float(item)
+        else:
+            continue
+        if not pd.isna(val):
+            values.append(val)
+    
+    if len(values) == 0:
+        return None, {'available': 0, 'average': None}
+    
+    avg = np.mean(values)
+    # -40 ～ +40 を 0-100 にマップ（0 → 50）
+    score = 50 + (avg / 40) * 50
+    score = float(np.clip(score, 0, 100))
+    
+    return score, {'available': len(values), 'average': avg}
+
+
+def score_services_composite(data: Dict[str, Any]) -> Tuple[Optional[float], Dict]:
+    """
+    地区連銀サービス業指数のCompositeスコア
+    """
+    svc_keys = ['NY_Fed_Services', 'Philly_Fed_Services', 'Dallas_Fed_Services', 'Richmond_Fed_Services']
+    values = []
+    
+    for key in svc_keys:
+        item = data.get(key)
+        if item is None:
+            continue
+        if isinstance(item, pd.Series) and len(item) > 0:
+            val = item.iloc[-1]
+        elif isinstance(item, (int, float)):
+            val = float(item)
+        else:
+            continue
+        if not pd.isna(val):
+            values.append(val)
+    
+    if len(values) == 0:
+        return None, {'available': 0, 'average': None}
+    
+    avg = np.mean(values)
+    score = 50 + (avg / 40) * 50
+    score = float(np.clip(score, 0, 100))
+    
+    return score, {'available': len(values), 'average': avg}
+
+
 def calculate_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
     """
     サイクル位置スコアを計算
@@ -136,10 +202,12 @@ def calculate_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
         (総合スコア, 詳細辞書)
     """
     details = {
-        'yield_curve': {'value': None, 'score': None, 'weight': 0.35},
-        'unemployment': {'value': None, 'score': None, 'weight': 0.25},
-        'credit_spread': {'value': None, 'score': None, 'weight': 0.25},
-        'leading_index': {'value': None, 'score': None, 'weight': 0.15},
+        'yield_curve': {'value': None, 'score': None, 'weight': 0.30},
+        'unemployment': {'value': None, 'score': None, 'weight': 0.20},
+        'credit_spread': {'value': None, 'score': None, 'weight': 0.20},
+        'leading_index': {'value': None, 'score': None, 'weight': 0.10},
+        'mfg_composite': {'value': None, 'score': None, 'weight': 0.10},
+        'svc_composite': {'value': None, 'score': None, 'weight': 0.10},
         'components_available': 0,
         'data_quality': 'unknown'
     }
@@ -164,44 +232,64 @@ def calculate_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
     weighted_sum = 0.0
     total_weight = 0.0
     
-    # --- 1. Yield Curve (35%) ---
+    # --- 1. Yield Curve (30%) ---
     yc_series, yc_val = extract_series_and_value('T10Y2Y')
     if yc_val is not None:
         score = score_yield_curve(yc_val, yc_series)
         details['yield_curve']['value'] = yc_val
         details['yield_curve']['score'] = score
-        weighted_sum += score * 0.35
-        total_weight += 0.35
+        weighted_sum += score * 0.30
+        total_weight += 0.30
         details['components_available'] += 1
     
-    # --- 2. Unemployment (25%) ---
+    # --- 2. Unemployment (20%) ---
     ur_series, ur_val = extract_series_and_value('UNRATE')
     if ur_series is not None and len(ur_series) > 60:
         score = score_unemployment_trend(ur_series)
         details['unemployment']['value'] = ur_val
         details['unemployment']['score'] = score
-        weighted_sum += score * 0.25
-        total_weight += 0.25
+        weighted_sum += score * 0.20
+        total_weight += 0.20
         details['components_available'] += 1
     
-    # --- 3. Credit Spread (25%) ---
+    # --- 3. Credit Spread (20%) ---
     cs_series, cs_val = extract_series_and_value('Credit_Spread')
     if cs_val is not None:
         score = score_credit_spread(cs_val, cs_series)
         details['credit_spread']['value'] = cs_val
         details['credit_spread']['score'] = score
-        weighted_sum += score * 0.25
-        total_weight += 0.25
+        weighted_sum += score * 0.20
+        total_weight += 0.20
         details['components_available'] += 1
     
-    # --- 4. Leading Index (15%) ---
+    # --- 4. Leading Index (10%) ---
     li_series, li_val = extract_series_and_value('Leading_Index')
     if li_val is not None:
         score = score_leading_index(li_val, li_series)
         details['leading_index']['value'] = li_val
         details['leading_index']['score'] = score
-        weighted_sum += score * 0.15
-        total_weight += 0.15
+        weighted_sum += score * 0.10
+        total_weight += 0.10
+        details['components_available'] += 1
+    
+    # --- 5. Manufacturing Composite (10%) ---
+    mfg_score, mfg_info = score_manufacturing_composite(data)
+    if mfg_score is not None:
+        details['mfg_composite']['value'] = mfg_info['average']
+        details['mfg_composite']['score'] = mfg_score
+        details['mfg_composite']['available'] = mfg_info['available']
+        weighted_sum += mfg_score * 0.10
+        total_weight += 0.10
+        details['components_available'] += 1
+    
+    # --- 6. Services Composite (10%) ---
+    svc_score, svc_info = score_services_composite(data)
+    if svc_score is not None:
+        details['svc_composite']['value'] = svc_info['average']
+        details['svc_composite']['score'] = svc_score
+        details['svc_composite']['available'] = svc_info['available']
+        weighted_sum += svc_score * 0.10
+        total_weight += 0.10
         details['components_available'] += 1
     
     # --- 総合スコア ---
