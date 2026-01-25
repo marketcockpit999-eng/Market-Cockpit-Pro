@@ -215,9 +215,17 @@ with st.sidebar:
         if freshness['summary']['critical_count'] > 0:
             st.warning(t('sidebar_critical_warning', count=freshness['summary']['critical_count']))
         
-        # Show missing count if any (data fetch failures)
-        if freshness['summary']['missing_count'] > 0:
-            st.caption(f"⚪ Missing: {freshness['summary']['missing_count']}")
+        # Show stale items WITH NAMES (for easy identification)
+        if freshness['stale']:
+            names = ', '.join(freshness['stale'][:3])  # Max 3 items for sidebar width
+            suffix = f" +{len(freshness['stale'])-3}" if len(freshness['stale']) > 3 else ""
+            st.caption(f"🟡 Stale: {names}{suffix}")
+        
+        # Show missing items WITH NAMES
+        if freshness['missing']:
+            names = ', '.join(freshness['missing'][:3])
+            suffix = f" +{len(freshness['missing'])-3}" if len(freshness['missing']) > 3 else ""
+            st.caption(f"⚪ Missing: {names}{suffix}")
         
         st.caption(t('sidebar_health_score', score=freshness['summary']['health_score']))
     
