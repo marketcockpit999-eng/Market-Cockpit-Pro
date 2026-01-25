@@ -38,7 +38,7 @@ def test_japanese_translations_exist():
     assert 'ja' in TRANSLATIONS, "日本語翻訳セクションがありません"
     
     ja_count = len(TRANSLATIONS['ja'])
-    assert ja_count > 50, f"⚠️ 日本語翻訳が少なすぎます: {ja_count}個（50個以上必要）"
+    assert ja_count > 50, f"[WARN] 日本語翻訳が少なすぎます: {ja_count}個（50個以上必要）"
 
 
 def test_i18n_keys_match():
@@ -83,6 +83,64 @@ def test_no_empty_translations():
     assert len(empty_ja) == 0, f"日本語に空の翻訳があります: {empty_ja}"
 
 
+# =============================================================================
+# 重要翻訳キーの存在確認（回帰防止）
+# =============================================================================
+
+# これらのキーが消えるとUIが壊れる
+CRITICAL_TRANSLATION_KEYS = [
+    # 共通
+    'app_title',
+    'data_period',
+    'source_update_date',
+    'source_update',
+    'loading',
+    'no_data',
+    'error_data_not_loaded',
+    # ページタイトル
+    'liquidity_title',
+    'us_economic_page_title',
+    'crypto_page_title',
+    'sentiment_page_title',
+    # 指標名
+    'net_liquidity',
+    'on_rrp',
+    'tga',
+    'reserves',
+    'vix_index',
+    # 頻度ラベル
+    'freq_daily',
+    'freq_weekly',
+    'freq_monthly',
+]
+
+
+def test_critical_keys_exist_in_english():
+    """重要翻訳キーが英語に存在することを確認"""
+    from utils.i18n import TRANSLATIONS
+    
+    missing = [k for k in CRITICAL_TRANSLATION_KEYS if k not in TRANSLATIONS['en']]
+    
+    assert len(missing) == 0, (
+        f"[CRITICAL] 重要な英語翻訳キーが消えています!\n"
+        f"   消失キー: {missing}\n"
+        f"   → これらのキーがないとUIが壊れます"
+    )
+
+
+def test_critical_keys_exist_in_japanese():
+    """重要翻訳キーが日本語に存在することを確認"""
+    from utils.i18n import TRANSLATIONS
+    
+    missing = [k for k in CRITICAL_TRANSLATION_KEYS if k not in TRANSLATIONS['ja']]
+    
+    assert len(missing) == 0, (
+        f"[CRITICAL] 重要な日本語翻訳キーが消えています!\n"
+        f"   消失キー: {missing}\n"
+        f"   → これらのキーがないとUIが壊れます"
+    )
+
+
 if __name__ == "__main__":
     # 直接実行時のテスト
     print("=" * 60)
@@ -124,5 +182,17 @@ if __name__ == "__main__":
         print("[OK] test_no_empty_translations")
     except AssertionError as e:
         print(f"[NG] test_no_empty_translations: {e}")
+    
+    try:
+        test_critical_keys_exist_in_english()
+        print("[OK] test_critical_keys_exist_in_english")
+    except AssertionError as e:
+        print(f"[NG] test_critical_keys_exist_in_english: {e}")
+    
+    try:
+        test_critical_keys_exist_in_japanese()
+        print("[OK] test_critical_keys_exist_in_japanese")
+    except AssertionError as e:
+        print(f"[NG] test_critical_keys_exist_in_japanese: {e}")
     
     print("=" * 60)

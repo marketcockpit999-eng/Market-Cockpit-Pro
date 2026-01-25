@@ -25,7 +25,7 @@ BILLS_RATIO_FORMULA = "(SOMA_Bills / SOMA_Total) * 100"
 
 # 期待される指標数
 # 変更時は日付と理由をコメントで記載すること
-EXPECTED_INDICATOR_COUNT = 83  # 2026-01-17: 新指標追加 (M2_Velocity, Financial_Stress, Banking等)
+EXPECTED_INDICATOR_COUNT = 88  # 2026-01-25: Richmond Fed統合含む全88項目に更新
 
 # ページファイル（存在確認用）
 EXPECTED_PAGE_FILES = [
@@ -183,7 +183,8 @@ REQUIRED_DATAFRAME_COLUMNS = [
     # Plumbing
     "Reserves", "EFFR", "IORB", "SOFR",
     # SOMA
-    "SOMA_Total", "SOMA_Bills", "SomaBillsRatio",
+    "SOMA_Total", "SOMA_Bills",
+    # NOTE: SomaBillsRatio removed 2026-01-25 - calculation was removed from data_fetcher
     # Markets (Yahoo)
     "SP500", "VIX", "BTC", "ETH",
     # Credit
@@ -197,11 +198,7 @@ CALCULATION_RULES = {
         "components": ["Fed_Assets", "TGA", "ON_RRP", "SRF", "FIMA"],
         "tolerance": 1.0  # 誤差許容範囲（Billions）
     },
-    "SomaBillsRatio": {
-        "formula": "(SOMA_Bills / SOMA_Total) * 100",
-        "components": ["SOMA_Bills", "SOMA_Total"],
-        "tolerance": 0.1  # 誤差許容範囲（%）
-    }
+    # NOTE: SomaBillsRatio removed 2026-01-25 - calculation was removed from data_fetcher
 }
 
 # 最小指標数（各カテゴリ）

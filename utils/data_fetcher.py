@@ -326,6 +326,39 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
     # Sort index after concat
     df = df.sort_index()
     
+    # === Fetch Richmond Fed Data (WEB) ===
+    # NOTE: Richmond Fed surveys are not available via FRED, so we fetch from their website
+    try:
+        richmond_mfg = get_richmond_fed_survey()
+        if richmond_mfg and richmond_mfg.get('history') is not None:
+            mfg_history = richmond_mfg['history'].copy()
+            mfg_history = mfg_history.rename(columns={'Composite Index': 'Richmond_Fed_Mfg'})
+            df = df.join(mfg_history, how='outer')
+            logger.info(f"✓ Richmond Fed Manufacturing: {len(mfg_history)} rows")
+        elif richmond_mfg and richmond_mfg.get('current') is not None:
+            date = pd.to_datetime(richmond_mfg.get('date', datetime.datetime.now()))
+            df.loc[date, 'Richmond_Fed_Mfg'] = richmond_mfg['current']
+            logger.info("✓ Richmond Fed Manufacturing: current value only")
+    except Exception as e:
+        logger.warning(f"✗ Richmond Fed Manufacturing: {e}")
+
+    try:
+        richmond_svc = get_richmond_fed_services_survey()
+        if richmond_svc and richmond_svc.get('history') is not None:
+            svc_history = richmond_svc['history'].copy()
+            svc_history = svc_history.rename(columns={'Composite Index': 'Richmond_Fed_Services'})
+            df = df.join(svc_history, how='outer')
+            logger.info(f"✓ Richmond Fed Services: {len(svc_history)} rows")
+        elif richmond_svc and richmond_svc.get('current') is not None:
+            date = pd.to_datetime(richmond_svc.get('date', datetime.datetime.now()))
+            df.loc[date, 'Richmond_Fed_Services'] = richmond_svc['current']
+            logger.info("✓ Richmond Fed Services: current value only")
+    except Exception as e:
+        logger.warning(f"✗ Richmond Fed Services: {e}")
+
+    # Re-sort after adding Richmond Fed data
+    df = df.sort_index()
+    
     # Unit Normalization (Million to Billion)
     mil_to_bil = ['Fed_Assets', 'TGA', 'Reserves', 'SOMA_Total', 'Bank_Cash', 
                   'SRF', 'FIMA', 'Primary_Credit', 'Total_Loans', 'SOMA_Treasury',
