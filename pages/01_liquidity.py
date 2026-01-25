@@ -319,10 +319,16 @@ col_ff1, col_ff2 = st.columns(2)
 with col_ff1:
     st.markdown(f"#### {t('ff_upper')}")
     show_metric_with_sparkline(t('ff_upper'), df.get('FedFundsUpper'), 'FedFundsUpper', "%", "FF_Upper", notes=t('ff_upper_notes'), decimal_places=2)
+    if 'FedFundsUpper' in df.columns and not df.get('FedFundsUpper', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        styled_line_chart(df[['FedFundsUpper']], height=200)
 
 with col_ff2:
     st.markdown(f"#### {t('ff_lower')}")
     show_metric_with_sparkline(t('ff_lower'), df.get('FedFundsLower'), 'FedFundsLower', "%", "FF_Lower", notes=t('ff_lower_notes'), decimal_places=2)
+    if 'FedFundsLower' in df.columns and not df.get('FedFundsLower', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        styled_line_chart(df[['FedFundsLower']], height=200)
 
 st.markdown("---")
 st.subheader(t('fed_balance_sheet'))
