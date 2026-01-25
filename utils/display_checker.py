@@ -896,6 +896,26 @@ def print_pattern_verification_report(results: Dict[str, List]) -> None:
         print("[OK] All patterns match their expected display functions!")
     else:
         print(f"[FAIL] {total_issues} issue(s) found - see above")
+        
+        # 初心者向けアクション提案
+        print("\n" + "-" * 80)
+        print("SUGGESTED ACTIONS (修正方法):")
+        print("-" * 80)
+        
+        if mismatches:
+            print("\n[Pattern Mismatch] 表示関数が仕様と一致しません:")
+            print("  -> docs/DISPLAY_SPEC.md の「パターンと表示関数の対応」を確認")
+            print("  -> standard パターン: show_metric_with_sparkline() を使用")
+            print("  -> mom_yoy パターン: display_macro_card() を使用")
+        
+        if results['errors']:
+            missing_count = sum(1 for e in results['errors'] if 'not found' in e)
+            if missing_count > 0:
+                print(f"\n[Missing Indicator] {missing_count}個の指標がページに見つかりません:")
+                print("  -> 該当ページの pages/*.py を確認")
+                print("  -> show_metric_with_sparkline() の呼び出しを追加")
+                print("  -> または indicators.py の ui_page 設定を確認")
+    
     print("=" * 80)
 
 
@@ -916,8 +936,8 @@ if __name__ == '__main__':
         results = verify_display_patterns(app_root)
         print_pattern_verification_report(results)
         
-        # Exit with error if any errors found
-        if results['errors']:
+        # Exit with error if any errors or mismatches found
+        if results['errors'] or results.get('pattern_mismatches', []):
             sys.exit(1)
         sys.exit(0)
     

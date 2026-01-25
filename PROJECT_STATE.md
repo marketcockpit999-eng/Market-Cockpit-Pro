@@ -1,10 +1,10 @@
 # Market Cockpit Pro - Project State
-> Last Updated: 2026-01-26 (Claude Thread #16)
+> Last Updated: 2026-01-26 (Claude Thread #17)
 
 ## ✅ 現在の状態
 
 **アプリ完成** 🎉
-- 100 指標を監視（indicators.py）
+- 101 指標を監視（indicators.py）
 - 12 ページ構成
 - 日英バイリンガル対応
 - AI分析（Claude/Gemini/Grok）
@@ -24,6 +24,7 @@
 |-------|------|------|
 | 1 | 全データの一元管理（indicators.py統合） | ✅ 完了 |
 | 2 | 表示パターン分類・仕様書作成 | ✅ 完了（#16） |
+| 2.5 | 全101指標のUI表示完了 | ✅ 完了（#17） |
 | 3 | 表示要素チェッカーの改修 | ⏳ 次 |
 | 4 | 自動修正の検討 | ⏳ 未着手 |
 
@@ -41,7 +42,7 @@
 | web_scrape | 2 | Webスクレイピング |
 | calculated | 1 | 複数指標から算出 |
 | api | 9 | 個別APIコール |
-| **合計** | **100** | |
+| **合計** | **101** | |
 
 ---
 
@@ -57,7 +58,7 @@
 | HYPERLIQUID | 5 |
 | DEFILLAMA | 3 |
 | SENTIMENT | 2 |
-| **合計** | **100** |
+| **合計** | **101** |
 
 ---
 
@@ -73,13 +74,14 @@
 | 13 | 01-24 | アプリ総評、Phase 4準備 |
 | 14 | 01-25 | サイドバー改善、表示パターン分類開始 |
 | 15 | 01-26 | 「本」の重要性議論、材料チェッカー作成 |
-| **16** | **01-26** | **仕様書（DISPLAY_SPEC.md）完成** |
+| 16 | 01-26 | 仕様書（DISPLAY_SPEC.md）完成 |
+| **17** | **01-26** | **全101指標UI表示完了（HYG,LQD,ECB,ADP追加）** |
 
 ---
 
 ## 🔗 最新スレッド
 
-**Thread #16**: https://claude.ai/chat/602d7677-dc10-4f5f-a321-40597bd37354
+**Thread #17**: https://claude.ai/chat/a8bc996b-ef90-4706-b413-7259193466b8
 
 ---
 
@@ -101,5 +103,5 @@
 | `utils/indicators.py` | 📍 Single Source of Truth |
 | `docs/DISPLAY_SPEC.md` | ★仕様書（本）|
 | `utils/display_checker.py` | 表示要素チェッカー |
-| `handoffs/HANDOFF_20260126_16.md` | 最新ハンドオフ |
+| `handoffs/HANDOFF_20260126_22.md` | 最新ハンドオフ |
 | `PROJECT_RULES.md` | 回帰防止ルール |
