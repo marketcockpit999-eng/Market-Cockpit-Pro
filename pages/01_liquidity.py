@@ -431,3 +431,24 @@ with col3:
     if 'US_TNX' in df.columns and not df.get('US_TNX', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
         styled_line_chart(df[['US_TNX']], height=200)
+
+# === Corporate Bond ETFs ===
+st.markdown("---")
+st.markdown(f"### {t('corp_bond_etf_section')}")
+st.caption(t('corp_bond_etf_desc'))
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown(f"#### {t('hyg')}")
+    show_metric_with_sparkline(t('hyg'), df.get('HYG'), 'HYG', "$", "HYG", notes=t('hyg_notes'), decimal_places=2)
+    if 'HYG' in df.columns and not df.get('HYG', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        styled_line_chart(df[['HYG']], height=200)
+
+with col2:
+    st.markdown(f"#### {t('lqd')}")
+    show_metric_with_sparkline(t('lqd'), df.get('LQD'), 'LQD', "$", "LQD", notes=t('lqd_notes'), decimal_places=2)
+    if 'LQD' in df.columns and not df.get('LQD', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        styled_line_chart(df[['LQD']], height=200)

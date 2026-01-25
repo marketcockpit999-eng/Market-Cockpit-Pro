@@ -161,6 +161,14 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'us_10y_yield': 'US 10Y Yield',
         'us_10y_notes': 'Long-term rate',
         
+        # --- Corporate Bond ETFs ---
+        'corp_bond_etf_section': '📊 Corporate Bond ETFs',
+        'corp_bond_etf_desc': '💡 Monitor investment grade and high yield corporate bond market',
+        'hyg': 'HYG (High Yield)',
+        'hyg_notes': 'High yield corporate bonds (junk bonds)',
+        'lqd': 'LQD (Investment Grade)',
+        'lqd_notes': 'Investment grade corporate bonds',
+        
         # --- Valuation & Leverage ---
         'sp500_pe': 'S&P 500 P/E',
         'sp500_pe_help': 'Historical avg ~19.5. Above 25 = overheated, below 15 = undervalued',
@@ -217,7 +225,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'nfp': 'Non-Farm Payrolls',
         'nfp_notes': 'Monthly job creation',
         'adp': 'ADP Employment',
+        'adp_title': 'ADP Employment (Private Sector)',
+        'adp_label': 'ADP Job Gain',
         'adp_notes': 'Private sector jobs',
+        'adp_monthly_change': 'ADP Monthly Change Trend',
         'unemployment': 'Unemployment Rate',
         'unemployment_notes': 'U-3 rate',
         'jolts': 'JOLTS Job Openings',
@@ -323,6 +334,12 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # --- Analysis Lab Page ---
         'analysis_lab_title': '🧪 Market Analysis Lab',
         'analysis_lab_desc': 'Advanced market analysis tools',
+        
+        # --- Central Bank Assets ---
+        'central_bank_assets_section': '🏦 Central Bank Assets',
+        'central_bank_assets_desc': '💡 Major central bank balance sheets - Key drivers of global liquidity',
+        'ecb_assets': 'ECB Total Assets',
+        'ecb_assets_notes': 'European Central Bank balance sheet (EUR billions)',
         
         # --- Global Money Page Extended ---
         'global_money_subtitle': '💡 Global liquidity, FX, commodities, and crypto trends',
@@ -1201,6 +1218,14 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'us_10y_yield': '米10年金利',
         'us_10y_notes': '長期金利',
         
+        # --- Corporate Bond ETFs ---
+        'corp_bond_etf_section': '📊 社債ETF',
+        'corp_bond_etf_desc': '💡 投資適格債とハイイールド債市場を監視',
+        'hyg': 'HYG (ハイイールド)',
+        'hyg_notes': 'ハイイールド社債（ジャンク債）',
+        'lqd': 'LQD (投資適格)',
+        'lqd_notes': '投資適格社債',
+        
         # --- Valuation & Leverage ---
         'sp500_pe': 'S&P 500 P/E',
         'sp500_pe_help': '歴史的平均は約19.5。25超=過熱、15未満=割安',
@@ -1257,7 +1282,10 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'nfp': '非農業部門雇用者数',
         'nfp_notes': '月間雇用創出',
         'adp': 'ADP雇用統計',
+        'adp_title': 'ADP雇用統計 (民間部門)',
+        'adp_label': 'ADP雇用増減',
         'adp_notes': '民間雇用',
+        'adp_monthly_change': 'ADP月次変化トレンド',
         'unemployment': '失業率',
         'unemployment_notes': 'U-3失業率',
         'jolts': 'JOLTS求人件数',
@@ -1363,6 +1391,12 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         # --- Analysis Lab Page ---
         'analysis_lab_title': '🧪 マーケット分析ラボ',
         'analysis_lab_desc': '高度なマーケット分析ツール',
+        
+        # --- Central Bank Assets ---
+        'central_bank_assets_section': '🏦 中央銀行資産',
+        'central_bank_assets_desc': '💡 主要中央銀行のバランスシート - グローバル流動性の主要ドライバー',
+        'ecb_assets': 'ECB総資産',
+        'ecb_assets_notes': '欧州中央銀行バランスシート（ユーロ十億）',
         
         # --- Global Money Page Extended ---
         'global_money_subtitle': '💡 グローバル流動性、為替、コモディティ、暗号資産のトレンド',

@@ -93,6 +93,47 @@ HELP_EN = {
     'help_Philly_Fed_Mfg': 'Philadelphia Fed Manufacturing Index - Mid-Atlantic region survey. Above 0 = expansion.',
     'help_Dallas_Fed_Mfg': 'Dallas Fed Manufacturing Index - Texas region survey. Above 0 = expansion.',
     'help_Richmond_Fed_Mfg': 'Richmond Fed Manufacturing Index - Fifth District survey. Above 0 = expansion.',
+    # === Key Name Aliases (2026-01-26) ===
+    'help_FedFundsUpper': 'Fed Funds Target Rate (Upper) - Policy rate upper bound.',
+    'help_FedFundsLower': 'Fed Funds Target Rate (Lower) - Policy rate lower bound.',
+    'help_AvgHourlyEarnings': 'Average Hourly Earnings - Wage inflation indicator.',
+    # === Fed & Global (2026-01-26) ===
+    'help_Fed_Assets': 'Fed Total Assets - Total balance sheet size. QE increases, QT decreases.',
+    'help_ECB_Assets': 'ECB Total Assets - European Central Bank balance sheet (Billion EUR).',
+    'help_Michigan_Inflation_Exp': 'Michigan 1-Year Inflation Expectations - Consumer survey-based inflation forecast.',
+    # === Regional Fed Services Indices (2026-01-26) ===
+    'help_Philly_Fed_Services': 'Philly Fed Non-Manufacturing Index - Services sector survey. Above 0 = expansion.',
+    'help_Dallas_Fed_Services': 'Dallas Fed Services Index - Texas services sector survey. Above 0 = expansion.',
+    'help_NY_Fed_Services': 'NY Fed Business Leaders Survey - Services activity. Above 0 = expansion.',
+    'help_Richmond_Fed_Services': 'Richmond Fed Services Index - Fifth District services survey. Above 0 = expansion.',
+    # === Banking H.8 Data (2026-01-26) ===
+    'help_Credit_Card_Loans': 'Credit Card Loans - Total credit card balances at commercial banks.',
+    'help_Consumer_Loans': 'Consumer Loans - Total consumer loan balances at commercial banks.',
+    'help_Bank_Securities': 'Bank Securities Holdings - Treasury and agency securities held by banks.',
+    'help_Bank_Deposits': 'Total Bank Deposits - All deposits at commercial banks.',
+    # === Credit ETFs (2026-01-26) ===
+    'help_HYG': 'iShares iBoxx High Yield Corporate Bond ETF - Junk bond market proxy.',
+    'help_LQD': 'iShares iBoxx Investment Grade Corporate Bond ETF - IG credit market proxy.',
+    # === FX Pairs (2026-01-26) ===
+    'help_GBPUSD': 'GBP/USD - British Pound vs US Dollar exchange rate.',
+    'help_USDCHF': 'USD/CHF - US Dollar vs Swiss Franc exchange rate.',
+    'help_AUDUSD': 'AUD/USD - Australian Dollar vs US Dollar exchange rate.',
+    # === Valuation API (2026-01-26) ===
+    'help_SP500_PE': 'S&P 500 P/E Ratio - Current price-to-earnings valuation.',
+    'help_NASDAQ_PE': 'NASDAQ P/E Ratio - Tech-heavy index valuation (via QQQ ETF).',
+    # === Crypto Leverage API (2026-01-26) ===
+    'help_BTC_Funding_Rate': 'BTC Funding Rate - Perpetual futures funding. Positive = longs pay shorts.',
+    'help_BTC_Open_Interest': 'BTC Open Interest - Total open perpetual contracts. High = leveraged market.',
+    'help_BTC_Long_Short_Ratio': 'BTC Long/Short Ratio - Trader positioning. >1 = more longs.',
+    'help_ETH_Funding_Rate': 'ETH Funding Rate - Ethereum perpetual futures funding rate.',
+    'help_ETH_Open_Interest': 'ETH Open Interest - Total open ETH perpetual contracts.',
+    # === DeFi/RWA API (2026-01-26) ===
+    'help_Stablecoin_Total': 'Total Stablecoin Supply - Combined market cap of all stablecoins.',
+    'help_Treasury_TVL': 'Tokenized US Treasury TVL - Real World Asset value locked in protocols.',
+    'help_Gold_TVL': 'Tokenized Gold TVL - Real World Asset gold value locked in protocols.',
+    # === Sentiment API (2026-01-26) ===
+    'help_Crypto_Fear_Greed': 'Crypto Fear & Greed Index - 0=Extreme Fear, 100=Extreme Greed.',
+    'help_CNN_Fear_Greed': 'CNN Fear & Greed Index - Traditional market sentiment. 0-100 scale.',
 }
 
 # Japanese help texts
@@ -184,4 +225,45 @@ HELP_JA = {
     'help_Philly_Fed_Mfg': '【フィラデルフィア連銀製造業指数】\n中部大西洋地域の製造業調査。0超=拡大。',
     'help_Dallas_Fed_Mfg': '【ダラス連銀製造業指数】\nテキサス地域の製造業調査。0超=拡大。',
     'help_Richmond_Fed_Mfg': '【リッチモンド連銀製造業指数】\n第5地区の製造業調査。0超=拡大。',
+    # === キー名エイリアス (2026-01-26) ===
+    'help_FedFundsUpper': '【FF誘導目標（上限）】\n政策金利の上限。',
+    'help_FedFundsLower': '【FF誘導目標（下限）】\n政策金利の下限。',
+    'help_AvgHourlyEarnings': '【平均時給】\n賃金インフレの指標。',
+    # === FRB & グローバル (2026-01-26) ===
+    'help_Fed_Assets': '【FRB総資産】\n連銀のバランスシート規模。QEで増加、QTで減少。',
+    'help_ECB_Assets': '【ECB総資産】\n欧州中央銀行のバランスシート（十億ユーロ）。',
+    'help_Michigan_Inflation_Exp': '【ミシガン大1年先期待インフレ】\n消費者調査に基づくインフレ予想。',
+    # === 地域連銀サービス業指数 (2026-01-26) ===
+    'help_Philly_Fed_Services': '【フィラデルフィア連銀非製造業指数】\nサービス業調査。0超=拡大。',
+    'help_Dallas_Fed_Services': '【ダラス連銀サービス業指数】\nテキサス地域サービス業調査。0超=拡大。',
+    'help_NY_Fed_Services': '【NY連銀ビジネスリーダー調査】\nサービス業景況。0超=拡大。',
+    'help_Richmond_Fed_Services': '【リッチモンド連銀サービス業指数】\n第5地区サービス業調査。0超=拡大。',
+    # === 銀行H.8データ (2026-01-26) ===
+    'help_Credit_Card_Loans': '【クレカ残高】\n商業銀行のクレジットカード融資残高。',
+    'help_Consumer_Loans': '【消費者ローン残高】\n商業銀行の消費者向けローン残高。',
+    'help_Bank_Securities': '【銀行保有有価証券】\n銀行が保有する国債・政府機関債。',
+    'help_Bank_Deposits': '【銀行預金総額】\n商業銀行の全預金残高。',
+    # === 社債ETF (2026-01-26) ===
+    'help_HYG': '【HYG（ハイイールド債ETF）】\nジャンク債市場のプロキシ。',
+    'help_LQD': '【LQD（投資適格社債ETF）】\n投資適格社債市場のプロキシ。',
+    # === 為替ペア (2026-01-26) ===
+    'help_GBPUSD': '【ポンドドル】\n英ポンド/米ドル為替レート。',
+    'help_USDCHF': '【ドルスイスフラン】\n米ドル/スイスフラン為替レート。',
+    'help_AUDUSD': '【豪ドル】\n豪ドル/米ドル為替レート。',
+    # === バリュエーションAPI (2026-01-26) ===
+    'help_SP500_PE': '【S&P 500 P/E比率】\n現在の株価収益率によるバリュエーション。',
+    'help_NASDAQ_PE': '【NASDAQ P/E比率】\nテック重視指数のバリュエーション（QQQ ETF経由）。',
+    # === 仮想通貨レバレッジAPI (2026-01-26) ===
+    'help_BTC_Funding_Rate': '【BTCファンディングレート】\n無期限先物の資金調達率。プラス=ロングがショートに支払い。',
+    'help_BTC_Open_Interest': '【BTCオープンインタレスト】\n未決済建玉総額。高い=レバレッジ市場。',
+    'help_BTC_Long_Short_Ratio': '【BTCロング/ショート比率】\nトレーダーのポジション。>1=ロング優勢。',
+    'help_ETH_Funding_Rate': '【ETHファンディングレート】\nイーサリアム無期限先物の資金調達率。',
+    'help_ETH_Open_Interest': '【ETHオープンインタレスト】\nETH無期限先物の未決済建玉。',
+    # === DeFi/RWA API (2026-01-26) ===
+    'help_Stablecoin_Total': '【ステーブルコイン総供給量】\n全ステーブルコインの合計時価総額。',
+    'help_Treasury_TVL': '【トークン化米国債TVL】\nプロトコル内のRWA（米国債）価値。',
+    'help_Gold_TVL': '【トークン化金TVL】\nプロトコル内のRWA（金）価値。',
+    # === センチメントAPI (2026-01-26) ===
+    'help_Crypto_Fear_Greed': '【仮想通貨Fear & Greed】\n0=極度の恐怖、100=極度の貪欲。',
+    'help_CNN_Fear_Greed': '【CNN Fear & Greed】\n伝統市場センチメント。0-100スケール。',
 }

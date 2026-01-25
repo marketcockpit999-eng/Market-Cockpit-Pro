@@ -81,6 +81,21 @@ with col1:
             styled_line_chart(nfp_changes, height=150)
     
     st.markdown("---")
+    st.markdown(f"#### {t('adp_title')}")
+    adp_original = df_original.get('ADP') if df_original is not None else None
+    
+    if adp_original is not None and len(adp_original.dropna()) >= 2:
+        adp_data = adp_original.dropna()
+        adp_change = adp_data.iloc[-1] - adp_data.iloc[-2]
+        st.metric(t('adp_label'), f"{adp_change:+,.0f}K")
+        show_date_info(df, 'ADP')
+        
+        adp_changes = adp_data.diff().dropna()
+        if len(adp_changes) > 0:
+            st.markdown(f"###### {t('adp_monthly_change')}")
+            styled_line_chart(adp_changes, height=120)
+    
+    st.markdown("---")
     st.markdown(f"#### {t('unemployment_rate')}")
     unemp_original = df_original.get('UNRATE') if df_original is not None else None
     unemp_series = df.get('UNRATE')

@@ -50,6 +50,27 @@ with col2:
         st.markdown(f"###### {t('long_term_trend')}")
         styled_line_chart(df[['M2REAL']], height=150)
 
+# === Central Bank Assets Section ===
+st.markdown("---")
+st.markdown(f"### {t('central_bank_assets_section')}")
+st.caption(t('central_bank_assets_desc'))
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("#### 🇪🇺 ECB Total Assets")
+    show_metric_with_sparkline(t('ecb_assets'), df.get('ECB_Assets'), 'ECB_Assets', "B€", "ECB_Assets", notes=t('ecb_assets_notes'), decimal_places=0)
+    if 'ECB_Assets' in df.columns and not df.get('ECB_Assets', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        styled_line_chart(df[['ECB_Assets']], height=150)
+
+with col2:
+    # Reference: Fed Total Assets (SOMA_Total) for comparison
+    st.markdown("#### 🇺🇸 Fed Total Assets (SOMA)")
+    show_metric_with_sparkline(t('soma_total'), df.get('SOMA_Total'), 'SOMA_Total', "B$", "SOMA_Total", notes=t('soma_total_notes'), decimal_places=0)
+    if 'SOMA_Total' in df.columns and not df.get('SOMA_Total', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        styled_line_chart(df[['SOMA_Total']], height=150)
 
 # === FX Section ===
 st.markdown("---")

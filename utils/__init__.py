@@ -110,6 +110,16 @@ from .news import (
     format_rss_entry,
 )
 
+# Display Checker
+from .display_checker import (
+    DisplayChecker,
+    run_display_check,
+    get_failed_indicators,
+    get_indicators_needing_attention,
+    get_indicators_needing_attention,
+    # REQUIRED_ELEMENTS,
+)
+
 # Version
 __version__ = "2.2.0"  # Added i18n support
 __all__ = [
@@ -156,4 +166,8 @@ __all__ = [
     # News
     "get_time_diff_str", "search_google_news",
     "check_for_market_alerts", "fetch_agency_rss", "format_rss_entry",
+    # Display Checker
+    "DisplayChecker", "run_display_check",
+    "get_failed_indicators", "get_indicators_needing_attention",
+    # REQUIRED_ELEMENTS, (Removed)
 ]

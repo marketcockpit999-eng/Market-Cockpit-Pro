@@ -119,6 +119,9 @@ def show_metric(label, series, unit="", explanation_key="", notes="", alert_func
                 latest_date = df.attrs['last_valid_dates'][col_name]
             if 'fred_release_dates' in df.attrs and col_name in df.attrs['fred_release_dates']:
                 release_date = df.attrs['fred_release_dates'][col_name]
+            # Fallback: For Yahoo Finance indicators (no FRED release date), use last_valid_date
+            if release_date is None and latest_date is not None:
+                release_date = latest_date
     
     # Import help texts with language support
     from .help_texts import HELP_EN, HELP_JA
@@ -185,6 +188,9 @@ def show_metric_with_sparkline(label, series, df_column, unit="", explanation_ke
                 latest_date = df.attrs['last_valid_dates'][df_column]
             if 'fred_release_dates' in df.attrs and df_column in df.attrs['fred_release_dates']:
                 release_date = df.attrs['fred_release_dates'][df_column]
+            # Fallback: For Yahoo Finance indicators (no FRED release date), use last_valid_date
+            if release_date is None and latest_date is not None:
+                release_date = latest_date
     
     # Import help texts with language support
     from .help_texts import HELP_EN, HELP_JA

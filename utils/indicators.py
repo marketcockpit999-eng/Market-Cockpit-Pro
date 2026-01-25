@@ -21,6 +21,7 @@ Example:
         'notes': 'Description',     # Human-readable notes
         'validation': (0, 100),     # Optional: (min, max) for validation
         'divisor': 1000,            # Optional: unit conversion divisor
+        'display_pattern': 'standard',
     },
 ================================================================================
 """
@@ -45,6 +46,7 @@ INDICATORS = {
         'notes': 'Overnight Reverse Repo (余剰資金の滞留)',
         'validation': (0, 3000),
         'divisor': 1000,  # Millions → Billions
+        'display_pattern': 'standard',
     },
     'Reserves': {
         'source': 'FRED',
@@ -59,6 +61,7 @@ INDICATORS = {
         'notes': '銀行準備預金',
         'validation': (0, 5000),
         'divisor': 1000,
+        'display_pattern': 'standard',
     },
     'TGA': {
         'source': 'FRED',
@@ -73,21 +76,9 @@ INDICATORS = {
         'notes': '財務省一般口座',
         'validation': (0, 2000),
         'divisor': 1000,
+        'display_pattern': 'standard',
     },
-    'Fed_Assets': {
-        'source': 'FRED',
-        'id': 'WALCL',
-        'unit': 'B',
-        'frequency': 'weekly',
-        'freshness': 'weekly',
-        'category': 'fed_liquidity',
-        'ui_page': '01_liquidity',
-        'ai_include': True,
-        'ai_section': 'FRB流動性',
-        'notes': 'FRB総資産',
-        'validation': (4000, 12000),
-        'divisor': 1000,
-    },
+
     'SOMA_Total': {
         'source': 'FRED',
         'id': 'WALCL',
@@ -101,6 +92,7 @@ INDICATORS = {
         'notes': 'SOMA総資産',
         'validation': (4000, 12000),
         'divisor': 1000,
+        'display_pattern': 'standard',
     },
     'SOMA_Treasury': {
         'source': 'FRED',
@@ -114,6 +106,7 @@ INDICATORS = {
         'ai_section': 'FRB流動性',
         'notes': 'SOMA国債保有総額（Treasury Securities Held Outright）',
         'divisor': 1000,
+        'display_pattern': 'standard',
     },
     'SOMA_Bills': {
         'source': 'FRED',
@@ -127,6 +120,7 @@ INDICATORS = {
         'ai_section': 'FRB流動性',
         'notes': 'SOMA短期国債保有（RMP監視の核心指標）',
         'divisor': 1000,
+        'display_pattern': 'standard',
     },
 
     'SRF': {
@@ -141,6 +135,7 @@ INDICATORS = {
         'ai_section': 'FRB流動性',
         'notes': 'Standing Repo Facility',
         'divisor': 1000,
+        'display_pattern': 'standard',
     },
     'FIMA': {
         'source': 'FRED',
@@ -154,6 +149,7 @@ INDICATORS = {
         'ai_section': 'FRB流動性',
         'notes': 'FIMA Repo Facility',
         'divisor': 1000,
+        'display_pattern': 'standard',
     },
     'Primary_Credit': {
         'source': 'FRED',
@@ -167,6 +163,7 @@ INDICATORS = {
         'ai_section': 'FRB流動性',
         'notes': '割引窓口プライマリークレジット',
         'divisor': 1000,
+        'display_pattern': 'standard',
     },
     'Total_Loans': {
         'source': 'FRED',
@@ -180,6 +177,7 @@ INDICATORS = {
         'ai_section': 'FRB流動性',
         'notes': 'FRB貸出総額',
         'divisor': 1000,
+        'display_pattern': 'standard',
     },
     
     # === Rates ===
@@ -195,6 +193,7 @@ INDICATORS = {
         'ai_section': '金利',
         'notes': '実効FF金利',
         'validation': (0, 15),
+        'display_pattern': 'standard',
     },
     'IORB': {
         'source': 'FRED',
@@ -208,6 +207,7 @@ INDICATORS = {
         'ai_section': '金利',
         'notes': '準備預金付利',
         'validation': (0, 15),
+        'display_pattern': 'standard',
     },
     'SOFR': {
         'source': 'FRED',
@@ -221,6 +221,7 @@ INDICATORS = {
         'ai_section': '金利',
         'notes': 'SOFR',
         'validation': (0, 15),
+        'display_pattern': 'standard',
     },
     'FedFundsUpper': {
         'source': 'FRED',
@@ -234,6 +235,7 @@ INDICATORS = {
         'ai_section': '金利',
         'notes': 'FF金利上限',
         'validation': (0, 15),
+        'display_pattern': 'standard',
     },
     'FedFundsLower': {
         'source': 'FRED',
@@ -247,6 +249,7 @@ INDICATORS = {
         'ai_section': '金利',
         'notes': 'FF金利下限',
         'validation': (0, 15),
+        'display_pattern': 'standard',
     },
     'US_TNX': {
         'source': 'FRED',
@@ -260,6 +263,7 @@ INDICATORS = {
         'ai_section': '金利',
         'notes': '米10年国債利回り',
         'validation': (0, 20),
+        'display_pattern': 'standard',
     },
     'T10Y2Y': {
         'source': 'FRED',
@@ -273,6 +277,7 @@ INDICATORS = {
         'ai_section': '金利',
         'notes': '10年-2年スプレッド（逆イールド）',
         'validation': (-5, 5),
+        'display_pattern': 'standard',
     },
     'Credit_Spread': {
         'source': 'FRED',
@@ -286,6 +291,7 @@ INDICATORS = {
         'ai_section': '金利',
         'notes': 'ハイイールドスプレッド',
         'validation': (0, 30),
+        'display_pattern': 'standard',
     },
     
     # =========================================================================
@@ -303,6 +309,7 @@ INDICATORS = {
         'ai_section': '通貨供給',
         'notes': '米M2',
         'divisor': 1000,  # Billions → Trillions
+        'display_pattern': 'standard',
     },
     'M2REAL': {
         'source': 'FRED',
@@ -316,6 +323,7 @@ INDICATORS = {
         'ai_section': '通貨供給',
         'notes': '米実質M2',
         'divisor': 1000,
+        'display_pattern': 'standard',
     },
     # NOTE: Non-US M2 (CN, JP, EU) removed due to unreliable FRED data sources
     # Only US M2 (M2SL, M2REAL) is maintained for reliable data
@@ -335,6 +343,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': '消費者物価指数',
         'validation': (200, 400),
+        'display_pattern': 'mom_yoy',
     },
     'CPICore': {
         'source': 'FRED',
@@ -348,6 +357,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': 'コアCPI',
         'validation': (200, 400),
+        'display_pattern': 'mom_yoy',
     },
     'PPI': {
         'source': 'FRED',
@@ -361,6 +371,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': '生産者物価指数',
         'validation': (100, 350),
+        'display_pattern': 'mom_yoy',
     },
     'CorePCE': {
         'source': 'FRED',
@@ -374,6 +385,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': 'コアPCE（Fedの最重視指標）',
         'validation': (-5, 15),
+        'display_pattern': 'mom_yoy',
     },
     # NOTE: 'Unemployment' removed - duplicate of UNRATE below
     'UNRATE': {
@@ -388,6 +400,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': '失業率（別名）',
         'validation': (0, 25),
+        'display_pattern': 'manual_calc',
     },
     'NFP': {
         'source': 'FRED',
@@ -401,6 +414,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': '非農業部門雇用者数',
         'validation': (100000, 200000),
+        'display_pattern': 'manual_calc',
     },
     'ADP': {
         'source': 'FRED',
@@ -415,6 +429,7 @@ INDICATORS = {
         'notes': 'ADP雇用統計',
         'validation': (100000, 200000),
         'divisor': 1000,  # Persons → Thousands
+        'display_pattern': 'manual_calc',
     },
     'AvgHourlyEarnings': {
         'source': 'FRED',
@@ -428,6 +443,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': '平均時給',
         'validation': (20, 60),
+        'display_pattern': 'manual_calc',
     },
     'JOLTS': {
         'source': 'FRED',
@@ -441,6 +457,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': 'JOLTS求人数',
         'validation': (3000, 15000),
+        'display_pattern': 'standard',
     },
     'ICSA': {
         'source': 'FRED',
@@ -455,6 +472,7 @@ INDICATORS = {
         'notes': '新規失業保険申請件数',
         'validation': (100, 1000),
         'divisor': 1000,  # Persons → Thousands
+        'display_pattern': 'manual_calc',
     },
     'RetailSales': {
         'source': 'FRED',
@@ -467,6 +485,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '米経済指標',
         'notes': '小売売上高',
+        'display_pattern': 'mom_yoy',
     },
     'ConsumerSent': {
         'source': 'FRED',
@@ -479,6 +498,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '米経済指標',
         'notes': 'ミシガン消費者信頼感',
+        'display_pattern': 'mom_yoy',
     },
     'Michigan_Inflation_Exp': {
         'source': 'FRED',
@@ -492,6 +512,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': 'ミシガン大1年先期待インフレ率（消費者の予想）',
         'validation': (0, 15),
+        'display_pattern': 'standard',
     },
     'RealGDP': {
         'source': 'FRED',
@@ -504,6 +525,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '米経済指標',
         'notes': '実質GDP',
+        'display_pattern': 'manual_calc',
     },
     
     # === Regional Fed Manufacturing Indices (2026-01-23 追加) ===
@@ -520,6 +542,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': 'NY連銀製造業景況指数（0超=拡大）',
         'validation': (-80, 80),
+        'display_pattern': 'standard',
     },
     'Philly_Fed_Mfg': {
         'source': 'FRED',
@@ -533,6 +556,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': 'フィラデルフィア連銀製造業景況指数（0超=拡大）',
         'validation': (-80, 80),
+        'display_pattern': 'standard',
     },
     'Dallas_Fed_Mfg': {
         'source': 'FRED',
@@ -546,6 +570,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': 'ダラス連銀製造業指数（0超=拡大）',
         'validation': (-80, 80),
+        'display_pattern': 'standard',
     },
     'Richmond_Fed_Mfg': {
         'source': 'WEB',  # Not on FRED - scrape from Richmond Fed website
@@ -559,6 +584,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': 'リッチモンド連銀製造業景況指数（0超=拡大）- Webスクレイピング',
         'validation': (-80, 80),
+        'display_pattern': 'web_scrape',
     },
     
     # === Regional Fed Services/Nonmanufacturing Indices (2026-01-23 追加) ===
@@ -575,6 +601,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': 'フィラデルフィア連銀非製造業景況指数（0超=拡大）季節調整済',
         'validation': (-80, 80),
+        'display_pattern': 'standard',
     },
     'Dallas_Fed_Services': {
         'source': 'FRED',
@@ -588,6 +615,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': 'ダラス連銀サービス業指数（0超=拡大）季節調整済',
         'validation': (-80, 80),
+        'display_pattern': 'standard',
     },
     'NY_Fed_Services': {
         'source': 'FRED',
@@ -601,6 +629,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': 'NY連銀サービス業景況指数（0超=拡大）※季節調整なし(NSA)',
         'validation': (-80, 80),
+        'display_pattern': 'standard',
     },
     'Richmond_Fed_Services': {
         'source': 'WEB',  # Not on FRED - scrape from Richmond Fed website
@@ -614,6 +643,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': 'リッチモンド連銀サービス業景況指数（0超=拡大）- Webスクレイピング',
         'validation': (-80, 80),
+        'display_pattern': 'web_scrape',
     },
     
     # === Leading & Housing Indicators (2026-01-22 追加) ===
@@ -629,6 +659,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '米経済指標',
         'notes': '住宅着工件数（年率換算・千戸）',
+        'display_pattern': 'standard',
     },
     'Building_Permits': {
         'source': 'FRED',
@@ -641,6 +672,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '米経済指標',
         'notes': '建築許可件数（年率換算・千戸）',
+        'display_pattern': 'standard',
     },
     'Leading_Index': {
         'source': 'FRED',
@@ -654,6 +686,7 @@ INDICATORS = {
         'ai_section': '米経済指標',
         'notes': 'シカゴ連銀景気指数（3ヶ月移動平均）経済活動の先行指標、0超=拡大/0未満=減速',
         'validation': (-4, 4),
+        'display_pattern': 'standard',
     },
     
     # =========================================================================
@@ -671,6 +704,7 @@ INDICATORS = {
         'ai_section': '銀行セクター',
         'notes': '銀行の現金保有',
         'divisor': 1000,
+        'display_pattern': 'standard',
     },
     'CI_Loans': {
         'source': 'FRED',
@@ -684,6 +718,7 @@ INDICATORS = {
         'ai_section': '銀行セクター',
         'notes': 'C&I融資残高',
         'divisor': 1000,
+        'display_pattern': 'standard',
     },
     'CRE_Loans': {
         'source': 'FRED',
@@ -697,6 +732,7 @@ INDICATORS = {
         'ai_section': '銀行セクター',
         'notes': 'CRE融資残高',
         'divisor': 1000,
+        'display_pattern': 'standard',
     },
     # NOTE: 'Lending_Standards' removed - duplicate of CI_Std_Large below
     'CI_Std_Large': {
@@ -710,6 +746,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '銀行セクター',
         'notes': 'C&I基準（大企業）',
+        'display_pattern': 'standard',
     },
     'CI_Std_Small': {
         'source': 'FRED',
@@ -722,6 +759,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '銀行セクター',
         'notes': 'C&I基準（小企業）',
+        'display_pattern': 'standard',
     },
     'CI_Demand': {
         'source': 'FRED',
@@ -734,6 +772,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '銀行セクター',
         'notes': 'C&I融資需要',
+        'display_pattern': 'standard',
     },
     'CRE_Std_Construction': {
         'source': 'FRED',
@@ -746,6 +785,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '銀行セクター',
         'notes': 'CRE基準（建設）',
+        'display_pattern': 'standard',
     },
     'CRE_Std_Office': {
         'source': 'FRED',
@@ -758,6 +798,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '銀行セクター',
         'notes': 'CRE基準（オフィス）',
+        'display_pattern': 'standard',
     },
     'CRE_Std_Multifamily': {
         'source': 'FRED',
@@ -770,6 +811,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '銀行セクター',
         'notes': 'CRE基準（集合住宅）',
+        'display_pattern': 'standard',
     },
     'CRE_Demand': {
         'source': 'FRED',
@@ -782,6 +824,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '銀行セクター',
         'notes': 'CRE融資需要',
+        'display_pattern': 'standard',
     },
     
     # === H.8 Additional (2026-01-15) ===
@@ -796,6 +839,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '銀行セクター',
         'notes': 'クレカ残高',
+        'display_pattern': 'standard',
     },
     'Consumer_Loans': {
         'source': 'FRED',
@@ -808,6 +852,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '銀行セクター',
         'notes': '消費者ローン残高',
+        'display_pattern': 'standard',
     },
     'Bank_Securities': {
         'source': 'FRED',
@@ -820,6 +865,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '銀行セクター',
         'notes': '銀行保有有価証券（国債＋政府機関債）',
+        'display_pattern': 'standard',
     },
     'Bank_Deposits': {
         'source': 'FRED',
@@ -832,6 +878,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '銀行セクター',
         'notes': '銀行預金総額',
+        'display_pattern': 'standard',
     },
     
     # === Financial Stress (2026-01-16 Gemini推奨) ===
@@ -846,6 +893,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '金融ストレス',
         'notes': '地銀預金（取り付け警報）',
+        'display_pattern': 'standard',
     },
     'CC_Delinquency': {
         'source': 'FRED',
@@ -858,6 +906,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '金融ストレス',
         'notes': 'クレカ延滞率',
+        'display_pattern': 'standard',
     },
     'CP_Spread': {
         'source': 'FRED',
@@ -870,6 +919,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '金融ストレス',
         'notes': 'CP-FFスプレッド（企業資金ストレス）',
+        'display_pattern': 'standard',
     },
     'NFCI': {
         'source': 'FRED',
@@ -882,6 +932,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '金融ストレス',
         'notes': 'シカゴ連銀金融環境指数',
+        'display_pattern': 'standard',
     },
     'Breakeven_10Y': {
         'source': 'FRED',
@@ -894,6 +945,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '金融ストレス',
         'notes': '10年期待インフレ率',
+        'display_pattern': 'standard',
     },
     
     # =========================================================================
@@ -911,6 +963,7 @@ INDICATORS = {
         'ai_section': '株式・為替・商品',
         'notes': 'S&P 500',
         'validation': (2000, 8000),
+        'display_pattern': 'standard',
     },
     'VIX': {
         'source': 'YAHOO',
@@ -924,6 +977,7 @@ INDICATORS = {
         'ai_section': '株式・為替・商品',
         'notes': 'VIX恐怖指数',
         'validation': (5, 100),
+        'display_pattern': 'standard',
     },
     'MOVE': {
         'source': 'YAHOO',
@@ -936,6 +990,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '金融ストレス',
         'notes': 'MOVE債券恐怖指数',
+        'display_pattern': 'standard',
     },
     'HYG': {
         'source': 'YAHOO',
@@ -948,6 +1003,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '社債',
         'notes': 'ハイイールド債ETF（投機的社債）',
+        'display_pattern': 'standard',
     },
     'LQD': {
         'source': 'YAHOO',
@@ -956,10 +1012,11 @@ INDICATORS = {
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'credit',
-        'ui_page': '11_analysis_lab',
+        'ui_page': '01_liquidity',  # Changed from 11_analysis_lab to match actual display location
         'ai_include': True,
         'ai_section': '社債',
         'notes': '投資適格社債ETF（IG社債）',
+        'display_pattern': 'standard',
     },
     'NIKKEI': {
         'source': 'YAHOO',
@@ -972,6 +1029,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '株式・為替・商品',
         'notes': '日経225',
+        'display_pattern': 'standard',
     },
     
     # === FX ===
@@ -987,6 +1045,7 @@ INDICATORS = {
         'ai_section': '株式・為替・商品',
         'notes': 'ドルインデックス',
         'validation': (70, 130),
+        'display_pattern': 'standard',
     },
     'USDJPY': {
         'source': 'YAHOO',
@@ -1000,6 +1059,7 @@ INDICATORS = {
         'ai_section': '株式・為替・商品',
         'notes': 'ドル円',
         'validation': (80, 200),
+        'display_pattern': 'standard',
     },
     'EURUSD': {
         'source': 'YAHOO',
@@ -1012,6 +1072,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '株式・為替・商品',
         'notes': 'ユーロドル',
+        'display_pattern': 'standard',
     },
     'USDCNY': {
         'source': 'YAHOO',
@@ -1024,6 +1085,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '株式・為替・商品',
         'notes': 'ドル人民元',
+        'display_pattern': 'standard',
     },
     'GBPUSD': {
         'source': 'YAHOO',
@@ -1036,6 +1098,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '株式・為替・商品',
         'notes': 'ポンドドル (Fiat Health Monitor)',
+        'display_pattern': 'standard',
     },
     'USDCHF': {
         'source': 'YAHOO',
@@ -1048,6 +1111,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '株式・為替・商品',
         'notes': 'ドルスイスフラン (Fiat Health Monitor)',
+        'display_pattern': 'standard',
     },
     'AUDUSD': {
         'source': 'YAHOO',
@@ -1060,6 +1124,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '株式・為替・商品',
         'notes': '豪ドル (Fiat Health Monitor)',
+        'display_pattern': 'standard',
     },
     
     # === Commodities ===
@@ -1075,6 +1140,7 @@ INDICATORS = {
         'ai_section': '株式・為替・商品',
         'notes': '金先物',
         'validation': (1000, 4000),
+        'display_pattern': 'standard',
     },
     'Silver': {
         'source': 'YAHOO',
@@ -1087,6 +1153,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '株式・為替・商品',
         'notes': '銀先物',
+        'display_pattern': 'standard',
     },
     'Oil': {
         'source': 'YAHOO',
@@ -1099,6 +1166,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '株式・為替・商品',
         'notes': 'WTI原油先物',
+        'display_pattern': 'standard',
     },
     'Copper': {
         'source': 'YAHOO',
@@ -1111,6 +1179,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '株式・為替・商品',
         'notes': '銅先物（景気先行指標）',
+        'display_pattern': 'standard',
     },
     
     # === Crypto ===
@@ -1126,6 +1195,7 @@ INDICATORS = {
         'ai_section': '仮想通貨',
         'notes': 'ビットコイン',
         'validation': (10000, 500000),
+        'display_pattern': 'standard',
     },
     'ETH': {
         'source': 'YAHOO',
@@ -1138,6 +1208,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '仮想通貨',
         'notes': 'イーサリアム',
+        'display_pattern': 'standard',
     },
     
     # =========================================================================
@@ -1154,6 +1225,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': 'マクロ分析',
         'notes': 'M2通貨回転率（インフレ・景気過熱）',
+        'display_pattern': 'standard',
     },
     'Financial_Stress': {
         'source': 'FRED',
@@ -1166,6 +1238,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '金融ストレス',
         'notes': 'セントルイス連銀金融ストレス指数',
+        'display_pattern': 'standard',
     },
     'ECB_Assets': {
         'source': 'FRED',
@@ -1187,6 +1260,7 @@ INDICATORS = {
         # To get Trillions: Divide by 1,000,000.
         # Current Fed Assets is Billions. Let's aim for Billions.
         'divisor': 1000, 
+        'display_pattern': 'standard',
     },
     'Global_Liquidity_Proxy': {
         'source': 'CALCULATED',
@@ -1199,6 +1273,226 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '流動性',
         'notes': 'グローバル流動性プロキシ (Fed+ECB-TGA-RRP)',
+        'display_pattern': 'calculated',
+    },
+    
+    # =========================================================================
+    # API-BASED INDICATORS (Not stored in main df)
+    # These are fetched via separate API calls, not part of get_market_data()
+    # =========================================================================
+    
+    # === Valuation Metrics (Page 01) ===
+    'SP500_PE': {
+        'source': 'EXTERNAL',
+        'id': 'multpl.com/s-p-500-pe-ratio',
+        'unit': 'x',
+        'frequency': 'daily',
+        'freshness': 'daily',
+        'category': 'valuation',
+        'ui_page': '01_liquidity',
+        'ai_include': True,
+        'ai_section': 'バリュエーション',
+        'notes': 'S&P 500 P/E比率',
+        'df_stored': False,
+        'fetch_function': 'get_pe_ratios',
+        'fetch_key': 'sp500_pe',
+        'api_check': True,
+        'display_pattern': 'api',
+    },
+    'NASDAQ_PE': {
+        'source': 'EXTERNAL',
+        'id': 'yfinance/QQQ',
+        'unit': 'x',
+        'frequency': 'daily',
+        'freshness': 'daily',
+        'category': 'valuation',
+        'ui_page': '01_liquidity',
+        'ai_include': True,
+        'ai_section': 'バリュエーション',
+        'notes': 'NASDAQ P/E比率（QQQ ETF）',
+        'df_stored': False,
+        'fetch_function': 'get_pe_ratios',
+        'fetch_key': 'nasdaq_pe',
+        'api_check': True,
+        'display_pattern': 'api',
+    },
+    
+    # === Crypto Leverage (Page 01/04) - Hyperliquid DEX ===
+    'BTC_Funding_Rate': {
+        'source': 'HYPERLIQUID',
+        'id': 'BTC-PERP',
+        'unit': '%',
+        'frequency': 'realtime',
+        'freshness': 'daily',
+        'category': 'crypto_leverage',
+        'ui_page': '01_liquidity',
+        'ai_include': True,
+        'ai_section': '仮想通貨',
+        'notes': 'BTC Funding Rate（Hyperliquid DEX）',
+        'df_stored': False,
+        'fetch_function': 'get_crypto_leverage_data',
+        'fetch_key': 'btc_funding_rate',
+        'api_check': True,
+        'display_pattern': 'api',
+    },
+    'BTC_Open_Interest': {
+        'source': 'HYPERLIQUID',
+        'id': 'BTC-PERP',
+        'unit': 'BTC',
+        'frequency': 'realtime',
+        'freshness': 'daily',
+        'category': 'crypto_leverage',
+        'ui_page': '01_liquidity',
+        'ai_include': True,
+        'ai_section': '仮想通貨',
+        'notes': 'BTC Open Interest（Hyperliquid DEX）',
+        'df_stored': False,
+        'fetch_function': 'get_crypto_leverage_data',
+        'fetch_key': 'btc_open_interest',
+        'api_check': True,
+        'display_pattern': 'api',
+    },
+    'BTC_Long_Short_Ratio': {
+        'source': 'EXTERNAL',
+        'id': 'coingecko/derivatives',
+        'unit': '',
+        'frequency': 'realtime',
+        'freshness': 'daily',
+        'category': 'crypto_leverage',
+        'ui_page': '01_liquidity',
+        'ai_include': True,
+        'ai_section': '仮想通貨',
+        'notes': 'BTC Long/Short比率（CoinGecko）',
+        'df_stored': False,
+        'fetch_function': 'get_crypto_leverage_data',
+        'fetch_key': 'btc_long_short_ratio',
+        'api_check': True,
+        'display_pattern': 'api',
+    },
+    'ETH_Funding_Rate': {
+        'source': 'HYPERLIQUID',
+        'id': 'ETH-PERP',
+        'unit': '%',
+        'frequency': 'realtime',
+        'freshness': 'daily',
+        'category': 'crypto_leverage',
+        'ui_page': '04_crypto',
+        'ai_include': True,
+        'ai_section': '仮想通貨',
+        'notes': 'ETH Funding Rate（Hyperliquid DEX）',
+        'df_stored': False,
+        'fetch_function': 'get_crypto_leverage_data',
+        'fetch_key': 'eth_funding_rate',
+        'api_check': True,
+        'display_pattern': 'api',
+    },
+    'ETH_Open_Interest': {
+        'source': 'HYPERLIQUID',
+        'id': 'ETH-PERP',
+        'unit': 'ETH',
+        'frequency': 'realtime',
+        'freshness': 'daily',
+        'category': 'crypto_leverage',
+        'ui_page': '04_crypto',
+        'ai_include': True,
+        'ai_section': '仮想通貨',
+        'notes': 'ETH Open Interest（Hyperliquid DEX）',
+        'df_stored': False,
+        'fetch_function': 'get_crypto_leverage_data',
+        'fetch_key': 'eth_open_interest',
+        'api_check': True,
+        'display_pattern': 'api',
+    },
+    
+    # === DeFiLlama Data (Page 04) ===
+    'Stablecoin_Total': {
+        'source': 'DEFILLAMA',
+        'id': 'stablecoins/all',
+        'unit': 'B',
+        'frequency': 'daily',
+        'freshness': 'daily',
+        'category': 'crypto_stablecoin',
+        'ui_page': '04_crypto',
+        'ai_include': True,
+        'ai_section': '仮想通貨',
+        'notes': 'ステーブルコイン総発行量',
+        'df_stored': False,
+        'fetch_function': 'get_stablecoin_data',
+        'fetch_key': 'total_supply',
+        'api_check': True,
+        'display_pattern': 'api',
+    },
+    'Treasury_TVL': {
+        'source': 'DEFILLAMA',
+        'id': 'protocols/rwa-treasury',
+        'unit': 'B',
+        'frequency': 'daily',
+        'freshness': 'daily',
+        'category': 'crypto_rwa',
+        'ui_page': '04_crypto',
+        'ai_include': True,
+        'ai_section': '仮想通貨',
+        'notes': 'トークン化米国債TVL（RWA）',
+        'df_stored': False,
+        'fetch_function': 'get_tokenized_treasury_data',
+        'fetch_key': 'treasury.total_tvl',
+        'api_check': True,
+        'display_pattern': 'api',
+    },
+    'Gold_TVL': {
+        'source': 'DEFILLAMA',
+        'id': 'protocols/rwa-gold',
+        'unit': 'B',
+        'frequency': 'daily',
+        'freshness': 'daily',
+        'category': 'crypto_rwa',
+        'ui_page': '04_crypto',
+        'ai_include': True,
+        'ai_section': '仮想通貨',
+        'notes': 'トークン化金TVL（RWA）',
+        'df_stored': False,
+        'fetch_function': 'get_tokenized_treasury_data',
+        'fetch_key': 'gold.total_tvl',
+        'api_check': True,
+        'display_pattern': 'api',
+    },
+    
+    # === Sentiment Indicators (Page 08) ===
+    'Crypto_Fear_Greed': {
+        'source': 'SENTIMENT',
+        'id': 'alternative.me/fng',
+        'unit': '',
+        'frequency': 'daily',
+        'freshness': 'daily',
+        'category': 'sentiment',
+        'ui_page': '08_sentiment',
+        'ai_include': True,
+        'ai_section': 'センチメント',
+        'notes': 'Crypto Fear & Greed Index',
+        'df_stored': False,
+        'fetch_function': 'get_crypto_fear_greed',
+        'fetch_key': 'current',
+        'api_check': True,
+        'validation': (0, 100),
+        'display_pattern': 'api',
+    },
+    'CNN_Fear_Greed': {
+        'source': 'SENTIMENT',
+        'id': 'cnn.com/fear-and-greed',
+        'unit': '',
+        'frequency': 'daily',
+        'freshness': 'daily',
+        'category': 'sentiment',
+        'ui_page': '08_sentiment',
+        'ai_include': True,
+        'ai_section': 'センチメント',
+        'notes': 'CNN Fear & Greed Index',
+        'df_stored': False,
+        'fetch_function': 'get_cnn_fear_greed',
+        'fetch_key': 'current',
+        'api_check': True,
+        'validation': (0, 100),
+        'display_pattern': 'api',
     },
 }
 
@@ -1275,6 +1569,53 @@ def get_all_indicator_names():
     return list(INDICATORS.keys())
 
 
+def get_api_indicators():
+    """Return indicators that are fetched via separate API calls (not stored in main df)
+    
+    These have 'df_stored': False and include:
+    - EXTERNAL: multpl.com, yfinance PE, CoinGecko
+    - HYPERLIQUID: Hyperliquid DEX
+    - DEFILLAMA: DeFiLlama API
+    - SENTIMENT: Fear & Greed indices
+    """
+    return {k: v for k, v in INDICATORS.items() if v.get('df_stored') == False}
+
+
+def get_df_indicators():
+    """Return indicators stored in main DataFrame (FRED, YAHOO, WEB, CALCULATED)
+    
+    These are fetched by get_market_data() and stored in the main df.
+    Default is df_stored=True (not explicitly set).
+    """
+    return {k: v for k, v in INDICATORS.items() if v.get('df_stored', True) == True}
+
+
+def get_indicators_for_health_check():
+    """Return all indicators that should be health-checked
+    
+    Returns dict with two categories:
+    - 'df_indicators': Checked via data freshness (last_valid_date)
+    - 'api_indicators': Checked via API response validation
+    """
+    df_indicators = {k: v for k, v in INDICATORS.items() 
+                     if v.get('df_stored', True) == True}
+    api_indicators = {k: v for k, v in INDICATORS.items() 
+                      if v.get('api_check') == True}
+    return {
+        'df_indicators': df_indicators,
+        'api_indicators': api_indicators,
+        'total_count': len(df_indicators) + len(api_indicators)
+    }
+
+
+def get_indicators_by_source(source: str):
+    """Return indicators for a specific source type
+    
+    Valid sources: FRED, YAHOO, WEB, CALCULATED, EXTERNAL, HYPERLIQUID, DEFILLAMA, SENTIMENT
+    """
+    return {k: v for k, v in INDICATORS.items() if v.get('source') == source}
+
+
 # =============================================================================
 # BACKWARD COMPATIBILITY EXPORTS
 # =============================================================================
@@ -1291,6 +1632,21 @@ if __name__ == '__main__':
     print(f"Total indicators: {len(INDICATORS)}")
     print(f"FRED indicators: {len(FRED_INDICATORS)}")
     print(f"Yahoo indicators: {len(YAHOO_INDICATORS)}")
+    
+    # New source types
+    print(f"\nBy source type:")
+    for source in ['FRED', 'YAHOO', 'WEB', 'CALCULATED', 'EXTERNAL', 'HYPERLIQUID', 'DEFILLAMA', 'SENTIMENT']:
+        count = len(get_indicators_by_source(source))
+        if count > 0:
+            print(f"  {source}: {count}")
+    
+    # Health check summary
+    hc = get_indicators_for_health_check()
+    print(f"\nHealth check coverage:")
+    print(f"  DataFrame indicators: {len(hc['df_indicators'])}")
+    print(f"  API indicators: {len(hc['api_indicators'])}")
+    print(f"  Total: {hc['total_count']}")
+    
     print(f"\nFreshness rules:")
     for period, rules in DATA_FRESHNESS_RULES.items():
         print(f"  {period}: {len(rules['indicators'])} indicators")
