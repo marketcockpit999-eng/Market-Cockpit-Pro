@@ -228,35 +228,37 @@ def show_metric_with_sparkline(label, series, df_column, unit="", explanation_ke
     if notes:
         st.caption(notes)
     
-    # スパークライン
-    if df is not None and df_column in df.columns and not df.get(df_column, pd.Series()).isna().all():
-        recent_data = df[df_column].tail(60)
-        
-        st.caption(f"📊 {t('sparkline_label')}")
-        
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=recent_data.index,
-            y=recent_data.values,
-            mode='lines',
-            line=dict(color='#FF9F43', width=2),
-            fill='tozeroy',
-            fillcolor='rgba(255, 159, 67, 0.3)',
-            showlegend=False
-        ))
-        
-        fig.update_layout(
-            height=100,
-            margin=dict(l=0, r=0, t=0, b=0),
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False),
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            hovermode=False
-        )
-        
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False}, 
-                       key=f"spark_{uuid.uuid4().hex[:8]}")
+    # スパークライン（daily/weeklyのみ表示、monthly/quarterlyはスキップ）
+    freq = DATA_FREQUENCY.get(df_column, '')
+    if freq not in ['monthly', 'quarterly']:
+        if df is not None and df_column in df.columns and not df.get(df_column, pd.Series()).isna().all():
+            recent_data = df[df_column].tail(60)
+            
+            st.caption(f"📊 {t('sparkline_label')}")
+            
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=recent_data.index,
+                y=recent_data.values,
+                mode='lines',
+                line=dict(color='#FF9F43', width=2),
+                fill='tozeroy',
+                fillcolor='rgba(255, 159, 67, 0.3)',
+                showlegend=False
+            ))
+            
+            fig.update_layout(
+                height=100,
+                margin=dict(l=0, r=0, t=0, b=0),
+                xaxis=dict(visible=False),
+                yaxis=dict(visible=False),
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                hovermode=False
+            )
+            
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False}, 
+                           key=f"spark_{uuid.uuid4().hex[:8]}")
 
 
 def plot_dual_axis(df, left_col, right_col, left_name, right_name):
