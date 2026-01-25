@@ -27,6 +27,7 @@ Display Patterns:
 ================================================================================
 """
 
+import re
 import pandas as pd
 from typing import Dict, List, Tuple, Optional, Any
 from datetime import datetime, timedelta
@@ -614,6 +615,220 @@ def get_indicators_needing_attention(checker: DisplayChecker) -> List[str]:
 # PATTERN-TO-FUNCTION MAPPING (from DISPLAY_SPEC.md)
 # =============================================================================
 
+# =============================================================================
+# ELEMENT COMPOSITION WARNINGS (Phase 3.5)
+# =============================================================================
+
+# Check specific arguments that affect 9-element display
+ELEMENT_WARNINGS = {
+    'show_metric_with_sparkline': {
+        # explanation_key="" means help_text won't show properly
+        'explanation_key': {
+            'check_empty': True,
+            'message': 'explanation_key is empty (help_text may be missing)',
+            'severity': 'WARN',
+        },
+        # notes="" is optional but recommended
+        'notes': {
+            'check_empty': True,
+            'message': 'notes is empty',
+            'severity': 'INFO',
+        },
+    },
+    'display_macro_card': {
+        # show_level=False hides the main metric
+        'show_level': {
+            'check_false': True,
+            'message': 'show_level=False (level metric will be hidden)',
+            'severity': 'WARN',
+        },
+        # notes="" is optional but recommended
+        'notes': {
+            'check_empty': True,
+            'message': 'notes is empty',
+            'severity': 'INFO',
+        },
+    },
+}
+
+
+def parse_function_call(content: str, func_name: str) -> List[Dict[str, Any]]:
+    """
+    Parse all calls to a function and extract arguments.
+    Handles multi-line calls and nested parentheses.
+    
+    Args:
+        content: File content to search
+        func_name: Function name (e.g., 'show_metric_with_sparkline')
+    
+    Returns:
+        List of dicts with 'key', 'raw_args', and parsed 'kwargs'
+    """
+    results = []
+    
+    # regex to find function name and opening parenthesis
+    # ensures it's not part of another identifier
+    pattern = re.compile(rf'(?<![a-zA-Z0-9_]){func_name}\s*\(')
+    
+    for match in pattern.finditer(content):
+        start_idx = match.end()
+        
+        # Manually find the matching closing parenthesis
+        depth = 1
+        in_string = None
+        i = start_idx
+        
+        while i < len(content) and depth > 0:
+            char = content[i]
+            
+            # Handle strings (simplistic approach)
+            if char in '"\'' and in_string is None:
+                in_string = char
+            elif char == in_string:
+                # Check for basic escaped quotes
+                if i > 0 and content[i-1] != '\\':
+                    in_string = None
+            elif in_string:
+                pass
+            # Handle parentheses
+            elif char == '(':
+                depth += 1
+            elif char == ')':
+                depth -= 1
+            
+            i += 1
+            
+        if depth == 0:
+            args_str = content[start_idx:i-1]
+            parsed = _parse_args_string(args_str)
+            
+            # Extract the key (usually 3rd positional arg for both sparkline and macro_card)
+            key = None
+            if 'pos_2' in parsed:
+                key = parsed['pos_2'].strip("'\" ")
+            
+            results.append({
+                'key': key,
+                'raw_args': args_str.strip(),
+                'kwargs': parsed,
+            })
+            
+    return results
+
+
+def _parse_args_string(args_str: str) -> Dict[str, str]:
+    """
+    Parse function arguments string into a dictionary.
+    
+    Handles:
+    - Positional args: stored as pos_0, pos_1, ...
+    - Keyword args: stored by name
+    
+    Example:
+        "label, series, 'KEY', explanation_key=''"
+        -> {'pos_0': 'label', 'pos_1': 'series', 'pos_2': "'KEY'",
+            'explanation_key': "''"}
+    """
+    result = {}
+    
+    # Split by comma, but be careful with nested parentheses and strings
+    args = _smart_split(args_str)
+    
+    pos_idx = 0
+    for arg in args:
+        arg = arg.strip()
+        if not arg:
+            continue
+        
+        # Check if keyword argument (contains '=')
+        if '=' in arg and not arg.startswith("'") and not arg.startswith('"'):
+            # Handle keyword argument
+            parts = arg.split('=', 1)
+            if len(parts) == 2:
+                key = parts[0].strip()
+                value = parts[1].strip()
+                result[key] = value
+        else:
+            # Positional argument
+            result[f'pos_{pos_idx}'] = arg
+            pos_idx += 1
+    
+    return result
+
+
+def _smart_split(s: str) -> List[str]:
+    """
+    Split string by comma, respecting parentheses and quotes.
+    """
+    result = []
+    current = []
+    depth = 0
+    in_string = None
+    
+    for char in s:
+        if char in '"\'' and in_string is None:
+            in_string = char
+            current.append(char)
+        elif char == in_string:
+            in_string = None
+            current.append(char)
+        elif in_string:
+            current.append(char)
+        elif char == '(':
+            depth += 1
+            current.append(char)
+        elif char == ')':
+            depth -= 1
+            current.append(char)
+        elif char == ',' and depth == 0:
+            result.append(''.join(current))
+            current = []
+        else:
+            current.append(char)
+    
+    if current:
+        result.append(''.join(current))
+    
+    return result
+
+
+def check_element_warnings(func_name: str, kwargs: Dict[str, str]) -> List[Dict[str, str]]:
+    """
+    Check parsed kwargs against element warning rules.
+    
+    Returns list of warnings found.
+    """
+    warnings = []
+    
+    rules = ELEMENT_WARNINGS.get(func_name, {})
+    
+    for arg_name, rule in rules.items():
+        value = kwargs.get(arg_name)
+        
+        # Check for empty string
+        if rule.get('check_empty') and value is not None:
+            # Empty string is "''", '""', or ''
+            if value in ("''", '""', ''):
+                warnings.append({
+                    'arg': arg_name,
+                    'value': value,
+                    'message': rule['message'],
+                    'severity': rule['severity'],
+                })
+        
+        # Check for False value
+        if rule.get('check_false') and value is not None:
+            if value.lower() in ('false',):
+                warnings.append({
+                    'arg': arg_name,
+                    'value': value,
+                    'message': rule['message'],
+                    'severity': rule['severity'],
+                })
+    
+    return warnings
+
+
 # Expected function for each pattern (None = skip verification)
 PATTERN_TO_FUNCTION = {
     'standard': 'show_metric_with_sparkline',
@@ -652,7 +867,6 @@ def verify_display_patterns(app_root: str) -> Dict[str, List[str]]:
         Dictionary with pattern classifications and error list
     """
     import os
-    import re
     from .indicators import INDICATORS
     
     results = {
@@ -713,6 +927,43 @@ def verify_display_patterns(app_root: str) -> Dict[str, List[str]]:
                 if key not in usage_map: usage_map[key] = []
                 if filename not in usage_map[key]: usage_map[key].append(filename)
                 results['pattern_detailed'].append({'key': key, 'file': filename})
+            
+            # =========================================================
+            # PHASE 3.5: Parse function arguments for element warnings
+            # =========================================================
+            # Initialize element_warnings list if not exists
+            if 'element_warnings' not in results:
+                results['element_warnings'] = []
+            
+            # Check show_metric_with_sparkline calls
+            for call_info in parse_function_call(content, 'show_metric_with_sparkline'):
+                if call_info['key']:
+                    warnings = check_element_warnings('show_metric_with_sparkline', call_info['kwargs'])
+                    for w in warnings:
+                        results['element_warnings'].append({
+                            'key': call_info['key'],
+                            'file': filename,
+                            'function': 'show_metric_with_sparkline',
+                            'arg': w['arg'],
+                            'value': w['value'],
+                            'message': w['message'],
+                            'severity': w['severity'],
+                        })
+            
+            # Check display_macro_card calls
+            for call_info in parse_function_call(content, 'display_macro_card'):
+                if call_info['key']:
+                    warnings = check_element_warnings('display_macro_card', call_info['kwargs'])
+                    for w in warnings:
+                        results['element_warnings'].append({
+                            'key': call_info['key'],
+                            'file': filename,
+                            'function': 'display_macro_card',
+                            'arg': w['arg'],
+                            'value': w['value'],
+                            'message': w['message'],
+                            'severity': w['severity'],
+                        })
             
             # Find other metrics or df access (manual handling)
             for key in metric_pat.findall(content):
@@ -822,6 +1073,14 @@ def print_pattern_verification_report(results: Dict[str, List]) -> None:
     print(f"[INFO] Special (API-based): {len(results['pattern_special'])}")
     print(f"[FAIL] Missing/Errors: {len(results['errors'])}")
     
+    # Phase 3.5: Element composition summary
+    element_warnings = results.get('element_warnings', [])
+    if element_warnings:
+        warn_count = sum(1 for w in element_warnings if w['severity'] == 'WARN')
+        info_count = sum(1 for w in element_warnings if w['severity'] == 'INFO')
+        print(f"[WARN] Element Warnings: {warn_count}")
+        print(f"[INFO] Element Info: {info_count}")
+    
     # Standard pattern
     if results['pattern_standard']:
         print("\n" + "-" * 80)
@@ -870,7 +1129,7 @@ def print_pattern_verification_report(results: Dict[str, List]) -> None:
         for item in results['pattern_special']:
             print(f"  {item['key']:<20} -> {item['reason']}")
             
-    # Pattern Mismatches (NEW)
+    # Pattern Mismatches
     mismatches = results.get('pattern_mismatches', [])
     if mismatches:
         print("\n" + "=" * 80)
@@ -880,6 +1139,40 @@ def print_pattern_verification_report(results: Dict[str, List]) -> None:
             print(f"  [FAIL] {item['key']}")
             print(f"         Pattern: {item['pattern']} -> Expected: {item['expected']}")
             print(f"         Actual: {item['actual']} in {item['file']}")
+    
+    # =========================================================================
+    # PHASE 3.5: Element Composition Warnings
+    # =========================================================================
+    element_warnings = results.get('element_warnings', [])
+    if element_warnings:
+        # Group by severity
+        warn_items = [w for w in element_warnings if w['severity'] == 'WARN']
+        info_items = [w for w in element_warnings if w['severity'] == 'INFO']
+        
+        if warn_items:
+            print("\n" + "-" * 80)
+            print(f"ELEMENT COMPOSITION WARNINGS ({len(warn_items)} items) - Phase 3.5")
+            print("-" * 80)
+            for item in warn_items:
+                print(f"  [WARN] {item['key']} ({item['file']})")
+                print(f"         {item['function']}: {item['message']}")
+        
+        if info_items:
+            print("\n" + "-" * 80)
+            print(f"ELEMENT COMPOSITION INFO ({len(info_items)} items)")
+            print("-" * 80)
+            # Group by file for cleaner output
+            by_file = {}
+            for item in info_items:
+                file = item['file']
+                if file not in by_file:
+                    by_file[file] = []
+                by_file[file].append(item)
+            
+            for file in sorted(by_file.keys()):
+                print(f"  {file}:")
+                for item in by_file[file]:
+                    print(f"    [INFO] {item['key']}: {item['message']}")
     
     # Errors
     if results['errors']:
@@ -915,6 +1208,15 @@ def print_pattern_verification_report(results: Dict[str, List]) -> None:
                 print("  -> 該当ページの pages/*.py を確認")
                 print("  -> show_metric_with_sparkline() の呼び出しを追加")
                 print("  -> または indicators.py の ui_page 設定を確認")
+        
+        # Phase 3.5 warnings advice
+        element_warnings = results.get('element_warnings', [])
+        warn_items = [w for w in element_warnings if w['severity'] == 'WARN']
+        if warn_items:
+            print(f"\n[Element Warning] {len(warn_items)}個の構成要素警告:")
+            print("  -> explanation_key が空: help_text が表示されない可能性")
+            print("  -> show_level=False: レベルメトリクスが非表示")
+            print("  -> docs/DISPLAY_SPEC.md の9要素仕様を確認")
     
     print("=" * 80)
 
