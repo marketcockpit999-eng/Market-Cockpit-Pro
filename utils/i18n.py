@@ -871,6 +871,12 @@ Rather than simply summarizing news, you analyze the "plumbing" behind the data 
         
         # --- Analysis Lab: Lag Correlation ---
         'lab_lag_correlation': '📊 Lag Correlation Analysis',
+        'lab_lag_about': 'ℹ️ About Lag Correlation Analysis',
+        'lab_lag_explanation': '''**Lag Correlation Analysis** measures how Global Liquidity Proxy (GLP) movements correlate with asset prices at different time delays.
+
+- **Best Lag**: The number of days where correlation is strongest
+- **Correlation**: Strength of relationship (-1 to +1)
+- Values > 0.7 suggest GLP is a strong leading indicator for that asset''',
         'lab_lag_desc': '💡 GLP leading indicator analysis for stocks/BTC',
         'lab_compare_with': 'Compare with',
         'lab_best_lag': 'Best Lag',
@@ -886,6 +892,11 @@ Rather than simply summarizing news, you analyze the "plumbing" behind the data 
         
         # --- Analysis Lab: Regime Detection ---
         'lab_regime_detection': '🚦 Regime Detection',
+        'lab_regime_about': 'ℹ️ About Regime Detection',
+        'lab_regime_explanation': '''**Regime Detection** identifies liquidity expansion/contraction phases using the 20-day moving average of GLP.
+
+- **Risk-On (🟢 Chance)**: MA20 rising - liquidity expanding, favorable for risk assets
+- **Risk-Off (🔴 Caution)**: MA20 falling - liquidity contracting, defensive positioning recommended''',
         'lab_regime_desc': '💡 Liquidity acceleration/deceleration detection',
         'lab_regime_chance': '## 🟢 Chance',
         'lab_regime_caution': '## 🔴 Caution',
@@ -1074,6 +1085,8 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'market_hours_reference': 'Market Hours Reference',
         'region': 'Region',
         'market_hours_local': 'Hours (Local Time)',
+        'all_regions_title': 'All Regions (Data from last market close)',
+        'select_region': 'Select region to view:',
         
         # --- AI Category Reports ---
         'ai_category_reports': '📊 Category Reports',
@@ -1928,6 +1941,12 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         
         # --- Analysis Lab: Lag Correlation ---
         'lab_lag_correlation': '📊 ラグ相関分析',
+        'lab_lag_about': 'ℹ️ ラグ相関分析とは',
+        'lab_lag_explanation': '''**ラグ相関分析**は、グローバル流動性プロキシ(GLP)の動きが資産価格とどの程度の時間差で相関するかを測定します。
+
+- **最適ラグ**: 相関が最も強くなる日数
+- **相関係数**: 関係性の強さ (-1〜+1)
+- 0.7以上はGLPがその資産の強い先行指標であることを示唆''',
         'lab_lag_desc': '💡 GLP先行指標分析（株式/BTC）',
         'lab_compare_with': '比較対象',
         'lab_best_lag': '最適ラグ',
@@ -1943,6 +1962,11 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         
         # --- Analysis Lab: Regime Detection ---
         'lab_regime_detection': '🚦 レジーム検出',
+        'lab_regime_about': 'ℹ️ レジーム検出とは',
+        'lab_regime_explanation': '''**レジーム検出**はGLPの20日移動平均を使用して流動性の拡大/縮小フェーズを特定します。
+
+- **リスクオン (🟢 チャンス)**: MA20上昇中 - 流動性拡大、リスク資産に有利
+- **リスクオフ (🔴 注意)**: MA20下降中 - 流動性縮小、防御的ポジショニング推奨''',
         'lab_regime_desc': '💡 流動性の加速・減速を検出',
         'lab_regime_chance': '## 🟢 チャンス',
         'lab_regime_caution': '## 🔴 注意',
@@ -2051,6 +2075,8 @@ Goldより変動が激しいため、短期的な市場センチメントを反�
         'market_hours_reference': '市場時間一覧',
         'region': 'リージョン',
         'market_hours_local': '時間帯 (現地時間)',
+        'all_regions_title': '全リージョン（前回市場終値時点）',
+        'select_region': '表示するリージョンを選択:',
         
         # --- AI Category Reports ---
         'ai_category_reports': '📊 カテゴリ別レポート',
@@ -2166,26 +2192,33 @@ def set_language(lang: str) -> None:
         st.session_state['lang'] = lang
 
 
-def t(key: str, **kwargs) -> str:
+def t(key: str, default: str = None, **kwargs) -> str:
     """
     Get translated text for a key.
     
     Args:
         key: Translation key
+        default: Default value if key not found (None = return key itself)
         **kwargs: Format arguments (e.g., count=5, date='2024-01-01')
     
     Returns:
-        Translated string, or key if not found
+        Translated string, or default/key if not found
+    
+    Example:
+        t('liquidity_title')  # Returns translation or 'liquidity_title'
+        t('indicator_ON_RRP', 'ON RRP')  # Returns translation or 'ON RRP'
     """
     lang = get_current_language()
     
     # Get translation dictionary for current language
     translations = TRANSLATIONS.get(lang, TRANSLATIONS[DEFAULT_LANGUAGE])
     
-    # Get text, fallback to English, then to key itself
+    # Get text, fallback to English, then to default/key
     text = translations.get(key)
     if text is None:
-        text = TRANSLATIONS[DEFAULT_LANGUAGE].get(key, key)
+        text = TRANSLATIONS[DEFAULT_LANGUAGE].get(key)
+    if text is None:
+        text = default if default is not None else key
     
     # Apply format arguments if any
     if kwargs:

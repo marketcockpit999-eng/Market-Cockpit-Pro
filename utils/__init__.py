@@ -70,6 +70,9 @@ from .data_fetcher import (
     load_manual_data,
     save_manual_data,
     fetch_h41_data,
+    record_api_status,
+    get_api_status,
+    prefetch_api_indicators,
 )
 
 # Data Processor
@@ -108,6 +111,16 @@ from .news import (
     check_for_market_alerts,
     fetch_agency_rss,
     format_rss_entry,
+)
+
+# Auto Render System (消えない構造)
+from .auto_render import (
+    render_indicator,
+    render_indicators_for_page,
+    render_in_columns,
+    render_section,
+    get_render_stats,
+    show_render_debug,
 )
 
 # Display Checker
@@ -152,6 +165,7 @@ __all__ = [
     "get_put_call_ratio", "get_aaii_sentiment",
     "get_fomc_sep_projections", "get_cme_fedwatch",
     "load_manual_data", "save_manual_data", "fetch_h41_data",
+    "record_api_status", "get_api_status", "prefetch_api_indicators",
     # Data Processor
     "get_data_freshness_status", "validate_data_ranges",
     "get_mom_yoy", "get_freshness_badge",
@@ -166,8 +180,11 @@ __all__ = [
     # News
     "get_time_diff_str", "search_google_news",
     "check_for_market_alerts", "fetch_agency_rss", "format_rss_entry",
+    # Auto Render System
+    "render_indicator", "render_indicators_for_page",
+    "render_in_columns", "render_section",
+    "get_render_stats", "show_render_debug",
     # Display Checker
     "DisplayChecker", "run_display_check",
     "get_failed_indicators", "get_indicators_needing_attention",
-    # REQUIRED_ELEMENTS, (Removed)
 ]
