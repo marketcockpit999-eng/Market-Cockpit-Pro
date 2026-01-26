@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Auto Render Test Page
+Auto Render Test Page v2
 ================================================================================
-自動レンダリングシステムのテストページ
+完全自動レンダリングシステムのテストページ
 
 Usage:
     streamlit run test_auto_render.py
@@ -19,19 +19,22 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from utils import (
     get_market_data,
+    render_page,
     render_indicator,
-    render_indicators_for_page,
     render_in_columns,
     render_section,
     get_render_stats,
     show_render_debug,
-    get_indicators_for_page,
+    get_page_layout,
+    get_all_page_names,
+    validate_layout_indicators,
     t,
 )
 
-st.set_page_config(page_title="Auto Render Test", layout="wide")
+st.set_page_config(page_title="Auto Render Test v2", layout="wide")
 
-st.title("🧪 Auto Render System Test")
+st.title("🧪 Auto Render System Test v2")
+st.caption("完全自動レンダリングシステム - 消えない構造")
 
 # Load data
 @st.cache_data(ttl=600)
@@ -49,75 +52,66 @@ if df is None or df.empty:
 
 st.success(f"Data loaded: {len(df)} rows, {len(df.columns)} columns")
 
-# Show render stats
-st.header("📊 Render Statistics")
-show_render_debug()
+# Validate layouts
+st.header("✅ Layout Validation")
+errors = validate_layout_indicators()
+if errors:
+    st.error(f"Found {len(errors)} errors:")
+    for e in errors:
+        st.write(f"  - {e}")
+else:
+    st.success("All layout indicators valid!")
 
-# Test individual indicator render
+# Page selector
+st.header("📄 Page Render Test")
+
+available_pages = get_all_page_names()
+selected_page = st.selectbox("Select page to render", available_pages)
+
+# Show layout info
+layout = get_page_layout(selected_page)
+if layout:
+    sections = layout.get('sections', [])
+    total_indicators = sum(len(s.get('indicators', [])) for s in sections)
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Sections", len(sections))
+    col2.metric("Indicators", total_indicators)
+    col3.metric("Page Title", t(layout.get('title_key', selected_page)))
+    
+    with st.expander("Section Details"):
+        for section in sections:
+            st.write(f"**{section['id']}** ({section.get('type', 'standard')})")
+            st.write(f"  Indicators: {section.get('indicators', [])}")
+
+st.markdown("---")
+
+# Render the page
+if st.button(f"🚀 Render {selected_page}", type="primary"):
+    st.markdown("---")
+    with st.spinner(f"Rendering {selected_page}..."):
+        stats = render_page(df, selected_page, show_debug=True)
+    
+    st.markdown("---")
+    st.success(f"Rendered {stats['sections_rendered']} sections, {stats['indicators_rendered']} indicators")
+    
+    if stats.get('errors'):
+        st.warning(f"Errors: {stats['errors']}")
+
+# Individual indicator test
+st.markdown("---")
 st.header("🔬 Individual Indicator Test")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("Standard Pattern: ON_RRP")
+    st.subheader("Standard: ON_RRP")
     render_indicator(df, 'ON_RRP')
 
 with col2:
-    st.subheader("Standard Pattern: VIX")
+    st.subheader("Standard: VIX")
     render_indicator(df, 'VIX')
 
+# Debug stats
 st.markdown("---")
-
-# Test mom_yoy pattern
-st.header("📈 MoM/YoY Pattern Test")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.subheader("MoM/YoY Pattern: CPI")
-    render_indicator(df, 'CPI')
-
-with col2:
-    st.subheader("MoM/YoY Pattern: RetailSales")
-    render_indicator(df, 'RetailSales')
-
-st.markdown("---")
-
-# Test render_in_columns
-st.header("📐 Column Layout Test")
-
-st.subheader("3 indicators in 3 columns")
-render_in_columns(df, ['EFFR', 'IORB', 'SOFR'], num_cols=3, show_charts=False)
-
-st.markdown("---")
-
-# Test render_section
-st.header("📦 Section Test")
-render_section(df, "Fed Liquidity Core", ['ON_RRP', 'Reserves', 'TGA'], num_cols=3)
-
-st.markdown("---")
-
-# Show page indicators
-st.header("📄 Page Indicators")
-
-page = st.selectbox("Select page", [
-    '01_liquidity',
-    '02_global_money', 
-    '03_us_economic',
-    '04_crypto',
-    '09_banking',
-    '10_market_lab',
-])
-
-indicators = get_indicators_for_page(page)
-st.write(f"**{page}**: {len(indicators)} indicators")
-
-with st.expander("Show indicator list"):
-    for key, config in indicators.items():
-        pattern = config.get('display_pattern', 'standard')
-        source = config.get('source', '?')
-        st.write(f"- `{key}` ({source}, {pattern})")
-
-if st.button(f"Render all indicators for {page}"):
-    results = render_indicators_for_page(df, page)
-    st.success(f"Rendered {sum(results.values())}/{len(results)} indicators successfully")
+show_render_debug()

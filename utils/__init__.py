@@ -115,12 +115,22 @@ from .news import (
 
 # Auto Render System (消えない構造)
 from .auto_render import (
+    render_page,
     render_indicator,
     render_indicators_for_page,
     render_in_columns,
     render_section,
     get_render_stats,
     show_render_debug,
+)
+
+# Page Layouts
+from .page_layouts import (
+    PAGE_LAYOUTS,
+    get_page_layout,
+    get_section_indicators,
+    get_all_page_names,
+    validate_layout_indicators,
 )
 
 # Display Checker
@@ -181,9 +191,12 @@ __all__ = [
     "get_time_diff_str", "search_google_news",
     "check_for_market_alerts", "fetch_agency_rss", "format_rss_entry",
     # Auto Render System
-    "render_indicator", "render_indicators_for_page",
+    "render_page", "render_indicator", "render_indicators_for_page",
     "render_in_columns", "render_section",
     "get_render_stats", "show_render_debug",
+    # Page Layouts
+    "PAGE_LAYOUTS", "get_page_layout", "get_section_indicators",
+    "get_all_page_names", "validate_layout_indicators",
     # Display Checker
     "DisplayChecker", "run_display_check",
     "get_failed_indicators", "get_indicators_needing_attention",
