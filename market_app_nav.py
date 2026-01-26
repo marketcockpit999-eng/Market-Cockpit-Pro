@@ -100,6 +100,17 @@ st.markdown("""
         padding-top: 1rem;
     }
     
+    /* Navigation group headers - make them larger and more visible */
+    section[data-testid="stSidebar"] [data-testid="stSidebarNavSeparator"] {
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        margin-top: 1rem !important;
+        margin-bottom: 0.5rem !important;
+        color: #4ECDC4 !important;
+    }
+    
     /* Alert boxes - Eye-friendly colors */
     .alert-high {
         background-color: rgba(255, 107, 107, 0.15);
@@ -268,32 +279,28 @@ with st.sidebar:
     st.caption(t('sidebar_last_update', date=last_update_date))
 
 # ========== PAGE NAVIGATION ==========
-pages = {
-    "📊 Liquidity & Rates": "pages/01_liquidity.py",
-    "🌏 Global Money & FX": "pages/02_global_money.py",
-    "📈 US Economic Data": "pages/03_us_economic.py",
-    "🪙 Crypto Liquidity": "pages/04_crypto.py",
-    "🤖 AI Analysis": "pages/05_ai_analysis.py",
-    "🎲 Monte Carlo": "pages/06_monte_carlo.py",
-    "📰 Market Voices": "pages/07_market_voices.py",
-    "🎭 Market Sentiment": "pages/08_sentiment.py",
+# 3-Group Structure: Markets / Analysis / Info & Tools
+# Build navigation dict with translated group names
+_nav_pages = {
+    t('nav_group_markets'): [
+        st.Page("pages/01_liquidity.py", title=t('page_liquidity'), default=True),
+        st.Page("pages/02_global_money.py", title=t('page_global_money')),
+        st.Page("pages/03_us_economic.py", title=t('page_us_economic')),
+        st.Page("pages/09_banking.py", title=t('page_banking')),
+        st.Page("pages/04_crypto.py", title=t('page_crypto')),
+        st.Page("pages/08_sentiment.py", title=t('page_sentiment')),
+        st.Page("pages/13_verdict.py", title=t('page_verdict')),
+    ],
+    t('nav_group_analysis'): [
+        st.Page("pages/05_ai_analysis.py", title=t('page_ai_analysis')),
+        st.Page("pages/11_analysis_lab.py", title=t('page_analysis_lab')),
+        st.Page("pages/12_currency_lab.py", title=t('page_currency_lab')),
+        st.Page("pages/06_monte_carlo.py", title=t('page_monte_carlo')),
+    ],
+    t('nav_group_tools'): [
+        st.Page("pages/07_market_voices.py", title=t('page_market_voices')),
+        st.Page("pages/99_admin.py", title=t('page_admin', '🔧 Admin')),
+    ],
 }
-
-# Create navigation
-# Order: Liquidity > GlobalMoney > USEconomic > Banking > Crypto > Sentiment > AI > Labs > Monte Carlo > Voices
-pg = st.navigation([
-    st.Page("pages/01_liquidity.py", title=t('page_liquidity'), default=True),
-    st.Page("pages/02_global_money.py", title=t('page_global_money')),
-    st.Page("pages/03_us_economic.py", title=t('page_us_economic')),
-    st.Page("pages/09_banking.py", title=t('page_banking')),
-    st.Page("pages/04_crypto.py", title=t('page_crypto')),
-    st.Page("pages/08_sentiment.py", title=t('page_sentiment')),
-    st.Page("pages/05_ai_analysis.py", title=t('page_ai_analysis')),
-    st.Page("pages/11_analysis_lab.py", title=t('page_analysis_lab')),
-    st.Page("pages/12_currency_lab.py", title=t('page_currency_lab')),
-    st.Page("pages/06_monte_carlo.py", title=t('page_monte_carlo')),
-    st.Page("pages/07_market_voices.py", title=t('page_market_voices')),
-    st.Page("pages/13_verdict.py", title=t('page_verdict')),
-])
-
+pg = st.navigation(_nav_pages)
 pg.run()

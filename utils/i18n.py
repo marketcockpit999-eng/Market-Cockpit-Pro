@@ -76,6 +76,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'sidebar_data_sources': 'Data Sources: FRED, Yahoo Finance, DeFiLlama, Alternative.me',
         'back_to_top': 'Back to top',
         
+        # --- Navigation Groups ---
+        'nav_group_markets': '📊 Markets',
+        'nav_group_analysis': '🔬 Analysis',
+        'nav_group_tools': '📰 Info & Tools',
+        
         # --- Page Titles ---
         'page_liquidity': '📊 Liquidity & Rates',
         'page_global_money': '🌏 Global Money & FX',
@@ -89,6 +94,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'page_analysis_lab': '🧪 Market Analysis Lab',
         'page_currency_lab': '💱 Currency Lab',
         'page_verdict': '⚖️ Market Verdict',
+        'page_admin': '🔧 Admin',
         
         # --- Common Labels ---
         'loading': 'Loading...',
@@ -1147,6 +1153,11 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'sidebar_data_sources': 'データソース: FRED, Yahoo Finance, DeFiLlama, Alternative.me',
         'back_to_top': 'トップへ戻る',
         
+        # --- Navigation Groups ---
+        'nav_group_markets': '📊 マーケット',
+        'nav_group_analysis': '🔬 分析',
+        'nav_group_tools': '📰 情報 & ツール',
+        
         # --- Page Titles ---
         'page_liquidity': '📊 流動性 & 金利',
         'page_global_money': '🌏 グローバルマネー & FX',
@@ -1159,6 +1170,8 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'page_banking': '🏦 銀行セクター',
         'page_analysis_lab': '🧪 分析ラボ',
         'page_currency_lab': '💱 通貨ラボ',
+        'page_verdict': '⚖️ マーケット判定',
+        'page_admin': '🔧 管理',
         
         # --- Common Labels ---
         'loading': '読み込み中...',
@@ -2192,6 +2205,9 @@ def set_language(lang: str) -> None:
         st.session_state['lang'] = lang
 
 
+# Debug flag - set to True to diagnose translation issues
+_T_DEBUG = True
+
 def t(key: str, default: str = None, **kwargs) -> str:
     """
     Get translated text for a key.
@@ -2215,10 +2231,20 @@ def t(key: str, default: str = None, **kwargs) -> str:
     
     # Get text, fallback to English, then to default/key
     text = translations.get(key)
+    
+    # DEBUG: Log navigation group keys
+    if _T_DEBUG and key.startswith('nav_group'):
+        # Use ascii() to escape non-ASCII characters for Windows CP932 terminal
+        print(f"[DEBUG t()] key={ascii(key)}, lang={ascii(lang)}, found={text is not None}, text={ascii(text)}")
+    
     if text is None:
         text = TRANSLATIONS[DEFAULT_LANGUAGE].get(key)
+        if _T_DEBUG and key.startswith('nav_group'):
+            print(f"[DEBUG t()] Fallback to EN: text={ascii(text)}")
     if text is None:
         text = default if default is not None else key
+        if _T_DEBUG and key.startswith('nav_group'):
+            print(f"[DEBUG t()] Using default/key: text={ascii(text)}")
     
     # Apply format arguments if any
     if kwargs:
