@@ -221,7 +221,7 @@ def prepare_verdict_data(df: pd.DataFrame) -> dict:
         return {}
     
     # 流動性データ
-    liq_keys = ['Fed_Assets', 'TGA', 'ON_RRP', 'Reserves', 'M2SL']
+    liq_keys = ['SOMA_Total', 'TGA', 'ON_RRP', 'Reserves', 'M2SL']
     liquidity_data = {}
     for k in liq_keys:
         if k in df.columns:

@@ -87,7 +87,7 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
     流動性スコアを計算
     
     Args:
-        data: データ辞書（キー: 'Fed_Assets', 'TGA', 'ON_RRP', 'Reserves', 'M2SL'）
+        data: データ辞書（キー: 'SOMA_Total', 'TGA', 'ON_RRP', 'Reserves', 'M2SL'）
               各値は pd.Series または dict{'value': float, 'series': pd.Series}
     
     Returns:
@@ -124,7 +124,7 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
         return None, None
     
     # --- 各指標の取得 ---
-    fed_series, fed_val = extract_series_and_value('Fed_Assets')
+    fed_series, fed_val = extract_series_and_value('SOMA_Total')
     tga_series, tga_val = extract_series_and_value('TGA')
     rrp_series, rrp_val = extract_series_and_value('ON_RRP')
     res_series, res_val = extract_series_and_value('Reserves')
@@ -270,7 +270,7 @@ if __name__ == '__main__':
     
     dates = pd.date_range('2022-01-01', periods=600, freq='D')
     test_data = {
-        'Fed_Assets': pd.Series(np.random.normal(7500, 200, 600), index=dates),
+        'SOMA_Total': pd.Series(np.random.normal(7500, 200, 600), index=dates),
         'TGA': pd.Series(np.random.normal(500, 100, 600), index=dates),
         'ON_RRP': pd.Series(np.random.normal(500, 200, 600), index=dates),
         'Reserves': pd.Series(np.random.normal(3200, 150, 600), index=dates),

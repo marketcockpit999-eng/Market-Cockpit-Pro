@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (
     get_pe_ratios,
     get_crypto_leverage_data,
+    record_api_status,
     show_metric,
     show_metric_with_sparkline,
     plot_dual_axis,
@@ -44,6 +45,15 @@ st.caption(t('valuation_leverage_desc'))
 
 pe_data = get_pe_ratios()
 leverage_data = get_crypto_leverage_data()
+
+# Record API status for health monitoring
+record_api_status('SP500_PE', pe_data is not None and pe_data.get('sp500_pe') is not None)
+record_api_status('NASDAQ_PE', pe_data is not None and pe_data.get('nasdaq_pe') is not None)
+record_api_status('BTC_Funding_Rate', leverage_data is not None and leverage_data.get('btc_funding_rate') is not None)
+record_api_status('BTC_Open_Interest', leverage_data is not None and leverage_data.get('btc_open_interest') is not None)
+record_api_status('BTC_Long_Short_Ratio', leverage_data is not None and leverage_data.get('btc_long_short_ratio') is not None)
+record_api_status('ETH_Funding_Rate', leverage_data is not None and leverage_data.get('eth_funding_rate') is not None)
+record_api_status('ETH_Open_Interest', leverage_data is not None and leverage_data.get('eth_open_interest') is not None)
 
 # Show data source timestamps
 data_sources = []
@@ -290,9 +300,10 @@ with col2:
     diff = None
     if 'EFFR' in df.columns and 'IORB' in df.columns:
         diff = (df['EFFR'] - df['IORB']) * 100
+        diff.name = 'EFFR_IORB'  # Set name for proper handling
     show_metric(t('effr_iorb'), diff, "bps", explanation_key="EFFR_IORB", notes=t('effr_iorb_notes'))
     
-    # EFFR-IORB用の日付情報を手動表示
+    # EFFR-IORB用の日付情報を手動表示（計算値なのでEFFRの日付を使用）
     if 'EFFR' in df.columns and hasattr(df, 'attrs'):
         effr_date = df.attrs.get('last_valid_dates', {}).get('EFFR')
         effr_release = df.attrs.get('fred_release_dates', {}).get('EFFR')
@@ -305,6 +316,32 @@ with col2:
                 st.caption(f"📅 {t('data_period')}: {effr_date}")
         if effr_release:
             st.caption(f"🔄 {t('source_update')}: {effr_release}")
+    
+    # EFFR-IORB専用sparkline（計算値なので手動で追加）
+    if diff is not None and not diff.isna().all():
+        recent_diff = diff.tail(60)
+        st.caption(f"📊 {t('sparkline_label')}")
+        fig_spark = go.Figure()
+        fig_spark.add_trace(go.Scatter(
+            x=recent_diff.index,
+            y=recent_diff.values,
+            mode='lines',
+            line=dict(color='#FF9F43', width=2),
+            fill='tozeroy',
+            fillcolor='rgba(255, 159, 67, 0.3)',
+            showlegend=False
+        ))
+        fig_spark.update_layout(
+            height=100,
+            margin=dict(l=0, r=0, t=0, b=0),
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            hovermode=False
+        )
+        st.plotly_chart(fig_spark, use_container_width=True, config={'displayModeBar': False},
+                       key=f"spark_effr_iorb_{uuid.uuid4().hex[:8]}")
     
     rate_cols = ['EFFR', 'IORB']
     valid_rates = [c for c in rate_cols if c in df.columns and not df.get(c, pd.Series()).isna().all()]

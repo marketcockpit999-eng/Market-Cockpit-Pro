@@ -174,6 +174,10 @@ else:
 # ========== Lag Correlation Analysis ==========
 st.markdown("---")
 st.markdown(f"### {t('lab_lag_correlation')}")
+
+with st.expander(t('lab_lag_about'), expanded=False):
+    st.markdown(t('lab_lag_explanation'))
+
 st.caption(t('lab_lag_desc'))
 
 def calculate_lag_correlation(series1, series2, max_lag=60):
@@ -250,6 +254,10 @@ else:
 # ========== Regime Detection ==========
 st.markdown("---")
 st.markdown(f"### {t('lab_regime_detection')}")
+
+with st.expander(t('lab_regime_about'), expanded=False):
+    st.markdown(t('lab_regime_explanation'))
+
 st.caption(t('lab_regime_desc'))
 
 if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy', pd.Series()).isna().all():
@@ -570,10 +578,10 @@ else:
         st.caption(f"{region_data['name']}: {region_data['open_hour']}:00 - {region_data['close_hour']}:00 local time (Mon-Fri)")
     
     # Show all regions even when closed
-    st.markdown("#### 📊 All Regions (Data from last market close)")
+    st.markdown(f"#### 📊 {t('all_regions_title')}")
     
     selected_region = st.radio(
-        "Select region to view:",
+        t('select_region'),
         options=list(MARKET_REGIONS.keys()),
         format_func=lambda x: MARKET_REGIONS[x]['name'],
         horizontal=True

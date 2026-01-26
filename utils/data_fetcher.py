@@ -47,6 +47,126 @@ FRED_REQUEST_TIMEOUT = 30  # Timeout for individual FRED requests (seconds)
 # DEX OI History Storage
 DEX_OI_HISTORY_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'dex_oi_history.csv')
 
+# ========== API STATUS TRACKING ==========
+
+def record_api_status(indicator_name: str, success: bool, data_date: str = None):
+    """
+    Record API fetch status in session_state for health monitoring.
+    
+    Args:
+        indicator_name: Name matching INDICATORS key (e.g., 'SP500_PE', 'BTC_Funding_Rate')
+        success: Whether the API call succeeded and returned valid data
+        data_date: Date of the data (YYYY-MM-DD), defaults to today
+    
+    Usage:
+        data = get_pe_ratios()
+        if data and data.get('sp500_pe'):
+            record_api_status('SP500_PE', True)
+        else:
+            record_api_status('SP500_PE', False)
+    """
+    try:
+        if 'api_status' not in st.session_state:
+            st.session_state['api_status'] = {}
+        
+        today = datetime.date.today().isoformat()
+        st.session_state['api_status'][indicator_name] = {
+            'success': success,
+            'last_fetch': data_date or today,
+            'timestamp': datetime.datetime.now().isoformat()
+        }
+    except Exception as e:
+        # Silently fail - don't break the app for monitoring
+        logger.debug(f"Failed to record API status for {indicator_name}: {e}")
+
+
+def get_api_status() -> dict:
+    """
+    Get current API status from session_state.
+    
+    Returns:
+        dict of {indicator_name: {'success': bool, 'last_fetch': 'YYYY-MM-DD', 'timestamp': str}}
+    """
+    return st.session_state.get('api_status', {})
+
+
+def prefetch_api_indicators():
+    """
+    Prefetch all API-based indicators at app startup.
+    This ensures API indicator status is available for health checks
+    before individual pages are visited.
+    
+    Called from market_app_nav.py during initialization.
+    """
+    logger.info("Prefetching API indicators...")
+    
+    # 1. P/E Ratios (SP500_PE, NASDAQ_PE)
+    try:
+        pe_data = get_pe_ratios()
+        record_api_status('SP500_PE', pe_data is not None and pe_data.get('sp500_pe') is not None)
+        record_api_status('NASDAQ_PE', pe_data is not None and pe_data.get('nasdaq_pe') is not None)
+        logger.info(f"  P/E: SP500={pe_data.get('sp500_pe') if pe_data else None}, NASDAQ={pe_data.get('nasdaq_pe') if pe_data else None}")
+    except Exception as e:
+        logger.warning(f"  P/E fetch error: {e}")
+        record_api_status('SP500_PE', False)
+        record_api_status('NASDAQ_PE', False)
+    
+    # 2. Crypto Leverage (BTC/ETH Funding Rate, OI, L/S Ratio)
+    try:
+        leverage_data = get_crypto_leverage_data()
+        record_api_status('BTC_Funding_Rate', leverage_data is not None and leverage_data.get('btc_funding_rate') is not None)
+        record_api_status('BTC_Open_Interest', leverage_data is not None and leverage_data.get('btc_open_interest') is not None)
+        record_api_status('BTC_Long_Short_Ratio', leverage_data is not None and leverage_data.get('btc_long_short_ratio') is not None)
+        record_api_status('ETH_Funding_Rate', leverage_data is not None and leverage_data.get('eth_funding_rate') is not None)
+        record_api_status('ETH_Open_Interest', leverage_data is not None and leverage_data.get('eth_open_interest') is not None)
+        logger.info(f"  Crypto Leverage: BTC FR={leverage_data.get('btc_funding_rate') if leverage_data else None}")
+    except Exception as e:
+        logger.warning(f"  Crypto Leverage fetch error: {e}")
+        record_api_status('BTC_Funding_Rate', False)
+        record_api_status('BTC_Open_Interest', False)
+        record_api_status('BTC_Long_Short_Ratio', False)
+        record_api_status('ETH_Funding_Rate', False)
+        record_api_status('ETH_Open_Interest', False)
+    
+    # 3. DeFiLlama (Stablecoin, Treasury TVL, Gold TVL)
+    try:
+        stablecoin_data = get_stablecoin_data()
+        record_api_status('Stablecoin_Total', stablecoin_data is not None and stablecoin_data.get('total_supply') is not None)
+        logger.info(f"  Stablecoin: Total={stablecoin_data.get('total_supply') if stablecoin_data else None}")
+    except Exception as e:
+        logger.warning(f"  Stablecoin fetch error: {e}")
+        record_api_status('Stablecoin_Total', False)
+    
+    try:
+        treasury_data = get_tokenized_treasury_data()
+        record_api_status('Treasury_TVL', treasury_data is not None and treasury_data.get('treasury', {}).get('total_tvl') is not None)
+        record_api_status('Gold_TVL', treasury_data is not None and treasury_data.get('gold', {}).get('total_tvl') is not None)
+        logger.info(f"  RWA: Treasury={treasury_data.get('treasury', {}).get('total_tvl') if treasury_data else None}, Gold={treasury_data.get('gold', {}).get('total_tvl') if treasury_data else None}")
+    except Exception as e:
+        logger.warning(f"  RWA fetch error: {e}")
+        record_api_status('Treasury_TVL', False)
+        record_api_status('Gold_TVL', False)
+    
+    # 4. Sentiment (Crypto Fear & Greed, CNN Fear & Greed)
+    try:
+        crypto_fg = get_crypto_fear_greed()
+        record_api_status('Crypto_Fear_Greed', crypto_fg is not None and crypto_fg.get('current') is not None)
+        logger.info(f"  Crypto F&G: {crypto_fg.get('current') if crypto_fg else None}")
+    except Exception as e:
+        logger.warning(f"  Crypto F&G fetch error: {e}")
+        record_api_status('Crypto_Fear_Greed', False)
+    
+    try:
+        cnn_fg = get_cnn_fear_greed()
+        record_api_status('CNN_Fear_Greed', cnn_fg is not None and cnn_fg.get('current') is not None)
+        logger.info(f"  CNN F&G: {cnn_fg.get('current') if cnn_fg else None}")
+    except Exception as e:
+        logger.warning(f"  CNN F&G fetch error: {e}")
+        record_api_status('CNN_Fear_Greed', False)
+    
+    logger.info("API indicator prefetch complete.")
+
+
 # ========== DEX OI HISTORY STORAGE ==========
 
 def _save_dex_oi_to_history(symbol: str, oi_value: float, source: str):
@@ -360,27 +480,27 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
     df = df.sort_index()
     
     # Unit Normalization (Million to Billion)
-    mil_to_bil = ['Fed_Assets', 'TGA', 'Reserves', 'SOMA_Total', 'Bank_Cash', 
+    mil_to_bil = ['TGA', 'Reserves', 'SOMA_Total', 'Bank_Cash', 
                   'SRF', 'FIMA', 'Primary_Credit', 'Total_Loans', 'SOMA_Treasury',
                   'SOMA_Bills', 'M2SL', 'M2REAL', 'CI_Loans', 'CRE_Loans', 'ECB_Assets']
     for col in mil_to_bil:
         if col in df.columns:
             df[col] = df[col] / 1000
     
-    # Calculate Net Liquidity
-    if all(c in df.columns for c in ['Fed_Assets', 'TGA', 'ON_RRP']):
-        df['Net_Liquidity'] = df['Fed_Assets'] - df['TGA'] - df['ON_RRP']
+    # Calculate Net Liquidity (Fed総資産 = SOMA_Total = WALCL)
+    if all(c in df.columns for c in ['SOMA_Total', 'TGA', 'ON_RRP']):
+        df['Net_Liquidity'] = df['SOMA_Total'] - df['TGA'] - df['ON_RRP']
 
     # Calculate Global Liquidity Proxy (Fed + ECB - TGA - RRP)
     # ECB Assets (likely in Billions EUR after normalization) needs conversion to USD
-    glp_cols = ['Fed_Assets', 'ECB_Assets', 'TGA', 'ON_RRP', 'EURUSD']
+    glp_cols = ['SOMA_Total', 'ECB_Assets', 'TGA', 'ON_RRP', 'EURUSD']
     if all(c in df.columns for c in glp_cols):
         try:
             # fill EURUSD to match weekly/daily cadence
             eur_usd = df['EURUSD'].ffill()
             ecb_usd = df['ECB_Assets'] * eur_usd
             # Ensure indices match
-            df['Global_Liquidity_Proxy'] = df['Fed_Assets'].ffill() + ecb_usd.ffill() - df['TGA'].ffill() - df['ON_RRP'].ffill()
+            df['Global_Liquidity_Proxy'] = df['SOMA_Total'].ffill() + ecb_usd.ffill() - df['TGA'].ffill() - df['ON_RRP'].ffill()
         except Exception as e:
             print(f"Error calculating GLP: {e}")
     else:

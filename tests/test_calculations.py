@@ -45,8 +45,7 @@ def create_mock_market_data() -> pd.DataFrame:
     
     # 実際の値に近いモックデータ
     data = {
-        # Fed Balance Sheet (Billions)
-        'Fed_Assets': np.linspace(7000, 7100, 30),  # ~$7T
+        # Fed Balance Sheet (Billions) - Fed Total Assets (WALCL) is SOMA_Total
         'TGA': np.linspace(700, 750, 30),           # ~$700B
         'ON_RRP': np.linspace(300, 350, 30),        # ~$300B
         'SRF': np.linspace(0, 5, 30),               # Usually near 0
@@ -54,7 +53,7 @@ def create_mock_market_data() -> pd.DataFrame:
         'Reserves': np.linspace(3200, 3300, 30),    # ~$3.2T
         
         # SOMA (Billions)
-        'SOMA_Total': np.linspace(6800, 6900, 30),  # ~$6.8T
+        'SOMA_Total': np.linspace(7000, 7100, 30),  # ~$7T (used for Net Liquidity)
         'SOMA_Bills': np.linspace(340, 380, 30),    # ~$350B
         
         # Rates (%)
@@ -78,8 +77,8 @@ def create_mock_market_data() -> pd.DataFrame:
 
 
 def calculate_net_liquidity(df: pd.DataFrame) -> pd.Series:
-    """Net Liquidity計算: Fed_Assets - TGA - ON_RRP - SRF - FIMA"""
-    return df['Fed_Assets'] - df['TGA'] - df['ON_RRP'] - df['SRF'] - df['FIMA']
+    """Net Liquidity計算: SOMA_Total - TGA - ON_RRP - SRF - FIMA"""
+    return df['SOMA_Total'] - df['TGA'] - df['ON_RRP'] - df['SRF'] - df['FIMA']
 
 
 def calculate_bills_ratio(df: pd.DataFrame) -> pd.Series:
@@ -120,7 +119,7 @@ def test_net_liquidity_calculation(results: TestResults):
     net_liq = calculate_net_liquidity(df)
     
     # 手動計算との比較
-    expected = df['Fed_Assets'] - df['TGA'] - df['ON_RRP'] - df['SRF'] - df['FIMA']
+    expected = df['SOMA_Total'] - df['TGA'] - df['ON_RRP'] - df['SRF'] - df['FIMA']
     diff = (net_liq - expected).abs().max()
     
     tolerance = CALCULATION_RULES['Net_Liquidity']['tolerance']
@@ -171,7 +170,7 @@ def test_mock_data_has_required_columns(results: TestResults):
     df = create_mock_market_data()
     
     # Net Liquidity計算に必要な列
-    net_liq_components = ['Fed_Assets', 'TGA', 'ON_RRP', 'SRF', 'FIMA']
+    net_liq_components = ['SOMA_Total', 'TGA', 'ON_RRP', 'SRF', 'FIMA']
     missing = [col for col in net_liq_components if col not in df.columns]
     
     if not missing:
@@ -227,18 +226,17 @@ def test_calculation_edge_cases(results: TestResults):
     
     # ゼロ値での計算
     df_zero = pd.DataFrame({
-        'Fed_Assets': [7000],
+        'SOMA_Total': [7000],
         'TGA': [0],
         'ON_RRP': [0],
         'SRF': [0],
         'FIMA': [0],
-        'SOMA_Total': [6800],
         'SOMA_Bills': [0],
     })
     
     net_liq_zero = calculate_net_liquidity(df_zero)
     if net_liq_zero.iloc[0] == 7000:
-        results.add_pass("Net Liquidity zero case", "TGA/RRP/SRF/FIMA=0 → NL=Fed_Assets")
+        results.add_pass("Net Liquidity zero case", "TGA/RRP/SRF/FIMA=0 → NL=SOMA_Total")
     else:
         results.add_fail("Net Liquidity zero case", f"Expected 7000, got {net_liq_zero.iloc[0]}")
     
@@ -253,7 +251,7 @@ def test_calculation_formula_strings(results: TestResults):
     """計算式文字列が正しいことを確認"""
     print("\n--- 計算式定義検証 ---")
     
-    expected_net_liq = "Fed_Assets - TGA - ON_RRP - SRF - FIMA"
+    expected_net_liq = "SOMA_Total - TGA - ON_RRP - SRF - FIMA"
     if NET_LIQUIDITY_FORMULA == expected_net_liq:
         results.add_pass("NET_LIQUIDITY_FORMULA", "定義一致")
     else:

@@ -228,7 +228,7 @@ if __name__ == '__main__':
     
     test_data = {
         'liquidity_data': {
-            'Fed_Assets': pd.Series(np.random.normal(7500, 200, 600), index=dates),
+            'SOMA_Total': pd.Series(np.random.normal(7500, 200, 600), index=dates),
             'TGA': pd.Series(np.random.normal(500, 100, 600), index=dates),
             'ON_RRP': pd.Series(np.random.normal(300, 100, 600), index=dates),
             'Reserves': pd.Series(np.random.normal(3200, 150, 600), index=dates),

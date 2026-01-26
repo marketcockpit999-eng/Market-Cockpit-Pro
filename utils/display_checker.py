@@ -137,8 +137,8 @@ MANUAL_CALC_SPECS = {
 
 CALCULATED_SPECS = {
     'Global_Liquidity_Proxy': {
-        'components': ['Fed_Assets', 'ECB_Assets', 'TGA', 'ON_RRP'],
-        'formula': 'Fed_Assets + ECB_Assets - TGA - ON_RRP',
+        'components': ['SOMA_Total', 'ECB_Assets', 'TGA', 'ON_RRP'],
+        'formula': 'SOMA_Total + ECB_Assets - TGA - ON_RRP',
     },
 }
 

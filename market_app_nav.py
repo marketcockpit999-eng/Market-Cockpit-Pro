@@ -22,6 +22,8 @@ from utils import (
     init_ai_clients,
     check_for_market_alerts,
     get_data_freshness_status,
+    get_api_status,
+    prefetch_api_indicators,
     t,
     render_language_selector,
 )
@@ -165,6 +167,13 @@ df, df_original = load_data(force_refresh)
 st.session_state['df'] = df
 st.session_state['df_original'] = df_original
 
+# ========== PREFETCH API INDICATORS ==========
+# Fetch API-based indicators at startup so health check has complete status
+if 'api_prefetch_done' not in st.session_state:
+    with st.spinner("🔄 Checking API indicators..."):
+        prefetch_api_indicators()
+    st.session_state['api_prefetch_done'] = True
+
 # ========== INITIALIZE AI CLIENTS ==========
 if 'gemini_client' not in st.session_state or 'claude_client' not in st.session_state:
     gemini_client, claude_client = init_ai_clients()
@@ -204,7 +213,8 @@ with st.sidebar:
     if hasattr(df, 'attrs') and 'last_valid_dates' in df.attrs:
         freshness = get_data_freshness_status(
             df.attrs['last_valid_dates'],
-            df.attrs.get('fred_release_dates', {})
+            df.attrs.get('fred_release_dates', {}),
+            get_api_status()  # Include API indicator status
         )
         
         col1, col2 = st.columns(2)
@@ -221,11 +231,11 @@ with st.sidebar:
             suffix = f" +{len(freshness['stale'])-3}" if len(freshness['stale']) > 3 else ""
             st.caption(f"🟡 Stale: {names}{suffix}")
         
-        # Show missing items WITH NAMES
+        # Show missing items WITH NAMES AND COUNT
         if freshness['missing']:
             names = ', '.join(freshness['missing'][:3])
             suffix = f" +{len(freshness['missing'])-3}" if len(freshness['missing']) > 3 else ""
-            st.caption(f"⚪ Missing: {names}{suffix}")
+            st.caption(f"⚪ Missing ({len(freshness['missing'])}): {names}{suffix}")
         
         st.caption(t('sidebar_health_score', score=freshness['summary']['health_score']))
     

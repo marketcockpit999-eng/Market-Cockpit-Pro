@@ -20,6 +20,7 @@ from utils import (
     get_cnn_fear_greed,
     get_aaii_sentiment, 
     get_put_call_ratio,
+    record_api_status,
     EXPLANATIONS,
     DATA_FREQUENCY,
 )
@@ -40,6 +41,10 @@ crypto_fg = get_crypto_fear_greed()
 cnn_fg = get_cnn_fear_greed()
 aaii = get_aaii_sentiment()
 vix_value = df.get('VIX').iloc[-1] if df.get('VIX') is not None else None
+
+# Record API status for health monitoring
+record_api_status('Crypto_Fear_Greed', crypto_fg is not None and crypto_fg.get('current') is not None)
+record_api_status('CNN_Fear_Greed', cnn_fg is not None and cnn_fg.get('current') is not None)
 
 # === ROW 1: Fear & Greed Gauges ===
 st.markdown(f"### {t('sent_fg_section')}")

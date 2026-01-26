@@ -20,6 +20,7 @@ from utils import (
     REPORT_CATEGORIES,
     get_indicators_for_ai,
     get_data_freshness_status,
+    get_api_status,
 )
 
 # Get AI client and data from session state
@@ -38,8 +39,12 @@ st.caption(t('ai_analysis_desc'))
 ai_indicators = get_indicators_for_ai()
 defined_count = len(ai_indicators)  # Total defined in INDICATORS with ai_include=True
 
-# Get actual data status
-total_freshness = get_data_freshness_status(df.attrs.get('last_valid_dates', {})) if hasattr(df, 'attrs') else {'summary': {'total': 0, 'fresh_count': 0, 'stale_count': 0, 'critical_count': 0, 'missing_count': 0}}
+# Get actual data status (including API indicators)
+total_freshness = get_data_freshness_status(
+    df.attrs.get('last_valid_dates', {}),
+    df.attrs.get('fred_release_dates', {}),
+    get_api_status()  # Include API indicator status
+) if hasattr(df, 'attrs') else {'summary': {'total': 0, 'fresh_count': 0, 'stale_count': 0, 'critical_count': 0, 'missing_count': 0}}
 # Available = Total - Missing (Fresh + Stale + Critical = データが存在するものすべて)
 available_count = total_freshness['summary']['total'] - total_freshness['summary'].get('missing_count', 0)
 missing_count = total_freshness['summary'].get('missing_count', 0)

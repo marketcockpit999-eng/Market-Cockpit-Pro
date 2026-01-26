@@ -15,7 +15,7 @@ Market Cockpit Pro - Master Specification
 # ========== 不変の定義（絶対に変わらない）==========
 
 # Net Liquidityの計算式（これは変更禁止）
-NET_LIQUIDITY_FORMULA = "Fed_Assets - TGA - ON_RRP - SRF - FIMA"
+NET_LIQUIDITY_FORMULA = "SOMA_Total - TGA - ON_RRP - SRF - FIMA"
 
 # Bills Ratioの計算式
 BILLS_RATIO_FORMULA = "(SOMA_Bills / SOMA_Total) * 100"
@@ -52,7 +52,7 @@ EXPECTED_UTILS_MODULES = [
 # FRED指標キー（constants.pyのFRED_INDICATORSに存在すべきキー）
 EXPECTED_FRED_KEYS = [
     # Plumbing
-    "ON_RRP", "Reserves", "TGA", "Fed_Assets", "SOMA_Total", "SOMA_Bills",
+    "ON_RRP", "Reserves", "TGA", "SOMA_Total", "SOMA_Bills",
     "EFFR", "IORB", "SRF", "FIMA", "SOFR",
     # Banking
     "Bank_Cash", "Lending_Standards", "Primary_Credit", "Total_Loans",
@@ -179,7 +179,7 @@ EXPECTED_INDICATORS_BY_PAGE = {
 # データフレーム必須列（オフラインテスト用 - Net Liquidity計算に必要な列）
 REQUIRED_DATAFRAME_COLUMNS = [
     # Net Liquidity計算に必須
-    "Net_Liquidity", "Fed_Assets", "TGA", "ON_RRP", "SRF", "FIMA",
+    "Net_Liquidity", "SOMA_Total", "TGA", "ON_RRP", "SRF", "FIMA",
     # Plumbing
     "Reserves", "EFFR", "IORB", "SOFR",
     # SOMA
@@ -194,8 +194,8 @@ REQUIRED_DATAFRAME_COLUMNS = [
 # 計算式の検証ルール
 CALCULATION_RULES = {
     "Net_Liquidity": {
-        "formula": "Fed_Assets - TGA - ON_RRP - SRF - FIMA",
-        "components": ["Fed_Assets", "TGA", "ON_RRP", "SRF", "FIMA"],
+        "formula": "SOMA_Total - TGA - ON_RRP - SRF - FIMA",
+        "components": ["SOMA_Total", "TGA", "ON_RRP", "SRF", "FIMA"],
         "tolerance": 1.0  # 誤差許容範囲（Billions）
     },
     # NOTE: SomaBillsRatio removed 2026-01-25 - calculation was removed from data_fetcher

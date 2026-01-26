@@ -18,6 +18,7 @@ from utils import (
     get_stablecoin_data,
     get_stablecoin_historical,
     get_tokenized_treasury_data,
+    record_api_status,
     EXPLANATIONS,
     DATA_FREQUENCY,
     t,
@@ -38,6 +39,11 @@ st.caption(t('crypto_subtitle'))
 stablecoin_data = get_stablecoin_data()
 stablecoin_hist = get_stablecoin_historical()
 treasury_data = get_tokenized_treasury_data()
+
+# Record API status for health monitoring
+record_api_status('Stablecoin_Total', stablecoin_data is not None and stablecoin_data.get('total_supply') is not None)
+record_api_status('Treasury_TVL', treasury_data is not None and treasury_data.get('treasury', {}).get('total_tvl') is not None)
+record_api_status('Gold_TVL', treasury_data is not None and treasury_data.get('gold', {}).get('total_tvl') is not None)
 
 # Cache crypto summary for AI tab
 if stablecoin_data or treasury_data:

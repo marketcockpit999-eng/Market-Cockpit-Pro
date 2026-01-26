@@ -96,13 +96,13 @@ def test_net_liquidity_calculation():
     
     # テストデータ
     df = pd.DataFrame({
-        'Fed_Assets': [8000.0, 8100.0, 8200.0],
+        'SOMA_Total': [8000.0, 8100.0, 8200.0],
         'TGA': [500.0, 600.0, 700.0],
         'ON_RRP': [1500.0, 1400.0, 1300.0],
     })
     
     # 計算
-    df['Net_Liquidity'] = df['Fed_Assets'] - df['TGA'] - df['ON_RRP']
+    df['Net_Liquidity'] = df['SOMA_Total'] - df['TGA'] - df['ON_RRP']
     
     # 検証
     assert df['Net_Liquidity'].iloc[0] == 6000.0, "8000 - 500 - 1500 = 6000"
@@ -156,14 +156,14 @@ def test_global_liquidity_proxy_calculation():
     import pandas as pd
     
     df = pd.DataFrame({
-        'Fed_Assets': [8000.0, 8100.0],     # FRB総資産 (Billions USD)
+        'SOMA_Total': [8000.0, 8100.0],     # FRB総資産 (Billions USD)
         'ECB_Assets': [9000.0, 9200.0],     # ECB資産 (すでにUSD換算済と仮定)
         'TGA': [500.0, 600.0],              # 財務省口座
         'ON_RRP': [1500.0, 1400.0],         # リバースレポ
     })
     
     # 計算
-    df['Global_Liquidity_Proxy'] = df['Fed_Assets'] + df['ECB_Assets'] - df['TGA'] - df['ON_RRP']
+    df['Global_Liquidity_Proxy'] = df['SOMA_Total'] + df['ECB_Assets'] - df['TGA'] - df['ON_RRP']
     
     # 検証: 8000 + 9000 - 500 - 1500 = 15000
     assert df['Global_Liquidity_Proxy'].iloc[0] == 15000.0, "8000 + 9000 - 500 - 1500 = 15000"
@@ -244,7 +244,7 @@ def test_key_indicators_have_data():
     df, _ = get_market_data()
     
     key_indicators = [
-        'Fed_Assets', 'TGA', 'ON_RRP', 'Net_Liquidity',
+        'SOMA_Total', 'TGA', 'ON_RRP', 'Net_Liquidity',
         'VIX', 'SP500', 'US_10Y',
     ]
     
