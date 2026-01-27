@@ -28,7 +28,12 @@ from utils import (
 from utils.display_checker import (
     verify_display_patterns,
     DisplayChecker,
-    run_static_check,
+)
+from utils.element_gap_checker import (
+    ElementGapChecker,
+    run_element_gap_check,
+    classify_all_indicators,
+    ELEMENT_PATTERNS,
 )
 
 
@@ -42,8 +47,9 @@ def render_admin_page():
     df_original = st.session_state.get('df_original')
     
     # Create tabs for different admin sections
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📊 データ鮮度",
+        "🔍 構成要素チェック",
         "✅ 表示パターン",
         "🔌 API状況",
         "⚙️ システム情報",
@@ -56,22 +62,141 @@ def render_admin_page():
         render_data_freshness_tab(df)
     
     # =========================================================================
-    # TAB 2: Display Pattern Check (表示パターンチェック)
+    # TAB 2: Element Gap Check (構成要素チェック) - NEW!
     # =========================================================================
     with tab2:
+        render_element_gap_tab(df)
+    
+    # =========================================================================
+    # TAB 3: Display Pattern Check (表示パターンチェック)
+    # =========================================================================
+    with tab3:
         render_display_pattern_tab()
     
     # =========================================================================
-    # TAB 3: API Status (API状況)
+    # TAB 4: API Status (API状況)
     # =========================================================================
-    with tab3:
+    with tab4:
         render_api_status_tab()
     
     # =========================================================================
-    # TAB 4: System Info (システム情報)
+    # TAB 5: System Info (システム情報)
     # =========================================================================
-    with tab4:
+    with tab5:
         render_system_info_tab(df)
+
+
+def render_element_gap_tab(df):
+    """Render the element gap check tab (構成要素チェック)"""
+    st.subheader("🔍 構成要素ギャップチェック")
+    st.caption("各指標が『あるべき構成要素』を持っているか検証します")
+    
+    # Run checker
+    checker = run_element_gap_check(df)
+    summary = checker.get_summary()
+    
+    # Big score display
+    col1, col2, col3 = st.columns([2, 1, 1])
+    with col1:
+        score_text = summary['score']
+        ok_count = summary['ok']
+        total = summary['total']
+        
+        # Color based on status
+        if summary['fail'] == 0 and summary['warn'] == 0:
+            st.success(f"✅ {score_text} 全指標OK!")
+        elif summary['fail'] == 0:
+            st.warning(f"⚠️ {score_text} ({summary['warn']}件の警告あり)")
+        else:
+            st.error(f"❌ {score_text} ({summary['fail']}件の必須欠落)")
+    
+    with col2:
+        st.metric("OK", f"✅ {summary['ok']}")
+    with col3:
+        st.metric("問題あり", f"⚠️ {summary['warn'] + summary['fail']}")
+    
+    st.divider()
+    
+    # Pattern classification summary
+    st.write("### パターン別サマリー")
+    
+    classification = classify_all_indicators()
+    
+    cols = st.columns(4)
+    pattern_display = [
+        ('A_daily_weekly', '日次/週次フル', '10要素'),
+        ('B1_monthly_simple', '月次/四半期', '9要素'),
+        ('B2_mom_yoy', 'MoM/YoY', '特殊'),
+        ('API_external', 'API系', '別処理'),
+    ]
+    
+    for i, (key, name, elem_count) in enumerate(pattern_display):
+        with cols[i]:
+            count = len(classification.get(key, []))
+            pattern_stats = summary['by_pattern'].get(ELEMENT_PATTERNS.get(key, {}).get('name', key), {})
+            ok = pattern_stats.get('ok', 0)
+            st.metric(f"{name}", f"{ok}/{count}")
+            st.caption(elem_count)
+    
+    st.divider()
+    
+    # Problem indicators detail
+    problems = checker.get_problem_indicators()
+    
+    if problems:
+        st.write("### ⚠️ 問題のある指標")
+        
+        for name, result in problems:
+            status_icon = '❌' if result['status'] == 'FAIL' else '⚠️'
+            
+            with st.expander(f"{status_icon} {name} ({result['pattern']}) - {result['present']}/{result['expected']}要素", expanded=(result['status'] == 'FAIL')):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    if result['missing_mandatory']:
+                        st.error(f"**必須欠落:** {', '.join(result['missing_mandatory'])}")
+                
+                with col2:
+                    if result['missing_optional']:
+                        st.warning(f"**オプション欠落:** {', '.join(result['missing_optional'])}")
+                
+                # アクション提案
+                if result['missing_mandatory']:
+                    st.info("💡 **修正方法:**\n" + 
+                           "\n".join([f"- {elem}: 対応が必要" for elem in result['missing_mandatory']]))
+    else:
+        st.success("🎉 全ての指標が期待される構成要素を持っています！")
+    
+    st.divider()
+    
+    # Full list (collapsed)
+    with st.expander("📋 全指標リスト", expanded=False):
+        rows = []
+        for name, result in checker.results.items():
+            status_emoji = {'OK': '✅', 'WARN': '⚠️', 'FAIL': '❌', 'UNKNOWN': '❓'}.get(result['status'], '?')
+            rows.append({
+                'Status': status_emoji,
+                'Indicator': name,
+                'Pattern': result['pattern'],
+                'Elements': f"{result['present']}/{result['expected']}",
+                'Missing': ', '.join(result.get('missing_mandatory', []) + result.get('missing_optional', []))[:50] or '-',
+            })
+        
+        df_table = pd.DataFrame(rows)
+        df_table = df_table.sort_values(['Status', 'Indicator'], ascending=[True, True])
+        
+        st.dataframe(
+            df_table,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Status": st.column_config.TextColumn("", width="small"),
+                "Indicator": st.column_config.TextColumn("指標名", width="medium"),
+                "Pattern": st.column_config.TextColumn("パターン", width="small"),
+                "Elements": st.column_config.TextColumn("要素", width="small"),
+                "Missing": st.column_config.TextColumn("欠落", width="large"),
+            }
+        )
 
 
 def render_data_freshness_tab(df):
@@ -163,87 +288,88 @@ def render_data_freshness_tab(df):
 def render_display_pattern_tab():
     """Render the display pattern check tab"""
     st.subheader("✅ 表示パターンチェック")
+    st.caption("構成要素の検証結果（DisplayChecker）")
     
-    # Run verification
-    app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    
-    with st.spinner("パターン検証中..."):
-        results = verify_display_patterns(app_root)
-    
-    # Summary
-    total_found = (
-        len(results['pattern_standard']) + 
-        len(results['pattern_detailed']) + 
-        len(results['pattern_manual']) + 
-        len(results['pattern_special'])
-    )
-    error_count = len(results['errors'])
-    mismatch_count = len(results.get('pattern_mismatches', []))
-    warning_count = len([w for w in results.get('element_warnings', []) if w['severity'] == 'WARN'])
-    
-    # Metrics
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("検出済み指標", total_found)
-    col2.metric("Standard (Sparkline)", len(results['pattern_standard']))
-    col3.metric("Detailed (Macro Card)", len(results['pattern_detailed']))
-    col4.metric("Manual / Special", len(results['pattern_manual']) + len(results['pattern_special']))
-    
-    # Status indicator
-    if error_count == 0 and mismatch_count == 0:
-        st.success("✅ All patterns match their expected display functions!")
-    else:
-        st.error(f"❌ {error_count + mismatch_count} issue(s) found")
-    
-    st.divider()
-    
-    # Pattern breakdown
-    with st.expander("📋 Standard Pattern (show_metric_with_sparkline)", expanded=False):
-        if results['pattern_standard']:
-            by_file = {}
-            for item in results['pattern_standard']:
-                file = item['file']
-                if file not in by_file:
-                    by_file[file] = []
-                by_file[file].append(item['key'])
+    try:
+        # verify_display_patterns returns a DisplayChecker object
+        checker = verify_display_patterns()
+        
+        if checker is None or not hasattr(checker, 'results'):
+            st.info("パターン検証結果がありません")
+            return
+        
+        # Get summary from checker
+        results = checker.results  # Dict of CheckResult objects
+        
+        # Summary metrics
+        total = len(results)
+        ok_count = sum(1 for r in results.values() if r.is_ok)
+        fail_count = total - ok_count
+        
+        col1, col2, col3 = st.columns(3)
+        col1.metric("総指標数", total)
+        col2.metric("✅ OK", ok_count)
+        col3.metric("⚠️ 要確認", fail_count)
+        
+        st.divider()
+        
+        # Group by group type
+        by_group = {}
+        for name, result in results.items():
+            group = result.group
+            if group not in by_group:
+                by_group[group] = {'ok': [], 'fail': []}
+            if result.is_ok:
+                by_group[group]['ok'].append(name)
+            else:
+                by_group[group]['fail'].append((name, result))
+        
+        # Display by group
+        group_names = {
+            'daily_weekly': '📈 日次/週次フル (10要素)',
+            'monthly_quarterly': '📅 月次/四半期 (9要素)',
+            'mom_yoy': '📊 MoM/YoY (特殊)',
+            'api': '🔌 API系 (別処理)',
+        }
+        
+        for group_key, display_name in group_names.items():
+            group_data = by_group.get(group_key, {'ok': [], 'fail': []})
+            ok_list = group_data['ok']
+            fail_list = group_data['fail']
+            total_in_group = len(ok_list) + len(fail_list)
             
-            for file in sorted(by_file.keys()):
-                st.write(f"**{file}** ({len(by_file[file])}件)")
-                st.caption(", ".join(sorted(by_file[file])))
+            if total_in_group == 0:
+                continue
+            
+            with st.expander(f"{display_name} ({len(ok_list)}/{total_in_group} OK)", expanded=(len(fail_list) > 0)):
+                if fail_list:
+                    st.write("**⚠️ 問題のある指標:**")
+                    for name, result in fail_list:
+                        failed_elements = ', '.join(result.failed)
+                        st.warning(f"`{name}`: 欠落要素 = {failed_elements}")
+                
+                if ok_list:
+                    st.write("**✅ OK:**")
+                    st.caption(", ".join(sorted(ok_list)))
+        
+        # Show failed indicators detail
+        all_failed = [(name, r) for name, r in results.items() if not r.is_ok]
+        if all_failed:
+            st.divider()
+            st.write("### ⚠️ 修正が必要な指標")
+            for name, result in sorted(all_failed, key=lambda x: x[0]):
+                with st.expander(f"⚠️ {name} ({result.score_text})", expanded=False):
+                    st.write(f"**グループ:** {result.group}")
+                    st.write(f"**欠落要素:** {', '.join(result.failed)}")
+                    for elem in result.failed:
+                        detail = result.details.get(elem, '')
+                        st.caption(f"  - {elem}: {detail}")
     
-    with st.expander("📊 Detailed Pattern (display_macro_card)", expanded=False):
-        if results['pattern_detailed']:
-            for item in results['pattern_detailed']:
-                st.write(f"- `{item['key']}` → {item['file']}")
-    
-    with st.expander("🔧 Manual / Custom Pattern", expanded=False):
-        if results['pattern_manual']:
-            for item in results['pattern_manual']:
-                st.write(f"- `{item['key']}` → {item['file']} ({item['type']})")
-    
-    with st.expander("🔌 Special / API Pattern", expanded=False):
-        if results['pattern_special']:
-            for item in results['pattern_special']:
-                st.write(f"- `{item['key']}`: {item['reason']}")
-    
-    # Errors and mismatches
-    if results['errors']:
-        with st.expander(f"❌ Errors ({len(results['errors'])})", expanded=True):
-            for error in results['errors']:
-                st.error(error)
-    
-    if results.get('pattern_mismatches'):
-        with st.expander(f"⚠️ Pattern Mismatches ({len(results['pattern_mismatches'])})", expanded=True):
-            for item in results['pattern_mismatches']:
-                st.warning(f"`{item['key']}`: Expected `{item['expected']}` but found `{item['actual']}` in {item['file']}")
-    
-    # Element warnings (Phase 3.5)
-    element_warnings = results.get('element_warnings', [])
-    warn_items = [w for w in element_warnings if w['severity'] == 'WARN']
-    if warn_items:
-        with st.expander(f"⚠️ Element Warnings ({len(warn_items)})", expanded=False):
-            for item in warn_items:
-                st.warning(f"`{item['key']}` ({item['file']}): {item['message']}")
-
+    except Exception as e:
+        st.error(f"パターン検証エラー: {e}")
+        import traceback
+        st.code(traceback.format_exc())
+        st.info("構成要素チェックタブをご利用ください")
 
 def render_api_status_tab():
     """Render the API status tab"""

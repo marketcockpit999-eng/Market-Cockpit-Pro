@@ -4,10 +4,11 @@ MARKET VERDICT - Cycle Position Calculator
 ================================================================================
 サイクル位置スコア（0-100）を計算するモジュール
 
-スコア構成:
-  - イールドカーブ（T10Y2Y）× 30%
-  - 失業率トレンド × 20%
-  - 信用スプレッド × 20%
+スコア構成 (7本柱):
+  - イールドカーブ（T10Y2Y）× 25%
+  - 失業率トレンド × 15%
+  - 信用スプレッド × 15%
+  - SLOOS融資基準 × 15%         ← 信用サイクル先行指標
   - Leading Index × 10%
   - Manufacturing Composite × 10% (地区連銀製造業)
   - Services Composite × 10% (地区連銀サービス業)
@@ -123,6 +124,55 @@ def score_leading_index(value: float, series: Optional[pd.Series] = None) -> flo
     return float(np.clip(score, 0, 100))
 
 
+def score_sloos_standards(data: Dict[str, Any]) -> Tuple[Optional[float], Dict]:
+    """
+    SLOOS融資基準のCompositeスコア（逆スコア）
+    
+    CI_Std_Large + CI_Std_Small の平均を使用
+    - 正の値 = 融資基準引き締め → 低スコア（経済に悪影響）
+    - 負の値 = 融資基準緩和 → 高スコア（経済に好影響）
+    - ゼロ = 変化なし → 中立
+    
+    典型的な範囲: -40 ～ +80 (危機時は80超も)
+    """
+    sloos_keys = ['CI_Std_Large', 'CI_Std_Small']
+    values = []
+    
+    for key in sloos_keys:
+        item = data.get(key)
+        if item is None:
+            continue
+        if isinstance(item, pd.Series) and len(item) > 0:
+            val = item.iloc[-1]
+        elif isinstance(item, (int, float)):
+            val = float(item)
+        else:
+            continue
+        if not pd.isna(val):
+            values.append(val)
+    
+    if len(values) == 0:
+        return None, {'available': 0, 'average': None}
+    
+    avg = np.mean(values)
+    
+    # 逆スコア化: 引き締め（正）= 低スコア、緩和（負）= 高スコア
+    # -40 ～ +80 を 100 ～ 0 にマップ (0 → 66.7)
+    # 0 = 中立(67点くらい)、+40% = 低、-30% = 高
+    if avg <= -30:
+        score = 95  # 大幅緩和
+    elif avg <= 0:
+        score = 65 + (-avg / 30) * 30  # 65-95
+    elif avg <= 40:
+        score = 65 - (avg / 40) * 40  # 25-65
+    else:
+        score = max(0, 25 - (avg - 40) / 2)  # 0-25
+    
+    score = float(np.clip(score, 0, 100))
+    
+    return score, {'available': len(values), 'average': avg}
+
+
 def score_manufacturing_composite(data: Dict[str, Any]) -> Tuple[Optional[float], Dict]:
     """
     地区連銀製造業指数のCompositeスコア
@@ -189,7 +239,7 @@ def score_services_composite(data: Dict[str, Any]) -> Tuple[Optional[float], Dic
 
 def calculate_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
     """
-    サイクル位置スコアを計算
+    サイクル位置スコアを計算 (7本柱)
     
     Args:
         data: データ辞書
@@ -197,14 +247,18 @@ def calculate_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
             'UNRATE': 失業率
             'Credit_Spread': 信用スプレッド
             'Leading_Index': 先行指標
+            'CI_Std_Large': SLOOS C&I基準（大企業）
+            'CI_Std_Small': SLOOS C&I基準（小企業）
+            + 地区連銀製造業・サービス業
     
     Returns:
         (総合スコア, 詳細辞書)
     """
     details = {
-        'yield_curve': {'value': None, 'score': None, 'weight': 0.30},
-        'unemployment': {'value': None, 'score': None, 'weight': 0.20},
-        'credit_spread': {'value': None, 'score': None, 'weight': 0.20},
+        'yield_curve': {'value': None, 'score': None, 'weight': 0.25},
+        'unemployment': {'value': None, 'score': None, 'weight': 0.15},
+        'credit_spread': {'value': None, 'score': None, 'weight': 0.15},
+        'sloos_std': {'value': None, 'score': None, 'weight': 0.15},
         'leading_index': {'value': None, 'score': None, 'weight': 0.10},
         'mfg_composite': {'value': None, 'score': None, 'weight': 0.10},
         'svc_composite': {'value': None, 'score': None, 'weight': 0.10},
@@ -232,37 +286,47 @@ def calculate_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
     weighted_sum = 0.0
     total_weight = 0.0
     
-    # --- 1. Yield Curve (30%) ---
+    # --- 1. Yield Curve (25%) ---
     yc_series, yc_val = extract_series_and_value('T10Y2Y')
     if yc_val is not None:
         score = score_yield_curve(yc_val, yc_series)
         details['yield_curve']['value'] = yc_val
         details['yield_curve']['score'] = score
-        weighted_sum += score * 0.30
-        total_weight += 0.30
+        weighted_sum += score * 0.25
+        total_weight += 0.25
         details['components_available'] += 1
     
-    # --- 2. Unemployment (20%) ---
+    # --- 2. Unemployment (15%) ---
     ur_series, ur_val = extract_series_and_value('UNRATE')
     if ur_series is not None and len(ur_series) > 60:
         score = score_unemployment_trend(ur_series)
         details['unemployment']['value'] = ur_val
         details['unemployment']['score'] = score
-        weighted_sum += score * 0.20
-        total_weight += 0.20
+        weighted_sum += score * 0.15
+        total_weight += 0.15
         details['components_available'] += 1
     
-    # --- 3. Credit Spread (20%) ---
+    # --- 3. Credit Spread (15%) ---
     cs_series, cs_val = extract_series_and_value('Credit_Spread')
     if cs_val is not None:
         score = score_credit_spread(cs_val, cs_series)
         details['credit_spread']['value'] = cs_val
         details['credit_spread']['score'] = score
-        weighted_sum += score * 0.20
-        total_weight += 0.20
+        weighted_sum += score * 0.15
+        total_weight += 0.15
         details['components_available'] += 1
     
-    # --- 4. Leading Index (10%) ---
+    # --- 4. SLOOS Standards (15%) - NEW ---
+    sloos_score, sloos_info = score_sloos_standards(data)
+    if sloos_score is not None:
+        details['sloos_std']['value'] = sloos_info['average']
+        details['sloos_std']['score'] = sloos_score
+        details['sloos_std']['available'] = sloos_info['available']
+        weighted_sum += sloos_score * 0.15
+        total_weight += 0.15
+        details['components_available'] += 1
+    
+    # --- 5. Leading Index (10%) ---
     li_series, li_val = extract_series_and_value('Leading_Index')
     if li_val is not None:
         score = score_leading_index(li_val, li_series)
@@ -272,7 +336,7 @@ def calculate_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
         total_weight += 0.10
         details['components_available'] += 1
     
-    # --- 5. Manufacturing Composite (10%) ---
+    # --- 6. Manufacturing Composite (10%) ---
     mfg_score, mfg_info = score_manufacturing_composite(data)
     if mfg_score is not None:
         details['mfg_composite']['value'] = mfg_info['average']
@@ -282,7 +346,7 @@ def calculate_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
         total_weight += 0.10
         details['components_available'] += 1
     
-    # --- 6. Services Composite (10%) ---
+    # --- 7. Services Composite (10%) ---
     svc_score, svc_info = score_services_composite(data)
     if svc_score is not None:
         details['svc_composite']['value'] = svc_info['average']
@@ -299,10 +363,10 @@ def calculate_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
     else:
         final_score = 50.0
     
-    # データ品質
-    if details['components_available'] >= 4:
+    # データ品質（7本柱対応）
+    if details['components_available'] >= 5:
         details['data_quality'] = 'good'
-    elif details['components_available'] >= 2:
+    elif details['components_available'] >= 3:
         details['data_quality'] = 'partial'
     else:
         details['data_quality'] = 'insufficient'
@@ -357,6 +421,8 @@ if __name__ == '__main__':
         'UNRATE': pd.Series(np.linspace(3.8, 4.1, 300), index=dates),
         'Credit_Spread': pd.Series(np.random.normal(2.5, 0.5, 300), index=dates),
         'Leading_Index': pd.Series(np.random.normal(0.2, 0.3, 300), index=dates),
+        'CI_Std_Large': pd.Series(np.random.normal(10, 15, 300), index=dates),
+        'CI_Std_Small': pd.Series(np.random.normal(15, 15, 300), index=dates),
     }
     
     score, details = calculate_cycle_score(test_data)
@@ -364,4 +430,4 @@ if __name__ == '__main__':
     
     print(f"Cycle Score: {score:.1f}")
     print(f"Interpretation: {interpretation['label']} ({interpretation['level']})")
-    print(f"Components: {details['components_available']}/4")
+    print(f"Components: {details['components_available']}/7")

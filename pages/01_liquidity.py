@@ -226,16 +226,16 @@ st.markdown("---")
 # === Net Liquidity ===
 st.markdown(f"#### {t('net_liquidity')}")
 
-# Show source update date for Net Liquidity
-if 'Net_Liquidity' in df.columns and not df.get('Net_Liquidity', pd.Series()).isna().all():
-    nl_series = df['Net_Liquidity'].dropna()
-    if len(nl_series) > 0:
-        last_date = nl_series.index[-1]
-        st.caption(f"🔄 {t('source_update')}: {last_date.strftime('%Y-%m-%d')} (Fed BS)")
-
 col1, col2 = st.columns([1, 3])
 with col1:
-    show_metric_with_sparkline(t('net_liquidity'), df.get('Net_Liquidity'), 'Net_Liquidity', "B", "Net_Liquidity", notes=t('net_liquidity_notes'))
+    # Get S&P500 date for extra_sources
+    extra_src = {'_primary': 'Fed BS'}  # Primary source label
+    if 'SP500' in df.columns and not df.get('SP500', pd.Series()).isna().all():
+        sp500_series = df['SP500'].dropna()
+        if len(sp500_series) > 0:
+            sp500_date = sp500_series.index[-1].strftime('%Y-%m-%d')
+            extra_src['S&P500'] = sp500_date
+    show_metric_with_sparkline(t('net_liquidity'), df.get('Net_Liquidity'), 'Net_Liquidity', "B", "Net_Liquidity", notes=t('net_liquidity_notes'), extra_sources=extra_src)
 with col2:
     st.markdown(f"##### {t('net_liquidity_chart_title')}")
     plot_dual_axis(df, 'Net_Liquidity', 'SP500', 'Net Liquidity (L)', 'S&P 500 (R)')
@@ -301,7 +301,8 @@ with col2:
     if 'EFFR' in df.columns and 'IORB' in df.columns:
         diff = (df['EFFR'] - df['IORB']) * 100
         diff.name = 'EFFR_IORB'  # Set name for proper handling
-    show_metric(t('effr_iorb'), diff, "bps", explanation_key="EFFR_IORB", notes=t('effr_iorb_notes'))
+    # notesを除いて表示（日付の後にnotesを手動表示するため）
+    show_metric(t('effr_iorb'), diff, "bps", explanation_key="EFFR_IORB")
     
     # EFFR-IORB用の日付情報を手動表示（計算値なのでEFFRの日付を使用）
     if 'EFFR' in df.columns and hasattr(df, 'attrs'):
@@ -316,6 +317,8 @@ with col2:
                 st.caption(f"📅 {t('data_period')}: {effr_date}")
         if effr_release:
             st.caption(f"🔄 {t('source_update')}: {effr_release}")
+    # notesは日付の後に表示（他の指標と同じ順序にする）
+    st.caption(t('effr_iorb_notes'))
     
     # EFFR-IORB専用sparkline（計算値なので手動で追加）
     if diff is not None and not diff.isna().all():

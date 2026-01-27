@@ -574,7 +574,7 @@ INDICATORS = {
     },
     'Richmond_Fed_Mfg': {
         'source': 'WEB',  # Not on FRED - scrape from Richmond Fed website
-        'id': 'https://www.richmondfed.org/region_communities/regional_data_analysis/surveys/manufacturing',
+        'id': 'https://www.richmondfed.org/region_communities/regional_data_analysis/business_surveys/manufacturing',
         'unit': 'idx',
         'frequency': 'monthly',
         'freshness': 'monthly',
@@ -633,7 +633,7 @@ INDICATORS = {
     },
     'Richmond_Fed_Services': {
         'source': 'WEB',  # Not on FRED - scrape from Richmond Fed website
-        'id': 'https://www.richmondfed.org/region_communities/regional_data_analysis/surveys/service_sector',
+        'id': 'https://www.richmondfed.org/region_communities/regional_data_analysis/business_surveys/non-manufacturing',
         'unit': 'idx',
         'frequency': 'monthly',
         'freshness': 'monthly',
@@ -924,7 +924,7 @@ INDICATORS = {
     'NFCI': {
         'source': 'FRED',
         'id': 'NFCI',
-        'unit': '',
+        'unit': 'idx',
         'frequency': 'weekly',
         'freshness': 'weekly',
         'category': 'financial_stress',
@@ -954,7 +954,7 @@ INDICATORS = {
     'SP500': {
         'source': 'YAHOO',
         'id': '^GSPC',
-        'unit': '',
+        'unit': 'pts',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'equity',
@@ -968,7 +968,7 @@ INDICATORS = {
     'VIX': {
         'source': 'YAHOO',
         'id': '^VIX',
-        'unit': '',
+        'unit': 'pts',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'volatility',
@@ -982,7 +982,7 @@ INDICATORS = {
     'MOVE': {
         'source': 'YAHOO',
         'id': '^MOVE',
-        'unit': '',
+        'unit': 'pts',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'volatility',
@@ -995,7 +995,7 @@ INDICATORS = {
     'HYG': {
         'source': 'YAHOO',
         'id': 'HYG',
-        'unit': '',
+        'unit': '$',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'credit',
@@ -1008,7 +1008,7 @@ INDICATORS = {
     'LQD': {
         'source': 'YAHOO',
         'id': 'LQD',
-        'unit': '',
+        'unit': '$',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'credit',
@@ -1021,7 +1021,7 @@ INDICATORS = {
     'NIKKEI': {
         'source': 'YAHOO',
         'id': '^N225',
-        'unit': '',
+        'unit': 'pts',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'equity',
@@ -1036,7 +1036,7 @@ INDICATORS = {
     'DXY': {
         'source': 'YAHOO',
         'id': 'DX-Y.NYB',
-        'unit': '',
+        'unit': 'pts',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'fx',
@@ -1050,7 +1050,7 @@ INDICATORS = {
     'USDJPY': {
         'source': 'YAHOO',
         'id': 'JPY=X',
-        'unit': '',
+        'unit': '¥',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'fx',
@@ -1064,7 +1064,7 @@ INDICATORS = {
     'EURUSD': {
         'source': 'YAHOO',
         'id': 'EURUSD=X',
-        'unit': '',
+        'unit': '$',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'fx',
@@ -1077,7 +1077,7 @@ INDICATORS = {
     'USDCNY': {
         'source': 'YAHOO',
         'id': 'CNY=X',
-        'unit': '',
+        'unit': '¥',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'fx',
@@ -1090,7 +1090,7 @@ INDICATORS = {
     'GBPUSD': {
         'source': 'YAHOO',
         'id': 'GBPUSD=X',
-        'unit': '',
+        'unit': '$',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'fx',
@@ -1103,7 +1103,7 @@ INDICATORS = {
     'USDCHF': {
         'source': 'YAHOO',
         'id': 'CHF=X',
-        'unit': '',
+        'unit': 'Fr',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'fx',
@@ -1116,7 +1116,7 @@ INDICATORS = {
     'AUDUSD': {
         'source': 'YAHOO',
         'id': 'AUDUSD=X',
-        'unit': '',
+        'unit': '$',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'fx',
@@ -1131,7 +1131,7 @@ INDICATORS = {
     'Gold': {
         'source': 'YAHOO',
         'id': 'GC=F',
-        'unit': '',
+        'unit': '$',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'commodities',
@@ -1145,7 +1145,7 @@ INDICATORS = {
     'Silver': {
         'source': 'YAHOO',
         'id': 'SI=F',
-        'unit': '',
+        'unit': '$',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'commodities',
@@ -1158,7 +1158,7 @@ INDICATORS = {
     'Oil': {
         'source': 'YAHOO',
         'id': 'CL=F',
-        'unit': '',
+        'unit': '$',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'commodities',
@@ -1171,7 +1171,7 @@ INDICATORS = {
     'Copper': {
         'source': 'YAHOO',
         'id': 'HG=F',
-        'unit': '',
+        'unit': '$',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'commodities',
@@ -1186,7 +1186,7 @@ INDICATORS = {
     'BTC': {
         'source': 'YAHOO',
         'id': 'BTC-USD',
-        'unit': '',
+        'unit': '$',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'crypto',
@@ -1200,7 +1200,7 @@ INDICATORS = {
     'ETH': {
         'source': 'YAHOO',
         'id': 'ETH-USD',
-        'unit': '',
+        'unit': '$',
         'frequency': 'daily',
         'freshness': 'daily',
         'category': 'crypto',
@@ -1217,7 +1217,7 @@ INDICATORS = {
     'M2_Velocity': {
         'source': 'FRED',
         'id': 'M2V',
-        'unit': '',
+        'unit': 'ratio',
         'frequency': 'quarterly',
         'freshness': 'quarterly',
         'category': 'economy',
@@ -1230,7 +1230,7 @@ INDICATORS = {
     'Financial_Stress': {
         'source': 'FRED',
         'id': 'STLFSI4',
-        'unit': '',
+        'unit': 'idx',
         'frequency': 'weekly',
         'freshness': 'weekly',
         'category': 'financial_stress',

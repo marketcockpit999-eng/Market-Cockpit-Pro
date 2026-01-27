@@ -101,14 +101,20 @@ st.markdown("""
     }
     
     /* Navigation group headers - make them larger and more visible */
-    section[data-testid="stSidebar"] [data-testid="stSidebarNavSeparator"] {
-        font-size: 1.1rem !important;
+    /* Selector found via DevTools inspection */
+    [data-testid="stNavSectionHeader"] {
+        font-size: 0.95rem !important;
         font-weight: 700 !important;
-        text-transform: uppercase !important;
         letter-spacing: 0.5px !important;
-        margin-top: 1rem !important;
-        margin-bottom: 0.5rem !important;
+        margin-top: 1.2rem !important;
+        margin-bottom: 0.4rem !important;
+        padding-bottom: 0.3rem !important;
+        border-bottom: 1px solid rgba(78, 205, 196, 0.3) !important;
+    }
+    
+    [data-testid="stNavSectionHeader"] span {
         color: #4ECDC4 !important;
+        font-weight: 700 !important;
     }
     
     /* Alert boxes - Eye-friendly colors */

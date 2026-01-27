@@ -346,3 +346,95 @@ python scripts/check_fred_status.py
 | 新指標追加時 | 追加後すぐに検証スクリプト実行 |
 | FRED ID変更の噂を聞いたとき | 即座に検証 |
 
+---
+
+## ⚠️ 9. 自動検証システム（Pre-commit Hook）(CRITICAL - 2026-01-28追加)
+
+### 📋 概要
+
+**問題**: 修正時に指標が「静かに消える」リスクがある
+**解決**: commit時に自動チェック → NGならcommit自体をブロック
+
+### 🔧 セットアップ
+
+**hookのインストール:**
+```bash
+# 方法1: BATファイル実行
+.\SETUP_HOOKS.bat
+
+# 方法2: Pythonスクリプト実行
+python scripts/setup_hooks.py
+```
+
+### 📊 自動化フロー
+
+```
+Claude修正完了
+    ↓
+高橋さん:「Antigravity、pushして」
+    ↓
+Antigravity: git commit
+    ↓
+pre-commit hook 自動実行 ← ここが自動
+    ↓
+❌ エラー検出
+    ↓
+Antigravity:「commitできません。エラー: VIXが消えています」
+    ↓
+高橋さん:「Claude、VIX消えてるって」
+    ↓
+Claude: 修正
+```
+
+**ポイント**: 消えた状態でのpushが**物理的に不可能**になる
+
+### 📂 関連ファイル
+
+| ファイル | 役割 |
+|---------|------|
+| `scripts/verify_baseline.py` | 指標存在チェックスクリプト |
+| `scripts/setup_hooks.py` | hookインストーラー |
+| `scripts/pre-commit-hook.sh` | Git pre-commit hook本体 |
+| `VERIFY_BASELINE.bat` | 手動検証用バッチ |
+| `SETUP_HOOKS.bat` | hookインストール用バッチ |
+
+### ✅ 手動での検証実行
+
+```bash
+# BATファイルで実行
+.\VERIFY_BASELINE.bat
+
+# または直接Python実行
+python scripts/verify_baseline.py
+```
+
+### 🔒 検証対象ページ
+
+| ページ | 内容 |
+|--------|------|
+| 01_liquidity | Fed流動性・金利 |
+| 02_global_money | グローバルマネー |
+| 03_us_economic | 米経済指標 |
+| 04_crypto | 暗号資産 |
+| 08_sentiment | センチメント |
+| 09_banking | 銀行セクター |
+
+**注**: 05（AI分析）、06（Monte Carlo）、07（Market Voices）、11-13（Lab系）は
+標準の指標表示パターンを使わないため、検証対象外。
+
+### ❌ 絶対にやってはいけないこと
+- hookをスキップしてcommitする（`git commit --no-verify`）
+- 検証エラーを無視してpushする
+- `EXCLUDED_FROM_UI_CHECK`に安易に追加する
+
+### ✅ エラーが出た場合の対処
+
+1. **指標がページに表示されていない場合**
+   → ページファイルに`show_metric_with_sparkline`呼び出しを追加
+
+2. **特殊な表示方法を使っている場合**
+   → `scripts/verify_baseline.py`の`SPECIAL_DISPLAY_INDICATORS`に追加
+
+3. **意図的にUIから除外している場合**
+   → `scripts/verify_baseline.py`の`EXCLUDED_FROM_UI_CHECK`に追加
+

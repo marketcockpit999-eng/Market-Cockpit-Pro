@@ -72,7 +72,10 @@ with col1:
     if nfp_original is not None and len(nfp_original.dropna()) >= 2:
         nfp_data = nfp_original.dropna()
         nfp_change = nfp_data.iloc[-1] - nfp_data.iloc[-2]
-        st.metric(t('result'), f"{nfp_change:+,.0f}K")
+        from utils.help_texts import HELP_EN, HELP_JA
+        from utils.i18n import get_current_language
+        help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
+        st.metric(t('result'), f"{nfp_change:+,.0f}K", help=help_dict.get('help_NFP', ''))
         show_date_info(df, 'NFP')
         
         nfp_changes = nfp_data.diff().dropna()
@@ -87,7 +90,10 @@ with col1:
     if adp_original is not None and len(adp_original.dropna()) >= 2:
         adp_data = adp_original.dropna()
         adp_change = adp_data.iloc[-1] - adp_data.iloc[-2]
-        st.metric(t('adp_label'), f"{adp_change:+,.0f}K")
+        from utils.help_texts import HELP_EN, HELP_JA
+        from utils.i18n import get_current_language
+        help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
+        st.metric(t('adp_label'), f"{adp_change:+,.0f}K", help=help_dict.get('help_ADP', ''))
         show_date_info(df, 'ADP')
         
         adp_changes = adp_data.diff().dropna()
@@ -104,7 +110,10 @@ with col1:
         unemp_data = unemp_original.dropna()
         unemp_curr = unemp_data.iloc[-1]
         unemp_change = unemp_curr - unemp_data.iloc[-2]
-        st.metric(t('unemployment_rate'), f"{unemp_curr:.1f}%", delta=f"{unemp_change:+.1f}pp {t('vs_last_month')}")
+        from utils.help_texts import HELP_EN, HELP_JA
+        from utils.i18n import get_current_language
+        help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
+        st.metric(t('unemployment_rate'), f"{unemp_curr:.1f}%", delta=f"{unemp_change:+.1f}pp {t('vs_last_month')}", help=help_dict.get('help_UNRATE', ''))
         show_date_info(df, 'UNRATE')
     
     if unemp_series is not None and not unemp_series.isna().all():
@@ -145,7 +154,10 @@ with col2:
         icsa_data = icsa_series.dropna() / 1000
         icsa_curr = icsa_data.iloc[-1]
         icsa_change = icsa_curr - icsa_data.iloc[-2]
-        st.metric(t('latest_week'), f"{icsa_curr:,.0f}K", delta=f"{icsa_change:+,.0f}K {t('vs_last_week')}", delta_color="inverse")
+        from utils.help_texts import HELP_EN, HELP_JA
+        from utils.i18n import get_current_language
+        help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
+        st.metric(t('latest_week'), f"{icsa_curr:,.0f}K", delta=f"{icsa_change:+,.0f}K {t('vs_last_week')}", delta_color="inverse", help=help_dict.get('help_ICSA', ''))
         show_date_info(df, 'ICSA')
         st.caption(t('icsa_notes'))
         # 60-day sparkline
@@ -280,7 +292,12 @@ with mfg_col2:
         
         if current_val is not None:
             delta_str = f"{change_val:+.1f} pts" if change_val is not None else None
-            st.metric(t('richmond_fed_mfg_label'), f"{current_val:.1f}", delta=delta_str)
+            # Import help texts
+            from utils.help_texts import HELP_EN, HELP_JA
+            from utils.i18n import get_current_language
+            help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
+            help_text = help_dict.get('help_Richmond_Fed_Mfg', '')
+            st.metric(t('richmond_fed_mfg_label'), f"{current_val:.1f}", delta=delta_str, help=help_text)
         
         # Show both data_period and source_update like other indicators
         if data_date:
@@ -366,7 +383,12 @@ with svc_col2:
         
         if current_val is not None:
             delta_str = f"{change_val:+.1f} pts" if change_val is not None else None
-            st.metric(t('richmond_fed_services_label'), f"{current_val:.1f}", delta=delta_str)
+            # Import help texts
+            from utils.help_texts import HELP_EN, HELP_JA
+            from utils.i18n import get_current_language
+            help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
+            help_text = help_dict.get('help_Richmond_Fed_Services', '')
+            st.metric(t('richmond_fed_services_label'), f"{current_val:.1f}", delta=delta_str, help=help_text)
         
         # Show both data_period and source_update like other indicators
         if data_date:

@@ -62,11 +62,8 @@ from .data_fetcher import (
     get_tokenized_treasury_data,
     get_protocol_historical,
     get_crypto_fear_greed,
-    get_cnn_fear_greed,
     get_put_call_ratio,
-    get_aaii_sentiment,
     get_fomc_sep_projections,
-    get_cme_fedwatch,
     load_manual_data,
     save_manual_data,
     fetch_h41_data,
@@ -136,11 +133,7 @@ from .page_layouts import (
 # Display Checker
 from .display_checker import (
     DisplayChecker,
-    run_display_check,
-    get_failed_indicators,
-    get_indicators_needing_attention,
-    get_indicators_needing_attention,
-    # REQUIRED_ELEMENTS,
+    verify_display_components,
 )
 
 # Version
@@ -171,9 +164,9 @@ __all__ = [
     "get_pe_ratios", "get_crypto_leverage_data",
     "get_stablecoin_data", "get_stablecoin_historical",
     "get_tokenized_treasury_data", "get_protocol_historical",
-    "get_crypto_fear_greed", "get_cnn_fear_greed",
-    "get_put_call_ratio", "get_aaii_sentiment",
-    "get_fomc_sep_projections", "get_cme_fedwatch",
+    "get_crypto_fear_greed",
+    "get_put_call_ratio",
+    "get_fomc_sep_projections",
     "load_manual_data", "save_manual_data", "fetch_h41_data",
     "record_api_status", "get_api_status", "prefetch_api_indicators",
     # Data Processor

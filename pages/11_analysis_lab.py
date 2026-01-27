@@ -34,12 +34,23 @@ if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy
     if hasattr(df, 'attrs') and 'last_valid_dates' in df.attrs:
         glp_latest_date = df.attrs['last_valid_dates'].get('Global_Liquidity_Proxy')
     
+    # Get source dates for components
+    fed_date = None
+    ecb_date = None
+    if hasattr(df, 'attrs') and 'last_valid_dates' in df.attrs:
+        fed_date = df.attrs['last_valid_dates'].get('SOMA_Total')
+        ecb_date = df.attrs['last_valid_dates'].get('ECB_Assets')
+    
     col1, col2 = st.columns([1,2])
     with col1:
         st.metric("GLP", f"${gl.iloc[-1]/1000:.2f}T", help="Fed + ECB - TGA - RRP")
         if glp_latest_date:
             st.caption(f"{t('lab_data_period')}: {glp_latest_date}")
-            st.caption(f"🔄 {t('lab_calculated')}")
+        # Show source update with component dates
+        if fed_date or ecb_date:
+            source_info = f"Fed: {fed_date or 'N/A'}, ECB: {ecb_date or 'N/A'}"
+            st.caption(f"{t('lab_source_update')}: {source_info}")
+        st.caption(f"🔄 {t('lab_calculated')}: GLP = Fed + ECB(USD) - TGA - RRP")
     with col2:
         if 'SP500' in df.columns:
             fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -88,6 +99,17 @@ if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy
                 st.success(f"{t('liquidity_expanding')}: {current_yoy:+.2f}% YoY")
             else:
                 st.warning(f"{t('liquidity_contracting')}: {current_yoy:+.2f}% YoY")
+            
+            # Add data period and source update for YoY Growth
+            yoy_start = yoy_growth.index[0].strftime('%Y-%m-%d') if len(yoy_growth) > 0 else 'N/A'
+            yoy_end = yoy_growth.index[-1].strftime('%Y-%m-%d') if len(yoy_growth) > 0 else 'N/A'
+            st.caption(f"{t('lab_data_period')}: {yoy_start} ~ {yoy_end}")
+            # Get source date (fallback if not defined earlier)
+            yoy_source_date = None
+            if hasattr(df, 'attrs') and 'last_valid_dates' in df.attrs:
+                yoy_source_date = df.attrs['last_valid_dates'].get('Global_Liquidity_Proxy')
+            if yoy_source_date:
+                st.caption(f"{t('lab_source_update')}: {yoy_source_date} (FRED)")
     else:
         st.info(t('insufficient_data_yoy'))
 
@@ -240,10 +262,13 @@ if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy
                     margin=dict(l=0, r=0, t=10, b=0)
                 )
                 st.plotly_chart(fig, use_container_width=True)
-            # Source update for Lag Correlation
+            # Data period and Source update for Lag Correlation
+            common_start = common_idx[0].strftime('%Y-%m-%d') if len(common_idx) > 0 else 'N/A'
+            common_end = common_idx[-1].strftime('%Y-%m-%d') if len(common_idx) > 0 else 'N/A'
+            st.caption(f"{t('lab_data_period')}: {common_start} ~ {common_end}")
             glp_date = df.attrs.get('last_valid_dates', {}).get('Global_Liquidity_Proxy') if hasattr(df, 'attrs') else None
             if glp_date:
-                st.caption(f"🔄 {t('source_update')}: {glp_date} (FRED)")
+                st.caption(f"{t('lab_source_update')}: {glp_date} (FRED)")
         else:
             st.warning(t('lab_insufficient_data_lag'))
     else:
@@ -291,10 +316,14 @@ if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy
             fig.update_layout(template='plotly_dark', height=200, margin=dict(l=0, r=0, t=10, b=0))
             st.plotly_chart(fig, use_container_width=True)
         
-        # Source update for Regime Detection
+        # Data period and Source update for Regime Detection
+        regime_data = gl_series.tail(120)
+        regime_start = regime_data.index[0].strftime('%Y-%m-%d') if len(regime_data) > 0 else 'N/A'
+        regime_end = regime_data.index[-1].strftime('%Y-%m-%d') if len(regime_data) > 0 else 'N/A'
+        st.caption(f"{t('lab_data_period')}: {regime_start} ~ {regime_end}")
         glp_date = df.attrs.get('last_valid_dates', {}).get('Global_Liquidity_Proxy') if hasattr(df, 'attrs') else None
         if glp_date:
-            st.caption(f"🔄 {t('source_update')}: {glp_date} (FRED)")
+            st.caption(f"{t('lab_source_update')}: {glp_date} (FRED)")
     else:
         st.warning(t('lab_insufficient_data_short'))
 else:
@@ -382,9 +411,11 @@ if not spread_df.empty:
         )
         st.plotly_chart(fig, use_container_width=True)
     
-    # Source update for Cross-Asset Spreads
+    # Data period and Source update for Cross-Asset Spreads
     from datetime import datetime
-    st.caption(f"🔄 {t('source_update')}: {datetime.now().strftime('%Y-%m-%d %H:%M')} (Yahoo Finance)")
+    now = datetime.now()
+    st.caption(f"{t('lab_data_period')}: {now.strftime('%Y-%m-%d')} (Intraday)")
+    st.caption(f"{t('lab_source_update')}: {now.strftime('%Y-%m-%d %H:%M')} (Yahoo Finance)")
 else:
     st.info(t('lab_spreads_no_data'))
 
@@ -521,6 +552,25 @@ st.dataframe(
 
 st.markdown("---")
 
+# Show current time in all regions for verification
+now_utc = datetime.now(ZoneInfo('UTC'))
+st.markdown(f"##### 🕒 {t('current_time_verification')}")
+time_cols = st.columns(3)
+for i, (region_id, region_data) in enumerate(MARKET_REGIONS.items()):
+    try:
+        tz = ZoneInfo(region_data['tz'])
+        local_time = now_utc.astimezone(tz)
+        is_weekday = local_time.weekday() <= 4
+        is_market_hours = region_data['open_hour'] <= local_time.hour < region_data['close_hour']
+        status = "🟢 OPEN" if (is_weekday and is_market_hours) else "🔴 CLOSED"
+        with time_cols[i]:
+            st.caption(f"{region_data['name']}")
+            st.caption(f"{local_time.strftime('%Y-%m-%d %H:%M')} {status}")
+    except:
+        pass
+
+st.markdown("---")
+
 # Show current market status
 active_markets = get_active_market()
 
@@ -554,6 +604,12 @@ if active_markets:
                 )
                 
                 st.dataframe(display_spreads, use_container_width=True, hide_index=True)
+                
+                # Data period and source update
+                tz = ZoneInfo(MARKET_REGIONS[region_id]['tz'])
+                local_now = now_utc.astimezone(tz)
+                st.caption(f"{t('lab_data_period')}: {local_now.strftime('%Y-%m-%d')} (Local: {local_now.strftime('%H:%M')})")
+                st.caption(f"{t('lab_source_update')}: {datetime.now().strftime('%Y-%m-%d %H:%M')} (Yahoo Finance)")
                 
                 # Chart for valid spreads
                 valid = region_spreads[region_spreads['Spread (bps)'].notna()]
@@ -591,6 +647,15 @@ else:
     
     if not region_spreads.empty:
         st.caption("⚠️ Note: Data reflects last available quotes and may be stale during closed hours")
+        
+        # Data period and source update for closed markets
+        try:
+            tz = ZoneInfo(MARKET_REGIONS[selected_region]['tz'])
+            local_now = now_utc.astimezone(tz)
+            st.caption(f"{t('lab_data_period')}: {local_now.strftime('%Y-%m-%d')} (Last close)")
+            st.caption(f"{t('lab_source_update')}: {datetime.now().strftime('%Y-%m-%d %H:%M')} (Yahoo Finance)")
+        except:
+            pass
         
         def get_spread_status(spread):
             if spread is None or pd.isna(spread):

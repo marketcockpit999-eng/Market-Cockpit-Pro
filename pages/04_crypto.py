@@ -141,7 +141,7 @@ if stablecoin_data:
     fig.update_layout(template='plotly_dark', height=350, showlegend=True, legend=dict(orientation='h', y=-0.1))
     st.plotly_chart(fig, use_container_width=True, key="stablecoin_pie")
     
-    st.caption(f"{t('last_update')}: {stablecoin_data['timestamp'][:19]}")
+    st.caption(f"🔄 {t('source_update')}: {stablecoin_data['timestamp'][:16].replace('T', ' ')} (DeFiLlama)")
 else:
     st.warning(t('stablecoin_fetch_failed'))
 
@@ -211,7 +211,7 @@ if treasury_data:
             ])
             st.dataframe(other_df, use_container_width=True, hide_index=True)
     
-    st.caption(f"{t('last_update')}: {treasury_data['timestamp'][:19]}")
+    st.caption(f"🔄 {t('source_update')}: {treasury_data['timestamp'][:16].replace('T', ' ')} (DeFiLlama)")
 else:
     st.warning(t('rwa_fetch_failed'))
 

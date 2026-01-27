@@ -1,138 +1,57 @@
-# Market Cockpit Pro - Project State
-> Last Updated: 2026-01-26 (Claude Thread #20)
+# PROJECT_STATE.md - Market Cockpit Pro
 
-## ✅ 現在の状態
+## Last Updated
+2026-01-28 05:00 JST
 
-**アプリ完成** 🎉
-- 101 指標を監視（indicators.py）
-- 13 ページ構成（Admin追加）
-- 3グループ・ナビゲーション
-- 日英バイリンガル対応
-- AI分析（Claude/Gemini/Grok）
+## Current Status
+**Pre-commit Hook System Implemented** - Automatic indicator verification on commit
 
----
+## Recent Changes (This Session)
+1. ✅ Created `scripts/verify_baseline.py` - Indicator existence verification
+2. ✅ Created `scripts/setup_hooks.py` - Hook installer
+3. ✅ Created `scripts/pre-commit-hook.sh` - Git hook script
+4. ✅ Created `VERIFY_BASELINE.bat` - Manual verification runner
+5. ✅ Created `SETUP_HOOKS.bat` - Hook installation runner
+6. ✅ Updated `PROJECT_RULES.md` - Added Section 9 for pre-commit hook docs
 
-## 🔴 次の大きなタスク
+## Pre-commit Hook System
+- **Purpose**: Prevent "silent indicator disappearance"
+- **Mechanism**: Block commits if indicators missing from UI pages
+- **Setup**: Run `.\SETUP_HOOKS.bat` or `python scripts/setup_hooks.py`
+- **Manual Run**: `.\VERIFY_BASELINE.bat` or `python scripts/verify_baseline.py`
 
-### 完全ヘルスチェックの構築
+## Pages Verified by Hook
+| Page | Content |
+|------|---------|
+| 01_liquidity | Fed liquidity & rates |
+| 02_global_money | Global money supply |
+| 03_us_economic | US economic indicators |
+| 04_crypto | Crypto & stablecoins |
+| 08_sentiment | Market sentiment |
+| 09_banking | Banking sector |
 
-**高橋さんの最終目標:**
-> 機能追加・修正時に構成要素が消えたり、文章が短くなったり、APIがおかしいのを**自動検出・自動修正**できる仕組み
+## CRITICAL RULE
+**ダミーデータは絶対に使用しない！**
+APIが無い/不安定なら、表示しない。削除する。
 
-### 作業フェーズ
-
-| Phase | 内容 | 状態 |
-|-------|------|------|
-| 1 | 全データの一元管理（indicators.py統合） | ✅ 完了 |
-| 2 | 表示パターン分類・仕様書作成 | ✅ 完了（#16） |
-| 2.5 | 全101指標のUI表示完了 | ✅ 完了（#17） |
-| 3 | 表示要素チェッカーの改修 | ✅ 完了 （#19） |
-| 3.5 | **Admin Tabでチェッカー結果GUI表示** | ✅ 完了（#20） |
-| 4 | 自動修正の検討 | ⏳ 未着手 |
-
----
-
-## 📋 仕様書完成（Thread #16）
-
-**docs/DISPLAY_SPEC.md** = 「本」
-
-| パターン | 件数 | 説明 |
-|---------|------|------|
-| standard | 77 | 標準9要素 |
-| mom_yoy | 6 | 標準 + 前月比・前年比 |
-| manual_calc | 6 | 特殊計算ロジック |
-| web_scrape | 2 | Webスクレイピング |
-| calculated | 1 | 複数指標から算出 |
-| api | 9 | 個別APIコール |
-| **合計** | **101** | |
-
----
-
-## 📊 100項目の内訳
-
-| ソース | 項目数 |
-|--------|--------|
-| FRED | 58 |
-| YAHOO | 18 |
-| WEB | 2 |
-| CALCULATED | 1 |
-| EXTERNAL | 2 |
-| HYPERLIQUID | 5 |
-| DEFILLAMA | 3 |
-| SENTIMENT | 2 |
-| **合計** | **101** |
-
----
-
-## 🗂️ ナビゲーション構成（Thread #20）
-
+## Git Status
+Changes pending push:
 ```
-📊 Markets（7ページ）
-  ├── Liquidity & Rates
-  ├── Global Money & FX
-  ├── US Economic Data
-  ├── Banking Sector
-  ├── Crypto Liquidity
-  ├── Market Sentiment
-  └── Market Verdict
-
-🔬 Analysis（4ページ）
-  ├── AI Analysis
-  ├── Market Analysis Lab
-  ├── Currency Lab
-  └── Monte Carlo
-
-📰 Info & Tools（2ページ）
-  ├── Market Voices
-  └── Admin ← 新規追加
+Add pre-commit hook system for automatic indicator verification
+- scripts/verify_baseline.py
+- scripts/setup_hooks.py
+- scripts/pre-commit-hook.sh
+- VERIFY_BASELINE.bat
+- SETUP_HOOKS.bat
+- PROJECT_RULES.md (Section 9 added)
 ```
 
----
+## Baseline Verification
+- ✅ All tabs documented in BASELINE_VERIFICATION.md
+- ✅ Pre-commit hook system ready
 
-## 📜 スレッド履歴
+## Handoff File
+`handoffs/HANDOFF_20260128_03.md` (pre-commit hook implementation)
 
-| # | 日付 | 作業内容 |
-|---|------|----------|
-| 8 | 01-23 | VERDICT Phase 1-4開始 |
-| 9 | 01-23 | 設計レビュー、データソース調査 |
-| 10 | 01-23 | 製造業指標4件追加 |
-| 11 | 01-23 | サービス業指標：英語i18n |
-| 12 | 01-23 | サービス業指標完成、UI実装 |
-| 13 | 01-24 | アプリ総評、Phase 4準備 |
-| 14 | 01-25 | サイドバー改善、表示パターン分類開始 |
-| 15 | 01-26 | 「本」の重要性議論、材料チェッカー作成 |
-| 16 | 01-26 | 仕様書（DISPLAY_SPEC.md）完成 |
-| 17 | 01-26 | 全101指標UI表示完了（HYG,LQD,ECB,ADP追加） |
-| 18 | 01-26 | 自動レダリング基盤（Step 1）実装・検証完了 |
-| 19 | 01-26 | 完全自動レンダリングシステム（Step 2）実装完了 |
-| **20** | **01-26** | **Admin Tab追加、3グループ・ナビゲーション** |
-
----
-
-## 🔗 最新スレッド
-
-**Thread #20**: https://claude.ai/chat/1508ff06-1215-4a1d-a1cc-3ffe08237aa4
-
----
-
-## 🔒 鉄の掟（リマインダー）
-
-1. **外科手術的修正のみ** - 関数全体の書き換え禁止
-2. **既存show_metric_with_sparkline呼び出しを削除しない**
-3. **新スレッド開始時は前スレURL+作業内容を共有**
-4. **指標追加後はヘルスチェック必須**
-5. **スレが長くなる前に引き継ぎ準備**
-6. **新指標追加後はForce Update必須**
-
----
-
-## 📁 重要ファイル
-
-| ファイル | 役割 |
-|---------|------|
-| `utils/indicators.py` | 📍 Single Source of Truth |
-| `docs/DISPLAY_SPEC.md` | ★仕様書（本）|
-| `utils/display_checker.py` | 表示要素チェッカー |
-| `pages/99_admin.py` | 管理者ダッシュボード |
-| `handoffs/HANDOFF_20260126_02.md` | 最新ハンドオフ |
-| `PROJECT_RULES.md` | 回帰防止ルール |
+## Previous Thread
+https://claude.ai/chat/c42f1dd9-c0c8-4b5d-a9e2-46e111bf9430

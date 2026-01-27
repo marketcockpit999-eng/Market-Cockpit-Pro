@@ -151,14 +151,24 @@ def show_metric(label, series, unit="", explanation_key="", notes="", alert_func
             st.caption(f"📅 {t('data_date')}: {latest_date}")
     
     if release_date:
-        st.caption(f"🔄 {t('source_update')}: {release_date}")
+        # Build source update string with extra sources if provided
+        source_parts = [f"{release_date}"]
+        if extra_sources:
+            for src_label, src_date in extra_sources.items():
+                source_parts.append(f"{src_date} ({src_label})")
+        st.caption(f"🔄 {t('source_update')}: {'  '.join(source_parts)}")
     
     if notes:
         st.caption(notes)
 
 
-def show_metric_with_sparkline(label, series, df_column, unit="", explanation_key="", notes="", alert_func=None, decimal_places=1):
-    """メトリック + スパークライン（ミニトレンドチャート）を表示"""
+def show_metric_with_sparkline(label, series, df_column, unit="", explanation_key="", notes="", alert_func=None, decimal_places=1, extra_sources=None):
+    """メトリック + スパークライン（ミニトレンドチャート）を表示
+    
+    Args:
+        extra_sources: dict of {label: date_str} for additional source dates
+                       e.g., {'S&P500': '2026-01-21'}
+    """
     df = st.session_state.get('df')
     df_original = st.session_state.get('df_original')  # Use non-forward-filled data for delta
 
@@ -223,7 +233,17 @@ def show_metric_with_sparkline(label, series, df_column, unit="", explanation_ke
             st.caption(f"📅 {t('data_date')}: {latest_date}")
     
     if release_date:
-        st.caption(f"🔄 {t('source_update')}: {release_date}")
+        # Build source update string with extra sources if provided
+        if extra_sources:
+            # If extra_sources provided, first item is primary source label
+            primary_label = extra_sources.get('_primary', '')
+            source_parts = [f"{release_date}({primary_label})" if primary_label else f"{release_date}"]
+            for src_label, src_date in extra_sources.items():
+                if src_label != '_primary':
+                    source_parts.append(f"{src_date} ({src_label})")
+            st.caption(f"🔄 {t('source_update')}: {' | '.join(source_parts)}")
+        else:
+            st.caption(f"🔄 {t('source_update')}: {release_date}")
     
     if notes:
         st.caption(notes)
@@ -341,7 +361,7 @@ def display_macro_card(title, series, df_column, df_original=None, unit="", note
     
     # Main Metric with Sparkline
     if show_level:
-        show_metric_with_sparkline(title, series, df_column, unit, notes=notes)
+        show_metric_with_sparkline(title, series, df_column, unit, df_column, notes=notes)
     
     # YoY% Trend Chart
     original_series = df_original.get(df_column) if isinstance(df_original, dict) else (

@@ -751,6 +751,19 @@ Rather than simply summarizing news, you analyze the "plumbing" behind the data 
         'sent_put_call_subtitle': 'Options market bullish/bearish degree - High = Bearish, Low = Bullish',
         'sent_put_call_preparing': '📝 Put/Call Ratio data source is being prepared. Showing VIX as proxy.',
         'sent_put_call_ref': 'VIX (Reference): {value:.1f}',
+        'sent_pc_bearish': '📉 Bearish Signal (Put Heavy)',
+        'sent_pc_neutral': '📊 Neutral',
+        'sent_pc_bullish': '📈 Bullish Signal (Call Heavy)',
+        'sent_pc_guide_title': '📖 How to Read Put/Call Ratio',
+        'sent_pc_guide': '''**Put/Call Ratio** measures bullish/bearish sentiment in the options market.
+
+| Value | State | Meaning |
+|----|------|------|
+| **> 1.0** | 🔴 Bearish | Put heavy, investors expect decline |
+| **0.7 - 1.0** | 🟡 Neutral | Balanced state |
+| **< 0.7** | 🟢 Bullish | Call heavy, investors expect rise |
+
+💡 **Contrarian Hint**: Extremely high values may signal bottoms, extremely low values may signal tops.''',
         'sent_guide_section': '### 📚 How to Read Sentiment Indicators',
         'sent_guide_expand': '💡 Indicator Interpretation Guide',
         'sent_guide_content': '''| Indicator | Extreme Fear | Fear | Neutral | Greed | Extreme Greed |
@@ -861,7 +874,7 @@ Rather than simply summarizing news, you analyze the "plumbing" behind the data 
         'lab_ig_etf': 'Investment Grade (LQD)',
         'lab_hy_etf': 'High Yield (HYG)',
         'lab_data_period': '📅 Data Period',
-        'lab_source_update': '🔄 Source Update',
+        'lab_source_update': '🔄 Source Update Date',
         'lab_calculated': 'Calculated value',
         
         # --- Analysis Lab: M2V & FSI Status ---
@@ -997,6 +1010,9 @@ Rather than simply summarizing news, you analyze the "plumbing" behind the data 
         'verdict_ind_position_52w': '52-week Range Position',
         'verdict_ind_vix': 'VIX Fear Index',
         'verdict_ind_aaii_spread': 'AAII Bull-Bear Spread',
+        'verdict_ind_consumer_sent': 'Consumer Sentiment',
+        'verdict_ind_nfci': 'NFCI (Financial Conditions)',
+        'verdict_ind_sloos_std': 'SLOOS Lending Standards',
         'verdict_disclaimer': '⚠️ This is not investment advice. Please make your own judgment.',
         
         # --- Market Verdict: Multi-Asset (Phase 5) ---
@@ -1013,10 +1029,11 @@ Rather than simply summarizing news, you analyze the "plumbing" behind the data 
         'verdict_data_quality_good': '✅ Good',
         'verdict_data_quality_partial': '⚠️ Partial',
         'verdict_data_quality_insufficient': '❌ Insufficient',
+        'verdict_data_as_of': 'Data As Of',
         
         # --- Verdict Phase 4 (Why Section) ---
         'verdict_why_title': '🧐 Why This Verdict?',
-        'verdict_why_subtitle': 'AI and algorithm explain the reasoning',
+        'verdict_why_subtitle': 'Algorithm explains the reasoning',
         'verdict_why_disclaimer': '⚠️ This analysis is not investment advice.',
         'verdict_why_action_title': '💡 Suggested Actions',
         
@@ -1089,6 +1106,7 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         
         # --- Multi-Region Spread Monitor ---
         'market_hours_reference': 'Market Hours Reference',
+        'current_time_verification': 'Current Time (for verification)',
         'region': 'Region',
         'market_hours_local': 'Hours (Local Time)',
         'all_regions_title': 'All Regions (Data from last market close)',
@@ -1806,7 +1824,7 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'sent_spread_neutral': '(中立)',
         'sent_spread_somewhat_bearish': '(やや弱気)',
         'sent_spread_bottom_signal': '(底打ちシグナル?)',
-        'sent_aaii_update': '🔄 提供元更新: {date} (週次)',
+        'sent_aaii_update': '🔄 提供元更新日: {date} (週次)',
         'sent_distribution': '**センチメント分布:**',
         'sent_category': 'カテゴリ',
         'sent_ratio': '比率',
@@ -1828,6 +1846,19 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'sent_put_call_subtitle': 'オプション市場の強気弱気度 - 高い=弱気、低い=強気',
         'sent_put_call_preparing': '📝 Put/Callレシオデータソースは準備中です。VIXを代理指標として表示。',
         'sent_put_call_ref': 'VIX (参考): {value:.1f}',
+        'sent_pc_bearish': '📉 弱気シグナル (プット優勢)',
+        'sent_pc_neutral': '📊 中立',
+        'sent_pc_bullish': '📈 強気シグナル (コール優勢)',
+        'sent_pc_guide_title': '📖 Put/Callレシオの読み方',
+        'sent_pc_guide': '''**Put/Call Ratio** はオプション市場での強気弱気を測る指標です。
+
+| 値 | 状態 | 意味 |
+|----|------|------|
+| **> 1.0** | 🔴 弱気 | プット優勢、投資家は下落を予想 |
+| **0.7 - 1.0** | 🟡 中立 | バランス状態 |
+| **< 0.7** | 🟢 強気 | コール優勢、投資家は上昇を予想 |
+
+💡 **逆張りヒント**: 極端に高い値は底打ちシグナル、極端に低い値は天井シグナルになることも。''',
         'sent_guide_section': '### 📚 センチメント指標の読み方',
         'sent_guide_expand': '💡 指標解釈ガイド',
         'sent_guide_content': '''| 指標 | 極度の恐怖 | 恐怖 | 中立 | 貪欲 | 極度の貪欲 |
@@ -1938,7 +1969,7 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'lab_ig_etf': '投資適格債 (LQD)',
         'lab_hy_etf': 'ハイイールド債 (HYG)',
         'lab_data_period': '📅 データ期間',
-        'lab_source_update': '🔄 提供元更新',
+        'lab_source_update': '🔄 提供元更新日',
         'lab_calculated': '計算値',
         
         # --- Analysis Lab: M2V & FSI Status ---
@@ -2086,6 +2117,7 @@ Goldより変動が激しいため、短期的な市場センチメントを反�
         
         # --- Multi-Region Spread Monitor ---
         'market_hours_reference': '市場時間一覧',
+        'current_time_verification': '現在時刻（検証用）',
         'region': 'リージョン',
         'market_hours_local': '時間帯 (現地時間)',
         'all_regions_title': '全リージョン（前回市場終値時点）',
@@ -2149,6 +2181,9 @@ Goldより変動が激しいため、短期的な市場センチメントを反�
         'verdict_ind_position_52w': '52週レンジ位置',
         'verdict_ind_vix': 'VIX恐怖指数',
         'verdict_ind_aaii_spread': 'AAII強弱差',
+        'verdict_ind_consumer_sent': '消費者信頼感',
+        'verdict_ind_nfci': 'NFCI (金融環境)',
+        'verdict_ind_sloos_std': 'SLOOS融資基準',
         'verdict_disclaimer': '⚠️ 投資助言ではありません。投資判断はご自身で行ってください。',
         
         # --- Market Verdict: Multi-Asset (Phase 5) ---
@@ -2165,10 +2200,11 @@ Goldより変動が激しいため、短期的な市場センチメントを反�
         'verdict_data_quality_good': '✅ 良好',
         'verdict_data_quality_partial': '⚠️ 一部欠損',
         'verdict_data_quality_insufficient': '❌ 不足',
+        'verdict_data_as_of': 'データ基準日',
         
         # --- Verdict Phase 4 (Why Section) ---
         'verdict_why_title': '🧐 判定の理由',
-        'verdict_why_subtitle': 'AIとアルゴリズムが判定根拠を解説',
+        'verdict_why_subtitle': 'アルゴリズムが判定根拠を解説',
         'verdict_why_disclaimer': '⚠️ 本分析は投資助言ではありません。',
         'verdict_why_action_title': '💡 示唆されるアクション',
         
@@ -2206,7 +2242,7 @@ def set_language(lang: str) -> None:
 
 
 # Debug flag - set to True to diagnose translation issues
-_T_DEBUG = True
+_T_DEBUG = False
 
 def t(key: str, default: str = None, **kwargs) -> str:
     """

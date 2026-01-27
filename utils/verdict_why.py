@@ -431,9 +431,5 @@ def render_why_section(verdict: dict):
             else:
                 st.info(explain_sentiment(pillars['sentiment']))
     
-    # アクション示唆
-    st.markdown("---")
-    st.markdown(suggest_actions(verdict, lang))
-
     # 免責
     st.caption(t('verdict_why_disclaimer'))

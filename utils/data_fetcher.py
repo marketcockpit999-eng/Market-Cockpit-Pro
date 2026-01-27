@@ -147,7 +147,8 @@ def prefetch_api_indicators():
         record_api_status('Treasury_TVL', False)
         record_api_status('Gold_TVL', False)
     
-    # 4. Sentiment (Crypto Fear & Greed, CNN Fear & Greed)
+    # 4. Sentiment (Crypto Fear & Greed only)
+    # NOTE: CNN Fear & Greed removed - no official API, web scraping blocked
     try:
         crypto_fg = get_crypto_fear_greed()
         record_api_status('Crypto_Fear_Greed', crypto_fg is not None and crypto_fg.get('current') is not None)
@@ -155,14 +156,6 @@ def prefetch_api_indicators():
     except Exception as e:
         logger.warning(f"  Crypto F&G fetch error: {e}")
         record_api_status('Crypto_Fear_Greed', False)
-    
-    try:
-        cnn_fg = get_cnn_fear_greed()
-        record_api_status('CNN_Fear_Greed', cnn_fg is not None and cnn_fg.get('current') is not None)
-        logger.info(f"  CNN F&G: {cnn_fg.get('current') if cnn_fg else None}")
-    except Exception as e:
-        logger.warning(f"  CNN F&G fetch error: {e}")
-        record_api_status('CNN_Fear_Greed', False)
     
     logger.info("API indicator prefetch complete.")
 
@@ -385,6 +378,51 @@ def _fetch_yahoo_data(indicators: dict, start: datetime.datetime, end: datetime.
         return pd.DataFrame()
 
 
+# ========== YAHOO REALTIME PRICE FIX ==========
+# DXY (DX-Y.NYB) has 2-day delay in history() API
+# Use ticker.info for realtime price
+
+YAHOO_REALTIME_TICKERS = {
+    'DXY': 'DX-Y.NYB',  # Dollar Index - 2 day delay in history()
+}
+
+def _fetch_yahoo_realtime_prices() -> dict:
+    """
+    Fetch realtime prices for tickers with known history() delays.
+    Uses ticker.info['regularMarketPrice'] which is near-realtime.
+    
+    Returns:
+        dict of {indicator_name: (price, date_str)}
+    """
+    results = {}
+    today_str = datetime.datetime.now().strftime('%Y-%m-%d')
+    
+    for name, ticker_symbol in YAHOO_REALTIME_TICKERS.items():
+        try:
+            ticker = yf.Ticker(ticker_symbol)
+            info = ticker.info
+            
+            price = info.get('regularMarketPrice')
+            # Get the actual market time if available
+            market_time = info.get('regularMarketTime')
+            if market_time:
+                # Convert Unix timestamp to date string
+                date_str = datetime.datetime.fromtimestamp(market_time).strftime('%Y-%m-%d')
+            else:
+                date_str = today_str
+            
+            if price is not None:
+                results[name] = (float(price), date_str)
+                logger.info(f"✓ Realtime {name}: {price:.3f} ({date_str})")
+            else:
+                logger.warning(f"✗ Realtime {name}: No price in info")
+                
+        except Exception as e:
+            logger.warning(f"✗ Realtime {name} error: {e}")
+    
+    return results
+
+
 # ========== FRED RELEASE DATES ==========
 @st.cache_data(ttl=3600, show_spinner=False)
 def get_fred_release_dates(fred_ids: list) -> dict:
@@ -551,6 +589,28 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
     
     # NOTE: China Credit Impulse and Global M2 calculations removed
     # Non-US M2 data sources unreliable
+    
+    # === REALTIME PRICE FIX ===
+    # Fetch realtime prices for tickers with known history() delays (e.g., DXY)
+    # This fixes the 2-day delay issue for Dollar Index
+    try:
+        realtime_prices = _fetch_yahoo_realtime_prices()
+        for name, (price, date_str) in realtime_prices.items():
+            if name in df.columns:
+                # Add/update the latest row with realtime price
+                latest_date = pd.to_datetime(date_str)
+                if latest_date not in df.index:
+                    # Add new row for today's date
+                    df.loc[latest_date, name] = price
+                    df = df.sort_index()
+                    logger.info(f"Added realtime {name}: {price:.3f} at {date_str}")
+                elif pd.isna(df.loc[latest_date, name]) or df.index[-1] < latest_date:
+                    # Update if NaN or if history is behind
+                    df.loc[latest_date, name] = price
+                    df = df.sort_index()
+                    logger.info(f"Updated realtime {name}: {price:.3f} at {date_str}")
+    except Exception as e:
+        logger.warning(f"Realtime price fetch error: {e}")
     
     # Store last valid dates BEFORE forward fill
     last_valid_dates = {}
@@ -1294,70 +1354,52 @@ def get_crypto_fear_greed():
         pass
     return None
 
-@st.cache_data(ttl=3600, show_spinner=False)
-def get_cnn_fear_greed():
-    """Fetch CNN Fear & Greed Index"""
-    try:
-        url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata"
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        response = requests.get(url, headers=headers, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            if 'fear_and_greed' in data:
-                fg = data['fear_and_greed']
-                history = []
-                if 'fear_and_greed_historical' in data:
-                    for point in data['fear_and_greed_historical'].get('data', []):
-                        history.append({
-                            'date': datetime.datetime.fromtimestamp(point['x'] / 1000),
-                            'value': point['y']
-                        })
-                return {
-                    'current': fg.get('score', None),
-                    'classification': fg.get('rating', ''),
-                    'previous_close': fg.get('previous_close', None),
-                    'history': pd.DataFrame(history).set_index('date').sort_index() if history else None
-                }
-    except:
-        pass
-    return None
+# NOTE: get_cnn_fear_greed() REMOVED - No official API, web scraping blocked by rate limits
+# NOTE: get_aaii_sentiment() REMOVED - Was using hardcoded dummy data
+# NOTE: get_cme_fedwatch() REMOVED - Was using hardcoded dummy data
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def get_put_call_ratio():
-    """Fetch Put/Call Ratio from CBOE"""
+    """Fetch Equity Put/Call Ratio from CBOE official CSV
+    
+    Source: https://cdn.cboe.com/resources/options/volume_and_call_put_ratios/equitypc.csv
+    This is the official CBOE Equity Put/Call Ratio ($CPCE) data.
+    
+    Returns:
+        float: Latest equity put/call ratio, or None if fetch fails
+    """
     try:
-        url = "https://www.cboe.com/us/options/market_statistics/daily/"
+        url = "https://cdn.cboe.com/resources/options/volume_and_call_put_ratios/equitypc.csv"
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
         response = requests.get(url, headers=headers, timeout=15)
+        
         if response.status_code == 200:
-            content = response.text
-            matches = re.findall(r'EQUITY.*?(\d\.\d{2})', content, re.IGNORECASE | re.DOTALL)
-            if matches:
-                return float(matches[0])
-            pcr_match = re.search(r'Equity\s+Put/Call\s+Ratio.*?([\d\.]+)', content, re.IGNORECASE | re.DOTALL)
-            if pcr_match:
-                return float(pcr_match.group(1))
-    except:
-        pass
+            # Skip header rows (first 3 lines are disclaimer/metadata)
+            lines = response.text.strip().split('\n')
+            
+            # Find the header row with DATE,CALL,PUT,TOTAL,P/C Ratio
+            header_idx = None
+            for i, line in enumerate(lines):
+                if line.startswith('DATE,CALL,PUT'):
+                    header_idx = i
+                    break
+            
+            if header_idx is not None:
+                # Parse CSV from header row onwards
+                csv_text = '\n'.join(lines[header_idx:])
+                df = pd.read_csv(StringIO(csv_text))
+                
+                if 'P/C Ratio' in df.columns and len(df) > 0:
+                    # Get the last (most recent) row
+                    latest_ratio = df['P/C Ratio'].iloc[-1]
+                    logger.info(f"✓ Put/Call Ratio from CBOE CSV: {latest_ratio}")
+                    return float(latest_ratio)
+        
+        logger.warning(f"Put/Call Ratio fetch failed: HTTP {response.status_code}")
+    except Exception as e:
+        logger.warning(f"Put/Call Ratio fetch error: {e}")
+    
     return None
-
-@st.cache_data(ttl=86400, show_spinner=False)
-def get_aaii_sentiment():
-    """Fetch AAII Investor Sentiment Survey"""
-    try:
-        bullish = 38.5
-        neutral = 31.2
-        bearish = 30.3
-        return {
-            'bullish': bullish,
-            'neutral': neutral,
-            'bearish': bearish,
-            'bull_bear_spread': bullish - bearish,
-            'date': datetime.datetime.now().strftime('%Y-%m-%d'),
-            'note': 'データソース準備中'
-        }
-    except:
-        return None
 
 # ========== FOMC & FED WATCH ==========
 @st.cache_data(ttl=86400, show_spinner=False)
@@ -1392,22 +1434,6 @@ def get_fomc_sep_projections():
         return projections if projections else None
     except:
         return None
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def get_cme_fedwatch():
-    """Fetch CME FedWatch probabilities (placeholder)"""
-    return {
-        'next_meeting': '2026-01-29',
-        'current_rate': '4.25-4.50%',
-        'probabilities': {
-            'cut_50bp': 5.0,
-            'cut_25bp': 65.0,
-            'hold': 28.0,
-            'hike_25bp': 2.0,
-        },
-        'expected_rate': '4.00-4.25%',
-        'note': 'データソース準備中'
-    }
 
 # ========== MANUAL H.4.1 DATA ==========
 def load_manual_data():
@@ -1501,7 +1527,8 @@ def get_richmond_fed_survey():
         or None if fetch fails
     """
     try:
-        url = "https://www.richmondfed.org/region_communities/regional_data_analysis/surveys/manufacturing"
+        # URL updated 2026-01: surveys -> business_surveys
+        url = "https://www.richmondfed.org/region_communities/regional_data_analysis/business_surveys/manufacturing"
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
@@ -1513,15 +1540,22 @@ def get_richmond_fed_survey():
         
         content = response.text
         
-        # Extract release date from page (e.g., "**December 23, 2025**")
+        # Extract release date from page - try multiple patterns
         release_date = None
-        release_pattern = r'\*\*([A-Z][a-z]+ \d{1,2}, \d{4})\*\*'
-        release_match = re.search(release_pattern, content)
-        if release_match:
-            try:
-                release_date = pd.to_datetime(release_match.group(1)).strftime('%Y-%m-%d')
-            except:
-                pass
+        release_patterns = [
+            r'\*\*([A-Z][a-z]+\.?\s+\d{1,2},\s*\d{4})\*\*',  # Markdown bold: **Jan. 27, 2026** or **January 27, 2026**
+            r'([A-Z][a-z]{2}\.\s+\d{1,2},\s*\d{4})',  # Short month: Nov. 25, 2025
+            r'Released[:\s]+([A-Z][a-z]+\.?\s+\d{1,2},\s*\d{4})',  # Released: January 27, 2026
+            r'([A-Z][a-z]+\s+\d{1,2},\s*\d{4})',  # Full month: January 27, 2026
+        ]
+        for pattern in release_patterns:
+            release_match = re.search(pattern, content)
+            if release_match:
+                try:
+                    release_date = pd.to_datetime(release_match.group(1)).strftime('%Y-%m-%d')
+                    break
+                except:
+                    continue
         
         # Extract embedded CSV data from page
         # CSV format: Date,Composite Index,Shipments,New Orders,...
@@ -1621,15 +1655,22 @@ def get_richmond_fed_services_survey():
         
         content = response.text
         
-        # Extract release date from page (e.g., "**December 23, 2025**")
+        # Extract release date from page - try multiple patterns
         release_date = None
-        release_pattern = r'\*\*([A-Z][a-z]+ \d{1,2}, \d{4})\*\*'
-        release_match = re.search(release_pattern, content)
-        if release_match:
-            try:
-                release_date = pd.to_datetime(release_match.group(1)).strftime('%Y-%m-%d')
-            except:
-                pass
+        release_patterns = [
+            r'\*\*([A-Z][a-z]+\.?\s+\d{1,2},\s*\d{4})\*\*',  # Markdown bold: **Jan. 27, 2026** or **January 27, 2026**
+            r'([A-Z][a-z]{2}\.\s+\d{1,2},\s*\d{4})',  # Short month: Nov. 25, 2025
+            r'Released[:\s]+([A-Z][a-z]+\.?\s+\d{1,2},\s*\d{4})',  # Released: January 27, 2026
+            r'([A-Z][a-z]+\s+\d{1,2},\s*\d{4})',  # Full month: January 27, 2026
+        ]
+        for pattern in release_patterns:
+            release_match = re.search(pattern, content)
+            if release_match:
+                try:
+                    release_date = pd.to_datetime(release_match.group(1)).strftime('%Y-%m-%d')
+                    break
+                except:
+                    continue
         
         # Extract embedded CSV data from page
         # CSV format: Date,Revenues,Demand,Employment,Wages,Local Business Conditions,Capital Expenditures

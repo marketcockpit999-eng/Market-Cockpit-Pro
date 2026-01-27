@@ -164,7 +164,7 @@ with col4:
             if hasattr(df, 'attrs'):
                 copper_date = df.attrs.get('last_valid_dates', {}).get('Copper')
                 if copper_date:
-                    st.caption(f"📅 {t('data_period')}: {copper_date}")
+                    st.caption(f"📅 {t('data_period')}: {copper_date} ({t('freq_daily')})")
                     st.caption(f"🔄 {t('source_update')}: {copper_date}")  # yFinanceはlast_valid_datesを使用
                 st.caption(t('bank_cu_au_notes'))  # Rise=Risk-on, Fall=Risk-off
             
