@@ -35,6 +35,26 @@ if df is None:
 st.subheader(t('crypto_title'))
 st.caption(t('crypto_subtitle'))
 
+# === BTC & ETH Prices ===
+st.markdown(f"#### {t('crypto_prices')}")
+col_btc, col_eth = st.columns(2)
+
+with col_btc:
+    show_metric_with_sparkline(t('btc_price'), df.get('BTC'), 'BTC', "$", "BTC", notes=t('btc_price_notes'), decimal_places=0)
+    if 'BTC' in df.columns and not df.get('BTC', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        from utils import styled_line_chart
+        styled_line_chart(df[['BTC']], height=200)
+
+with col_eth:
+    show_metric_with_sparkline(t('eth_price'), df.get('ETH'), 'ETH', "$", "ETH", notes=t('eth_price_notes'), decimal_places=0)
+    if 'ETH' in df.columns and not df.get('ETH', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        from utils import styled_line_chart
+        styled_line_chart(df[['ETH']], height=200)
+
+st.markdown("---")
+
 # Fetch data
 stablecoin_data = get_stablecoin_data()
 stablecoin_hist = get_stablecoin_historical()

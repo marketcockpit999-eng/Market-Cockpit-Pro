@@ -66,7 +66,7 @@ if leverage_data and leverage_data.get('data_source'):
 if data_sources:
     st.caption(f"🔄 {t('source_update')}: {' | '.join(data_sources)}")
 
-col_val1, col_val2, col_val3, col_val4 = st.columns(4)
+col_val1, col_val2, col_val3, col_val4, col_val5 = st.columns(5)
 
 with col_val1:
     if pe_data and pe_data.get('sp500_pe'):
@@ -117,6 +117,27 @@ with col_val3:
         st.metric(t('btc_funding_rate'), t('loading'))
 
 with col_val4:
+    if leverage_data and leverage_data.get('eth_funding_rate') is not None:
+        fr = leverage_data['eth_funding_rate']
+        if fr > 0.05:
+            color = "🔴"
+            status = t('long_heavy')
+        elif fr < -0.05:
+            color = "🔵"
+            status = t('short_heavy')
+        else:
+            color = "🟢"
+            status = t('neutral')
+        st.metric(
+            f"{color} {t('eth_funding_rate')}",
+            f"{fr:.4f}%",
+            delta=status,
+            help=t('funding_rate_help')
+        )
+    else:
+        st.metric(t('eth_funding_rate'), t('loading'))
+
+with col_val5:
     if leverage_data and leverage_data.get('btc_long_short_ratio'):
         ratio = leverage_data['btc_long_short_ratio']
         if ratio > 1.5:
@@ -445,11 +466,10 @@ with col2:
 
 
 st.markdown("---")
-st.markdown("---")
 st.subheader(t('risk_bonds'))
 st.caption(t('risk_bonds_desc'))
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     st.markdown(f"#### {t('vix_index')}")
@@ -471,6 +491,13 @@ with col3:
     if 'US_TNX' in df.columns and not df.get('US_TNX', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
         styled_line_chart(df[['US_TNX']], height=200)
+
+with col4:
+    st.markdown(f"#### {t('t10y2y')}")
+    show_metric_with_sparkline(t('t10y2y'), df.get('T10Y2Y'), 'T10Y2Y', "%", "T10Y2Y", notes=t('t10y2y_notes'), decimal_places=3)
+    if 'T10Y2Y' in df.columns and not df.get('T10Y2Y', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        styled_line_chart(df[['T10Y2Y']], height=200)
 
 # === Corporate Bond ETFs ===
 st.markdown("---")

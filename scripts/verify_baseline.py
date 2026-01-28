@@ -143,7 +143,7 @@ def verify_page(page_name: str) -> tuple[list, list]:
     try:
         page_content = read_page_content(page_name)
     except FileNotFoundError as e:
-        print(f"⚠️  Warning: {e}")
+        print(f"[Warning] {e}")
         return [], []
     
     indicators = get_indicators_for_page(page_name)
@@ -188,14 +188,14 @@ def run_verification() -> int:
     total_found = []
     
     for page_name in PAGES_TO_CHECK:
-        print(f"📄 Checking {page_name}.py...")
+        print(f"[Checking] {page_name}.py...")
         missing, found = verify_page(page_name)
         
         if found:
-            print(f"   ✅ Found: {len(found)} indicators")
+            print(f"   [Success] Found: {len(found)} indicators")
         
         if missing:
-            print(f"   ❌ Missing: {len(missing)} indicators")
+            print(f"   [Error] Missing: {len(missing)} indicators")
             for name, info in missing:
                 print(f"      - {name} ({info.get('notes', 'No description')})")
             total_missing.extend([(page_name, name, info) for name, info in missing])
@@ -207,12 +207,12 @@ def run_verification() -> int:
     print("=" * 60)
     print("SUMMARY")
     print("=" * 60)
-    print(f"✅ Verified: {len(total_found)} indicators")
-    print(f"❌ Missing:  {len(total_missing)} indicators")
+    print(f"[Success] Verified: {len(total_found)} indicators")
+    print(f"[Error] Missing:  {len(total_missing)} indicators")
     print()
     
     if total_missing:
-        print("⚠️  MISSING INDICATORS:")
+        print("[Warning] MISSING INDICATORS:")
         print("-" * 40)
         for page_name, indicator_name, info in total_missing:
             print(f"  [{page_name}] {indicator_name}")
@@ -227,7 +227,7 @@ def run_verification() -> int:
         print("3. Or update SPECIAL_DISPLAY_INDICATORS if using custom display")
         return 1
     else:
-        print("✅ ALL INDICATORS VERIFIED")
+        print("[Success] ALL INDICATORS VERIFIED")
         return 0
 
 

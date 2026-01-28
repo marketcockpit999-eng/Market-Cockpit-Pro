@@ -76,7 +76,7 @@ with col2:
 st.markdown("---")
 st.markdown(f"### {t('fx_section')}")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
 with col1:
     st.markdown("#### DXY")
@@ -105,6 +105,27 @@ with col4:
     if 'USDCNY' in df.columns and not df.get('USDCNY', pd.Series()).isna().all():
         st.markdown(f"###### {t('long_term_trend')}")
         styled_line_chart(df[['USDCNY']], height=150)
+
+with col5:
+    st.markdown("#### GBP/USD")
+    show_metric_with_sparkline("GBP/USD", df.get('GBPUSD'), 'GBPUSD', "$", "GBPUSD", notes=t('pound_dollar'), decimal_places=3)
+    if 'GBPUSD' in df.columns and not df.get('GBPUSD', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        styled_line_chart(df[['GBPUSD']], height=150)
+
+with col6:
+    st.markdown("#### USD/CHF")
+    show_metric_with_sparkline("USD/CHF", df.get('USDCHF'), 'USDCHF', "CHF", "USDCHF", notes=t('swiss_franc'), decimal_places=3)
+    if 'USDCHF' in df.columns and not df.get('USDCHF', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        styled_line_chart(df[['USDCHF']], height=150)
+
+with col7:
+    st.markdown("#### AUD/USD")
+    show_metric_with_sparkline("AUD/USD", df.get('AUDUSD'), 'AUDUSD', "$", "AUDUSD", notes=t('aussie_dollar'), decimal_places=3)
+    if 'AUDUSD' in df.columns and not df.get('AUDUSD', pd.Series()).isna().all():
+        st.markdown(f"###### {t('long_term_trend')}")
+        styled_line_chart(df[['AUDUSD']], height=150)
 
 # === Global Indices Section ===
 st.markdown("---")

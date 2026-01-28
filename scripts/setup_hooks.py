@@ -36,37 +36,37 @@ def setup_pre_commit_hook():
     
     # .git ディレクトリの確認
     if not os.path.exists(os.path.join(PROJECT_ROOT, '.git')):
-        print("❌ Error: .git directory not found!")
+        print("[Error] .git directory not found!")
         print("   This script must be run from a Git repository.")
         return 1
     
     # hooks ディレクトリの作成
     if not os.path.exists(GIT_HOOKS_DIR):
         os.makedirs(GIT_HOOKS_DIR)
-        print(f"📁 Created hooks directory: {GIT_HOOKS_DIR}")
+        print(f"[Info] Created hooks directory: {GIT_HOOKS_DIR}")
     
     # ソーススクリプトの確認
     if not os.path.exists(HOOK_SCRIPT):
-        print(f"❌ Error: Hook script not found: {HOOK_SCRIPT}")
+        print(f"[Error] Hook script not found: {HOOK_SCRIPT}")
         return 1
     
     # 既存のhookをバックアップ
     if os.path.exists(TARGET_HOOK):
         backup_path = TARGET_HOOK + '.backup'
         shutil.copy2(TARGET_HOOK, backup_path)
-        print(f"📦 Backed up existing hook to: {backup_path}")
+        print(f"[Backup] Backed up existing hook to: {backup_path}")
     
     # hookをコピー
     shutil.copy2(HOOK_SCRIPT, TARGET_HOOK)
-    print(f"✅ Installed pre-commit hook: {TARGET_HOOK}")
+    print(f"[Success] Installed pre-commit hook: {TARGET_HOOK}")
     
     # 実行権限を設定 (Unix系OS用)
     try:
         st = os.stat(TARGET_HOOK)
         os.chmod(TARGET_HOOK, st.st_mode | stat.S_IEXEC)
-        print("✅ Set executable permission")
+        print("[Success] Set executable permission")
     except Exception as e:
-        print(f"⚠️  Warning: Could not set executable permission: {e}")
+        print(f"[Warning] Could not set executable permission: {e}")
         print("   On Windows, this is usually not needed.")
     
     print()
