@@ -1,16 +1,18 @@
 # PROJECT_STATE.md - Market Cockpit Pro
 
 ## Last Updated
-2026-01-28 07:15 JST
+2026-01-28 14:30 JST
 
 ## Current Status
-**Major Updates Pushed to GitHub** - i18n, Currency Lab, AI improvements, and Pre-commit hook system integrated and pushed.
+**Missing Indicator Display Fixes Pushed** - All 9 implementation gaps resolved, pre-commit hook verification passes (96/96 indicators).
 
 ## Recent Changes (This Session)
-1. ✅ **GitHub Push**: Pushed all changes to master branch.
-2. ✅ **Pre-commit Hook System**: Implemented and verified by health check.
-3. ✅ **i18n & AI Improvements**: Integrated Currency Lab and multilingual support.
-4. ✅ **UI/UX**: Verified all indicators display correctly via pre-commit hook.
+1. ✅ **Indicator Display Fixes**: Added 9 missing indicators to UI pages
+   - ETH_Funding_Rate, T10Y2Y, BTC/ETH prices, GBPUSD/USDCHF/AUDUSD, CNN_Fear_Greed
+2. ✅ **indicators.py Update**: ETH indicators ui_page '04_crypto' → '01_liquidity'
+3. ✅ **Verification**: 96/96 indicators detected (100 total, 4 excluded Lab indicators)
+4. ✅ **GitHub Push**: Commit `7e794c6` pushed to master branch
+5. ✅ **Pre-commit Hook**: Verified all indicators before commit
 
 ## Pre-commit Hook System
 - **Purpose**: Prevent "silent indicator disappearance"
@@ -34,7 +36,7 @@ APIが無い/不安定なら、表示しない。削除する。
 
 ## GitHub Sync Status
 - **Branch**: master
-- **Last Commit**: `5a6a761` (Major update: i18n, Currency Lab, AI improvements, pre-commit hook system)
+- **Last Commit**: `7e794c6` (feat: Add 9 missing indicator displays to UI pages)
 - **Status**: Clean and synced with origin.
 
 ## Baseline Verification

@@ -299,6 +299,7 @@ _nav_pages = {
     ],
     t('nav_group_analysis'): [
         st.Page("pages/05_ai_analysis.py", title=t('page_ai_analysis')),
+        st.Page("pages/14_money_flow.py", title=t('page_money_flow')),
         st.Page("pages/11_analysis_lab.py", title=t('page_analysis_lab')),
         st.Page("pages/12_currency_lab.py", title=t('page_currency_lab')),
         st.Page("pages/06_monte_carlo.py", title=t('page_monte_carlo')),
