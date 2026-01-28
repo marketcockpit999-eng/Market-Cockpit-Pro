@@ -32,9 +32,12 @@ def get_latest_value(column_name, default=0):
     return default
 
 
-def format_value(value, unit='B'):
+def format_value(value, unit='B', is_trillion=False):
     """Format value with appropriate suffix"""
-    if value >= 1000:
+    if is_trillion:
+        # Already in Trillion units (like M2)
+        return f"${value:.2f}T"
+    elif value >= 1000:
         return f"${value/1000:.2f}T"
     else:
         return f"${value:.0f}B"
@@ -265,7 +268,7 @@ with col3:
 with col4:
     st.metric(
         t('money_flow_m2'),
-        format_value(m2),
+        format_value(m2, is_trillion=True),
         help=t('money_flow_m2_help')
     )
 
