@@ -209,6 +209,9 @@ tab_current, tab_timeline = st.tabs([
 
 # ========== TAB 1: CURRENT DATA ==========
 with tab_current:
+    # Quick Guide (提案1対応)
+    st.info(t('money_flow_quick_guide'))
+    
     # Get current data
     current_data = {
         'soma_total': get_latest_value('SOMA_Total', 6800),
@@ -267,34 +270,40 @@ with tab_timeline:
             )
             
             if len(date_range) > 1:
-                # Controls row
-                col_ctrl1, col_ctrl2, col_ctrl3 = st.columns([2, 1, 1])
+                # Compact Controls (提案3対応: YouTube風統合UI)
+                col_play, col_date, col_slider, col_speed = st.columns([1, 2, 6, 1])
                 
-                with col_ctrl1:
-                    # Date slider
+                with col_play:
+                    play_button = st.button("▶️", use_container_width=True, help=t('money_flow_play'))
+                
+                with col_date:
+                    # Large date display
+                    selected_idx = st.session_state.get('timeline_slider', len(date_range) - 1)
+                    if selected_idx >= len(date_range):
+                        selected_idx = len(date_range) - 1
+                    selected_date = date_range[selected_idx]
+                    st.markdown(f"### 📅 {selected_date.strftime('%Y/%m')}")
+                
+                with col_slider:
                     selected_idx = st.slider(
                         t('money_flow_select_date'),
                         min_value=0,
                         max_value=len(date_range) - 1,
                         value=len(date_range) - 1,
                         format="%d",
-                        key='timeline_slider'
+                        key='timeline_slider',
+                        label_visibility='collapsed'
                     )
                     selected_date = date_range[selected_idx]
-                    st.caption(f"📅 {selected_date.strftime('%Y年%m月')}")
                 
-                with col_ctrl2:
-                    # Playback speed
+                with col_speed:
                     speed = st.selectbox(
                         t('money_flow_speed'),
                         options=[0.5, 1.0, 2.0],
                         index=1,
-                        format_func=lambda x: f"{x}x"
+                        format_func=lambda x: f"{x}x",
+                        label_visibility='collapsed'
                     )
-                
-                with col_ctrl3:
-                    # Play button
-                    play_button = st.button(f"▶️ {t('money_flow_play')}", use_container_width=True)
                 
                 # Auto-play functionality
                 if play_button:
@@ -373,20 +382,16 @@ with tab_timeline:
                 
                 with col_ev1:
                     st.markdown(f"**{t('money_flow_key_events')}**")
-                    st.markdown("""
-- 🔴 **2022年6月**: QT開始（Fed資産縮小）
-- 🟡 **2023年3月**: SVB破綻・緊急融資
-- 🟢 **2024年**: QT減速
-""")
+                    st.markdown(t('money_flow_events_list'))
                 
                 with col_ev2:
-                    # Net Liquidity trend chart
+                    # Net Liquidity trend chart - simplified without vline
                     if 'SOMA_Total' in df.columns and 'TGA' in df.columns and 'ON_RRP' in df.columns:
                         # Calculate net liquidity history
                         net_liq = df['SOMA_Total'] - df['TGA'].fillna(0) - df['ON_RRP'].fillna(0)
                         net_liq = net_liq.dropna().tail(100)  # Last ~2 years
                         
-                        if len(net_liq) > 0:
+                        if len(net_liq) > 10:
                             fig_trend = go.Figure()
                             fig_trend.add_trace(go.Scatter(
                                 x=net_liq.index,
@@ -398,14 +403,22 @@ with tab_timeline:
                                 fillcolor='rgba(59, 130, 246, 0.2)'
                             ))
                             
-                            # Mark selected date
-                            if selected_date in net_liq.index or True:
-                                fig_trend.add_vline(
-                                    x=selected_date,
-                                    line_dash="dash",
-                                    line_color="red",
-                                    annotation_text="現在選択"
-                                )
+                            # Add selected date marker as a scatter point instead of vline
+                            # Find the closest value for selected date
+                            selected_val = get_value_at_date('SOMA_Total', selected_date, 0) - \
+                                           get_value_at_date('TGA', selected_date, 0) - \
+                                           get_value_at_date('ON_RRP', selected_date, 0)
+                            
+                            fig_trend.add_trace(go.Scatter(
+                                x=[selected_date],
+                                y=[selected_val],
+                                mode='markers+text',
+                                name='選択中',
+                                marker=dict(color='red', size=12, symbol='diamond'),
+                                text=['📍'],
+                                textposition='top center',
+                                showlegend=False
+                            ))
                             
                             fig_trend.update_layout(
                                 title=t('money_flow_net_liquidity_trend'),
@@ -499,6 +512,60 @@ with col_abs2:
         st.info(t('money_flow_moderate_absorption_info'))
     else:
         st.success(t('money_flow_low_absorption_success'))
+
+# Absorption Rate History Chart (提案5対応)
+st.markdown(f"### {t('money_flow_absorption_trend')}")
+
+# Calculate historical absorption ratio
+if 'SOMA_Total' in df.columns and 'TGA' in df.columns and 'ON_RRP' in df.columns:
+    soma_hist = df['SOMA_Total'].dropna()
+    tga_hist = df['TGA'].reindex(soma_hist.index).fillna(0)
+    rrp_hist = df['ON_RRP'].reindex(soma_hist.index).fillna(0)
+    
+    # Calculate absorption ratio history
+    absorption_hist = ((tga_hist + rrp_hist) / soma_hist * 100).dropna().tail(100)  # Last ~2 years
+    
+    if len(absorption_hist) > 10:
+        fig_absorption_hist = go.Figure()
+        
+        # Main line
+        fig_absorption_hist.add_trace(go.Scatter(
+            x=absorption_hist.index,
+            y=absorption_hist.values,
+            mode='lines',
+            name=t('money_flow_absorption_history'),
+            line=dict(color='#F59E0B', width=2),
+            fill='tozeroy',
+            fillcolor='rgba(245, 158, 11, 0.2)'
+        ))
+        
+        # Add threshold lines
+        fig_absorption_hist.add_hline(y=20, line_dash="dash", line_color="red", 
+                                       annotation_text=t('money_flow_threshold_warning'), annotation_position="right")
+        fig_absorption_hist.add_hline(y=10, line_dash="dash", line_color="green",
+                                       annotation_text=t('money_flow_threshold_good'), annotation_position="right")
+        
+        # Mark current value
+        fig_absorption_hist.add_trace(go.Scatter(
+            x=[absorption_hist.index[-1]],
+            y=[absorption_hist.values[-1]],
+            mode='markers+text',
+            name=t('money_flow_current_level'),
+            marker=dict(color='red', size=12, symbol='diamond'),
+            text=[f'{absorption_hist.values[-1]:.1f}%'],
+            textposition='top center',
+            showlegend=False
+        ))
+        
+        fig_absorption_hist.update_layout(
+            height=250,
+            margin=dict(l=20, r=60, t=20, b=20),
+            showlegend=False,
+            yaxis_title="%",
+            yaxis=dict(range=[0, max(30, absorption_hist.max() * 1.1)])
+        )
+        
+        st.plotly_chart(fig_absorption_hist, use_container_width=True)
 
 # ========== FOOTER ==========
 st.markdown("---")

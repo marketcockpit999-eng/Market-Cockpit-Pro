@@ -1179,6 +1179,15 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'money_flow_net_liquidity_trend': 'Net Liquidity Trend',
         'money_flow_insufficient_data': '⚠️ Insufficient historical data for timeline animation',
         'money_flow_no_data': '⚠️ No data available',
+        'money_flow_quick_guide': '💡 **Quick Guide**: Arrow thickness = flow size. Hover for details. Green = inflows, Orange = absorption.',
+        'money_flow_absorption_history': 'Absorption Rate History',
+        'money_flow_absorption_trend': '📈 Absorption Rate Trend (24 months)',
+        'money_flow_current_level': 'Current',
+        'money_flow_threshold_warning': '20% (Warning)',
+        'money_flow_threshold_good': '10% (Good)',
+        'money_flow_events_list': '''- 🔴 **Jun 2022**: QT started (Fed balance sheet reduction)
+- 🟡 **Mar 2023**: SVB collapse & emergency lending
+- 🟢 **2024**: QT slowdown''',
     },
     
     'ja': {
@@ -2367,6 +2376,15 @@ Goldより変動が激しいため、短期的な市場センチメントを反�
         'money_flow_net_liquidity_trend': '純流動性トレンド',
         'money_flow_insufficient_data': '⚠️ 時系列アニメーションに必要なデータが不足しています',
         'money_flow_no_data': '⚠️ データがありません',
+        'money_flow_quick_guide': '💡 **読み方**: 矢印の太さ=フローの大きさ。ホバーで詳細表示。緑=流入、オレンジ=吸収。',
+        'money_flow_absorption_history': '吸収率の推移',
+        'money_flow_absorption_trend': '📈 吸収率トレンド（24ヶ月）',
+        'money_flow_current_level': '現在',
+        'money_flow_threshold_warning': '20% (警戒)',
+        'money_flow_threshold_good': '10% (良好)',
+        'money_flow_events_list': '''- 🔴 **2022年6月**: QT開始（Fed資産縮小）
+- 🟡 **2023年3月**: SVB破綻・緊急融資
+- 🟢 **2024年**: QT減速''',
     },
 }
 
