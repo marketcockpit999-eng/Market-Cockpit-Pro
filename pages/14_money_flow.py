@@ -385,11 +385,13 @@ with tab_timeline:
                     st.markdown(t('money_flow_events_list'))
                 
                 with col_ev2:
-                    # Net Liquidity trend chart - simplified without vline
+                    # Net Liquidity trend chart with event markers
                     if 'SOMA_Total' in df.columns and 'TGA' in df.columns and 'ON_RRP' in df.columns:
-                        # Calculate net liquidity history
+                        # Calculate net liquidity history - show from 2022 onwards
                         net_liq = df['SOMA_Total'] - df['TGA'].fillna(0) - df['ON_RRP'].fillna(0)
-                        net_liq = net_liq.dropna().tail(520)  # Last ~2 years (approx 520 daily data points)
+                        net_liq = net_liq.dropna()
+                        # Filter from 2022-01-01 to show all key events
+                        net_liq = net_liq[net_liq.index >= '2022-01-01']
                         
                         if len(net_liq) > 10:
                             fig_trend = go.Figure()
@@ -399,12 +401,32 @@ with tab_timeline:
                                 mode='lines',
                                 name='Net Liquidity',
                                 line=dict(color='#3B82F6', width=2),
-                                fill='tozeroy',
-                                fillcolor='rgba(59, 130, 246, 0.2)'
+                                fill='tonexty',
+                                fillcolor='rgba(59, 130, 246, 0.1)'
                             ))
                             
-                            # Add selected date marker as a scatter point instead of vline
-                            # Find the closest value for selected date
+                            # Add key event markers as vertical lines
+                            key_events = [
+                                ('2022-06-01', '🔴 QT Start', 'red'),
+                                ('2023-03-10', '🟠 SVB', 'orange'),
+                                ('2024-06-01', '🟢 QT Slow', 'green'),
+                            ]
+                            
+                            y_min = net_liq.min()
+                            y_max = net_liq.max()
+                            
+                            for event_date, event_label, event_color in key_events:
+                                fig_trend.add_trace(go.Scatter(
+                                    x=[event_date, event_date],
+                                    y=[y_min, y_max],
+                                    mode='lines',
+                                    line=dict(color=event_color, width=2, dash='dot'),
+                                    showlegend=False,
+                                    hoverinfo='text',
+                                    hovertext=event_label
+                                ))
+                            
+                            # Add selected date marker
                             selected_val = get_value_at_date('SOMA_Total', selected_date, 0) - \
                                            get_value_at_date('TGA', selected_date, 0) - \
                                            get_value_at_date('ON_RRP', selected_date, 0)
@@ -420,12 +442,16 @@ with tab_timeline:
                                 showlegend=False
                             ))
                             
+                            # Y-axis range: add 5% padding, NOT starting from zero
+                            y_padding = (y_max - y_min) * 0.05
+                            
                             fig_trend.update_layout(
                                 title=t('money_flow_net_liquidity_trend'),
-                                height=250,
+                                height=300,
                                 margin=dict(l=20, r=20, t=40, b=20),
                                 showlegend=False,
-                                yaxis_title="$B"
+                                yaxis_title="$B",
+                                yaxis=dict(range=[y_min - y_padding, y_max + y_padding])
                             )
                             st.plotly_chart(fig_trend, use_container_width=True)
             else:
