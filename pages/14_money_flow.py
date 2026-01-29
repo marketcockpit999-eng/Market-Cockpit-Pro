@@ -115,18 +115,18 @@ def create_sankey_figure(data, show_changes=False, prev_data=None):
     prev = prev_data or {}
     
     node_labels = [
-        label_with_change("🏛️ Fed総資産", data['soma_total'], prev.get('soma_total')),
-        label_with_change("📜 国債保有", data['soma_treasury'], prev.get('soma_treasury')),
-        label_with_change("📄 T-Bills", data['soma_bills'], prev.get('soma_bills')),
-        label_with_change("🏦 銀行準備金", data['reserves'], prev.get('reserves')),
-        label_with_change("🏛️ 財務省(TGA)", data['tga'], prev.get('tga')),
-        label_with_change("🔒 RRP(吸収)", data['on_rrp'], prev.get('on_rrp')),
-        label_with_change("🏭 企業融資(C&I)", data['ci_loans'], prev.get('ci_loans')),
-        label_with_change("🏢 不動産融資(CRE)", data['cre_loans'], prev.get('cre_loans')),
-        label_with_change("🛒 消費者ローン", data['consumer_loans'], prev.get('consumer_loans')),
-        label_with_change("📊 有価証券投資", data['bank_securities'], prev.get('bank_securities')),
-        label_with_change("💰 M2マネー", data['m2'], prev.get('m2'), is_trillion=True),
-        label_with_change("📈 金融市場", data['net_liquidity'], prev.get('net_liquidity')),
+        label_with_change(f"🏛️ {t('sankey_fed_assets')}", data['soma_total'], prev.get('soma_total')),
+        label_with_change(f"📜 {t('sankey_treasury_holdings')}", data['soma_treasury'], prev.get('soma_treasury')),
+        label_with_change(f"📄 {t('sankey_tbills')}", data['soma_bills'], prev.get('soma_bills')),
+        label_with_change(f"🏦 {t('sankey_bank_reserves')}", data['reserves'], prev.get('reserves')),
+        label_with_change(f"🏛️ {t('sankey_tga')}", data['tga'], prev.get('tga')),
+        label_with_change(f"🔒 {t('sankey_rrp')}", data['on_rrp'], prev.get('on_rrp')),
+        label_with_change(f"🏭 {t('sankey_ci_loans')}", data['ci_loans'], prev.get('ci_loans')),
+        label_with_change(f"🏢 {t('sankey_cre_loans')}", data['cre_loans'], prev.get('cre_loans')),
+        label_with_change(f"🛒 {t('sankey_consumer_loans')}", data['consumer_loans'], prev.get('consumer_loans')),
+        label_with_change(f"📊 {t('sankey_securities')}", data['bank_securities'], prev.get('bank_securities')),
+        label_with_change(f"💰 {t('sankey_m2_money')}", data['m2'], prev.get('m2'), is_trillion=True),
+        label_with_change(f"📈 {t('sankey_financial_markets')}", data['net_liquidity'], prev.get('net_liquidity')),
     ]
     
     node_colors = [
@@ -319,7 +319,7 @@ with tab_timeline:
                         
                         # Update chart
                         fig = create_sankey_figure(data, show_changes=True, prev_data=prev_data)
-                        fig.update_layout(title=f"📅 {date.strftime('%Y年%m月')}")
+                        fig.update_layout(title=f"📅 {date.strftime(t('money_flow_date_format'))}")
                         chart_placeholder.plotly_chart(fig, use_container_width=True, key=f"timeline_{i}")
                         
                         # Update metrics
@@ -327,16 +327,16 @@ with tab_timeline:
                             mcol1, mcol2, mcol3, mcol4 = st.columns(4)
                             with mcol1:
                                 delta = format_change(data['soma_total'], prev_data['soma_total']) if prev_data else None
-                                st.metric("Fed総資産", format_value(data['soma_total']), delta=delta)
+                                st.metric(t('money_flow_fed_assets'), format_value(data['soma_total']), delta=delta)
                             with mcol2:
                                 delta = format_change(data['net_liquidity'], prev_data['net_liquidity']) if prev_data else None
-                                st.metric("純流動性", format_value(data['net_liquidity']), delta=delta)
+                                st.metric(t('money_flow_net_liquidity'), format_value(data['net_liquidity']), delta=delta)
                             with mcol3:
                                 delta = format_change(data['on_rrp'], prev_data['on_rrp']) if prev_data else None
-                                st.metric("RRP", format_value(data['on_rrp']), delta=delta)
+                                st.metric(t('money_flow_rrp_label'), format_value(data['on_rrp']), delta=delta)
                             with mcol4:
                                 delta = format_change(data['tga'], prev_data['tga']) if prev_data else None
-                                st.metric("TGA", format_value(data['tga']), delta=delta)
+                                st.metric(t('money_flow_tga_label'), format_value(data['tga']), delta=delta)
                         
                         # Update progress
                         progress_bar.progress((i + 1) / len(date_range))
@@ -353,7 +353,7 @@ with tab_timeline:
                     prev_data = get_data_at_date(prev_date) if prev_date is not None else None
                     
                     fig = create_sankey_figure(data, show_changes=True, prev_data=prev_data)
-                    fig.update_layout(title=f"📅 {selected_date.strftime('%Y年%m月')}")
+                    fig.update_layout(title=f"📅 {selected_date.strftime(t('money_flow_date_format'))}")
                     st.plotly_chart(fig, use_container_width=True)
                     
                     # Metrics with changes
@@ -362,16 +362,16 @@ with tab_timeline:
                     
                     with col1:
                         delta = format_change(data['soma_total'], prev_data['soma_total']) if prev_data else None
-                        st.metric("Fed総資産", format_value(data['soma_total']), delta=delta)
+                        st.metric(t('money_flow_fed_assets'), format_value(data['soma_total']), delta=delta)
                     with col2:
                         delta = format_change(data['net_liquidity'], prev_data['net_liquidity']) if prev_data else None
-                        st.metric("純流動性", format_value(data['net_liquidity']), delta=delta)
+                        st.metric(t('money_flow_net_liquidity'), format_value(data['net_liquidity']), delta=delta)
                     with col3:
                         delta = format_change(data['on_rrp'], prev_data['on_rrp']) if prev_data else None
-                        st.metric("RRP", format_value(data['on_rrp']), delta=delta)
+                        st.metric(t('money_flow_rrp_label'), format_value(data['on_rrp']), delta=delta)
                     with col4:
                         delta = format_change(data['tga'], prev_data['tga']) if prev_data else None
-                        st.metric("TGA", format_value(data['tga']), delta=delta)
+                        st.metric(t('money_flow_tga_label'), format_value(data['tga']), delta=delta)
                 
                 # Historical comparison section
                 st.markdown("---")
@@ -389,7 +389,7 @@ with tab_timeline:
                     if 'SOMA_Total' in df.columns and 'TGA' in df.columns and 'ON_RRP' in df.columns:
                         # Calculate net liquidity history
                         net_liq = df['SOMA_Total'] - df['TGA'].fillna(0) - df['ON_RRP'].fillna(0)
-                        net_liq = net_liq.dropna().tail(100)  # Last ~2 years
+                        net_liq = net_liq.dropna().tail(520)  # Last ~2 years (approx 520 daily data points)
                         
                         if len(net_liq) > 10:
                             fig_trend = go.Figure()
@@ -413,7 +413,7 @@ with tab_timeline:
                                 x=[selected_date],
                                 y=[selected_val],
                                 mode='markers+text',
-                                name='選択中',
+                                name=t('money_flow_selected'),
                                 marker=dict(color='red', size=12, symbol='diamond'),
                                 text=['📍'],
                                 textposition='top center',
