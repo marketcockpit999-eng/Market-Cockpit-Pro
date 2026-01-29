@@ -262,9 +262,9 @@ with tab_timeline:
             min_date = available_dates.min()
             max_date = available_dates.max()
             
-            # Create monthly date options (last 24 months)
+            # Create monthly date options from 2022 onwards (to match key events)
             date_range = pd.date_range(
-                start=max(min_date, max_date - pd.DateOffset(months=24)),
+                start=max(min_date, pd.Timestamp('2022-01-01')),
                 end=max_date,
                 freq='ME'  # Month End
             )
