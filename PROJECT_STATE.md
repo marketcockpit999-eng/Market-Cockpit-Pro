@@ -1,18 +1,28 @@
 # PROJECT_STATE.md - Market Cockpit Pro
 
 ## Last Updated
-2026-01-28 14:30 JST
+2026-01-29 12:45 JST
 
 ## Current Status
-**Missing Indicator Display Fixes Pushed** - All 9 implementation gaps resolved, pre-commit hook verification passes (96/96 indicators).
+**Money Flow Phase 2 Translations Added** - Timeline Animation translation keys added to i18n.py for both English and Japanese.
 
-## Recent Changes (This Session)
-1. ✅ **Indicator Display Fixes**: Added 9 missing indicators to UI pages
-   - ETH_Funding_Rate, T10Y2Y, BTC/ETH prices, GBPUSD/USDCHF/AUDUSD, CNN_Fear_Greed
-2. ✅ **indicators.py Update**: ETH indicators ui_page '04_crypto' → '01_liquidity'
-3. ✅ **Verification**: 96/96 indicators detected (100 total, 4 excluded Lab indicators)
-4. ✅ **GitHub Push**: Commit `7e794c6` pushed to master branch
-5. ✅ **Pre-commit Hook**: Verified all indicators before commit
+## Recent Changes (2026-01-29)
+1. ✅ **Money Flow Phase 2 Translations**: Added 15 new i18n keys for Timeline Animation features.
+   - Tab labels: Current / Timeline Replay
+   - Playback controls: Speed selector, Play button, Date slider
+   - Comparison features: Historical comparison, Key events, Net liquidity trend
+   - Error messages: Insufficient data, No data available
+2. ✅ **Money Flow Visualization**: Added new page `14_money_flow.py` with Sankey diagram.
+   - Visualizes Fed Assets → Reserves → Banking → M2/Markets.
+   - Includes Absorption Analysis (TGA/RRP) and Key Metrics.
+   - Added i18n keys and navigation entry.
+3. ✅ **GitHub Push**: Commit `9f25c63` pushed to master branch.
+4. ✅ **Documentation**: Updated `PROJECT_STATE.md` and created `HANDOFF_20260129.md`.
+
+## Changes (2026-01-28)
+1. ✅ **Indicator Display Fixes**: Added 9 missing indicators to UI pages.
+2. ✅ **Verification**: 96/96 indicators detected via pre-commit hook.
+3. ✅ **GitHub Push**: Commit `7e794c6` pushed to master branch.
 
 ## Pre-commit Hook System
 - **Purpose**: Prevent "silent indicator disappearance"
@@ -36,7 +46,7 @@ APIが無い/不安定なら、表示しない。削除する。
 
 ## GitHub Sync Status
 - **Branch**: master
-- **Last Commit**: `7e794c6` (feat: Add 9 missing indicator displays to UI pages)
+- **Last Commit**: `9f25c63` (Add Money Flow visualization page with Sankey diagram (Phase 1))
 - **Status**: Clean and synced with origin.
 
 ## Baseline Verification

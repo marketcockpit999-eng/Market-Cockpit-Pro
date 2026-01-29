@@ -2,6 +2,9 @@
 """
 Market Cockpit Pro - Page 14: Money Flow Visualization
 お金の流れを可視化 - Fed → 銀行 → 市場 → 経済
+
+Phase 1: Static Sankey diagram (完了)
+Phase 2: Time-series animation with slider (現在)
 """
 
 import streamlit as st
@@ -9,6 +12,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import sys
 import os
+import time as time_module
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -23,6 +27,26 @@ if df is None:
     st.stop()
 
 
+def get_value_at_date(column_name, target_date, default=0):
+    """Get value at specific date (or nearest available)"""
+    if column_name not in df.columns:
+        return default
+    
+    series = df[column_name].dropna()
+    if len(series) == 0:
+        return default
+    
+    # Find nearest date
+    try:
+        idx = series.index.get_indexer([target_date], method='nearest')[0]
+        if idx >= 0 and idx < len(series):
+            return series.iloc[idx]
+    except:
+        pass
+    
+    return series.iloc[-1] if len(series) > 0 else default
+
+
 def get_latest_value(column_name, default=0):
     """Get latest non-null value from dataframe"""
     if column_name in df.columns:
@@ -34,8 +58,9 @@ def get_latest_value(column_name, default=0):
 
 def format_value(value, unit='B', is_trillion=False):
     """Format value with appropriate suffix"""
+    if pd.isna(value) or value == 0:
+        return "N/A"
     if is_trillion:
-        # Already in Trillion units (like M2)
         return f"${value:.2f}T"
     elif value >= 1000:
         return f"${value/1000:.2f}T"
@@ -43,239 +68,365 @@ def format_value(value, unit='B', is_trillion=False):
         return f"${value:.0f}B"
 
 
+def format_change(current, previous):
+    """Format change percentage"""
+    if pd.isna(current) or pd.isna(previous) or previous == 0:
+        return ""
+    change = ((current - previous) / previous) * 100
+    if change > 0:
+        return f"📈 +{change:.1f}%"
+    elif change < 0:
+        return f"📉 {change:.1f}%"
+    else:
+        return "→ 0%"
+
+
+def get_data_at_date(target_date):
+    """Get all money flow data at specific date"""
+    data = {
+        'soma_total': get_value_at_date('SOMA_Total', target_date, 6800),
+        'soma_treasury': get_value_at_date('SOMA_Treasury', target_date, 4200),
+        'soma_bills': get_value_at_date('SOMA_Bills', target_date, 195),
+        'reserves': get_value_at_date('Reserves', target_date, 3200),
+        'tga': get_value_at_date('TGA', target_date, 722),
+        'on_rrp': get_value_at_date('ON_RRP', target_date, 98),
+        'ci_loans': get_value_at_date('CI_Loans', target_date, 2800),
+        'cre_loans': get_value_at_date('CRE_Loans', target_date, 3000),
+        'consumer_loans': get_value_at_date('Consumer_Loans', target_date, 500),
+        'bank_securities': get_value_at_date('Bank_Securities', target_date, 5500),
+        'm2': get_value_at_date('M2SL', target_date, 21500),
+    }
+    data['net_liquidity'] = data['soma_total'] - data['tga'] - data['on_rrp']
+    return data
+
+
+def create_sankey_figure(data, show_changes=False, prev_data=None):
+    """Create Sankey diagram with given data"""
+    
+    # Build labels with optional change indicators
+    def label_with_change(name, value, prev_value=None, is_trillion=False):
+        base = f"{name}\n{format_value(value, is_trillion=is_trillion)}"
+        if show_changes and prev_value is not None:
+            change = format_change(value, prev_value)
+            if change:
+                base += f"\n{change}"
+        return base
+    
+    prev = prev_data or {}
+    
+    node_labels = [
+        label_with_change("🏛️ Fed総資産", data['soma_total'], prev.get('soma_total')),
+        label_with_change("📜 国債保有", data['soma_treasury'], prev.get('soma_treasury')),
+        label_with_change("📄 T-Bills", data['soma_bills'], prev.get('soma_bills')),
+        label_with_change("🏦 銀行準備金", data['reserves'], prev.get('reserves')),
+        label_with_change("🏛️ 財務省(TGA)", data['tga'], prev.get('tga')),
+        label_with_change("🔒 RRP(吸収)", data['on_rrp'], prev.get('on_rrp')),
+        label_with_change("🏭 企業融資(C&I)", data['ci_loans'], prev.get('ci_loans')),
+        label_with_change("🏢 不動産融資(CRE)", data['cre_loans'], prev.get('cre_loans')),
+        label_with_change("🛒 消費者ローン", data['consumer_loans'], prev.get('consumer_loans')),
+        label_with_change("📊 有価証券投資", data['bank_securities'], prev.get('bank_securities')),
+        label_with_change("💰 M2マネー", data['m2'], prev.get('m2'), is_trillion=True),
+        label_with_change("📈 金融市場", data['net_liquidity'], prev.get('net_liquidity')),
+    ]
+    
+    node_colors = [
+        "#3B82F6", "#60A5FA", "#93C5FD", "#8B5CF6", "#10B981", "#F59E0B",
+        "#EC4899", "#F472B6", "#FB7185", "#A78BFA", "#06B6D4", "#EF4444",
+    ]
+    
+    # Define links
+    links_source = [0, 0, 1, 2, 3, 3, 3, 3, 3, 0, 4, 6, 7, 8, 9]
+    links_target = [1, 2, 3, 3, 6, 7, 8, 9, 5, 4, 11, 10, 10, 10, 11]
+    
+    links_value = [
+        data['soma_treasury'],
+        data['soma_bills'],
+        data['reserves'] * 0.7,
+        data['soma_bills'] * 0.8,
+        data['ci_loans'] * 0.3,
+        data['cre_loans'] * 0.3,
+        data['consumer_loans'] * 0.5,
+        data['bank_securities'] * 0.2,
+        data['on_rrp'],
+        data['tga'],
+        data['tga'] * 0.8,
+        data['ci_loans'] * 0.5,
+        data['cre_loans'] * 0.4,
+        data['consumer_loans'] * 0.8,
+        data['bank_securities'] * 0.3,
+    ]
+    
+    links_color = [
+        "rgba(59, 130, 246, 0.4)", "rgba(59, 130, 246, 0.4)",
+        "rgba(139, 92, 246, 0.4)", "rgba(139, 92, 246, 0.4)",
+        "rgba(236, 72, 153, 0.4)", "rgba(244, 114, 182, 0.4)",
+        "rgba(251, 113, 133, 0.4)", "rgba(167, 139, 250, 0.4)",
+        "rgba(245, 158, 11, 0.5)", "rgba(16, 185, 129, 0.4)",
+        "rgba(16, 185, 129, 0.4)", "rgba(6, 182, 212, 0.4)",
+        "rgba(6, 182, 212, 0.4)", "rgba(6, 182, 212, 0.4)",
+        "rgba(239, 68, 68, 0.4)",
+    ]
+    
+    fig = go.Figure(data=[go.Sankey(
+        node=dict(
+            pad=20,
+            thickness=25,
+            line=dict(color="black", width=0.5),
+            label=node_labels,
+            color=node_colors,
+            hovertemplate='%{label}<extra></extra>',
+        ),
+        link=dict(
+            source=links_source,
+            target=links_target,
+            value=links_value,
+            color=links_color,
+            hovertemplate='%{source.label} → %{target.label}<br>%{value:.0f}B<extra></extra>',
+        ),
+        textfont=dict(size=11, color='white'),
+    )])
+    
+    fig.update_layout(
+        font_size=12,
+        height=650,
+        margin=dict(l=10, r=10, t=40, b=10),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+    )
+    
+    return fig
+
+
 # ========== PAGE CONTENT ==========
 st.subheader(t('money_flow_title'))
 st.caption(t('money_flow_desc'))
 
-# ========== GET REAL DATA ==========
-# Fed Balance Sheet (資産側)
-soma_total = get_latest_value('SOMA_Total', 6800)      # Fed総資産
-soma_treasury = get_latest_value('SOMA_Treasury', 4200)  # 国債保有
-soma_bills = get_latest_value('SOMA_Bills', 195)       # 短期国債(T-Bills)
+# ========== TAB SELECTION ==========
+tab_current, tab_timeline = st.tabs([
+    f"📊 {t('money_flow_tab_current')}",
+    f"▶️ {t('money_flow_tab_timeline')}"
+])
 
-# Fed Liabilities & Absorption (負債側・吸収)
-reserves = get_latest_value('Reserves', 3200)          # 銀行準備金
-tga = get_latest_value('TGA', 722)                     # 財務省口座
-on_rrp = get_latest_value('ON_RRP', 98)                # リバースレポ
-
-# Banking Sector (H.8)
-ci_loans = get_latest_value('CI_Loans', 2800)          # 企業融資
-cre_loans = get_latest_value('CRE_Loans', 3000)        # 不動産融資
-consumer_loans = get_latest_value('Consumer_Loans', 500)  # 消費者ローン
-bank_securities = get_latest_value('Bank_Securities', 5500)  # 銀行保有有価証券
-bank_deposits = get_latest_value('Bank_Deposits', 17500)  # 預金
-
-# Money Supply
-m2 = get_latest_value('M2SL', 21500)                   # M2マネーサプライ
-
-# Calculate Net Liquidity
-net_liquidity = soma_total - tga - on_rrp
-
-# ========== SANKEY DIAGRAM ==========
-st.markdown(f"### {t('money_flow_sankey_title')}")
-
-# Define nodes (ノード定義)
-# 順番が重要: インデックスで参照する
-node_labels = [
-    # Layer 0: Fed (Source)
-    f"🏛️ Fed総資産\n{format_value(soma_total)}",           # 0
+# ========== TAB 1: CURRENT DATA ==========
+with tab_current:
+    # Get current data
+    current_data = {
+        'soma_total': get_latest_value('SOMA_Total', 6800),
+        'soma_treasury': get_latest_value('SOMA_Treasury', 4200),
+        'soma_bills': get_latest_value('SOMA_Bills', 195),
+        'reserves': get_latest_value('Reserves', 3200),
+        'tga': get_latest_value('TGA', 722),
+        'on_rrp': get_latest_value('ON_RRP', 98),
+        'ci_loans': get_latest_value('CI_Loans', 2800),
+        'cre_loans': get_latest_value('CRE_Loans', 3000),
+        'consumer_loans': get_latest_value('Consumer_Loans', 500),
+        'bank_securities': get_latest_value('Bank_Securities', 5500),
+        'm2': get_latest_value('M2SL', 21500),
+    }
+    current_data['net_liquidity'] = current_data['soma_total'] - current_data['tga'] - current_data['on_rrp']
     
-    # Layer 1: Fed Components
-    f"📜 国債保有\n{format_value(soma_treasury)}",          # 1
-    f"📄 T-Bills\n{format_value(soma_bills)}",             # 2
+    st.markdown(f"### {t('money_flow_sankey_title')}")
+    fig = create_sankey_figure(current_data)
+    st.plotly_chart(fig, use_container_width=True)
     
-    # Layer 2: Distribution
-    f"🏦 銀行準備金\n{format_value(reserves)}",             # 3
-    f"🏛️ 財務省(TGA)\n{format_value(tga)}",                # 4
-    f"🔒 RRP(吸収)\n{format_value(on_rrp)}",               # 5
+    # Key Metrics
+    st.markdown(f"### {t('money_flow_key_metrics')}")
+    col1, col2, col3, col4 = st.columns(4)
     
-    # Layer 3: Banking Activity
-    f"🏭 企業融資(C&I)\n{format_value(ci_loans)}",          # 6
-    f"🏢 不動産融資(CRE)\n{format_value(cre_loans)}",       # 7
-    f"🛒 消費者ローン\n{format_value(consumer_loans)}",     # 8
-    f"📊 有価証券投資\n{format_value(bank_securities)}",    # 9
+    with col1:
+        st.metric(t('money_flow_fed_assets'), format_value(current_data['soma_total']),
+                  help=t('money_flow_fed_assets_help'))
+    with col2:
+        st.metric(t('money_flow_net_liquidity'), format_value(current_data['net_liquidity']),
+                  delta=f"TGA: -{format_value(current_data['tga'])}, RRP: -{format_value(current_data['on_rrp'])}",
+                  help=t('money_flow_net_liquidity_help'))
+    with col3:
+        st.metric(t('money_flow_bank_reserves'), format_value(current_data['reserves']),
+                  help=t('money_flow_bank_reserves_help'))
+    with col4:
+        st.metric(t('money_flow_m2'), format_value(current_data['m2'], is_trillion=True),
+                  help=t('money_flow_m2_help'))
+
+# ========== TAB 2: TIMELINE ANIMATION ==========
+with tab_timeline:
+    st.markdown(f"### {t('money_flow_timeline_title')}")
+    st.info(t('money_flow_timeline_desc'))
     
-    # Layer 4: Economy
-    f"💰 M2マネー\n{format_value(m2)}",                    # 10
-    f"📈 金融市場\n{format_value(net_liquidity)}",         # 11
-]
+    # Get available date range from data
+    if 'SOMA_Total' in df.columns:
+        available_dates = df['SOMA_Total'].dropna().index
+        if len(available_dates) > 0:
+            min_date = available_dates.min()
+            max_date = available_dates.max()
+            
+            # Create monthly date options (last 24 months)
+            date_range = pd.date_range(
+                start=max(min_date, max_date - pd.DateOffset(months=24)),
+                end=max_date,
+                freq='ME'  # Month End
+            )
+            
+            if len(date_range) > 1:
+                # Controls row
+                col_ctrl1, col_ctrl2, col_ctrl3 = st.columns([2, 1, 1])
+                
+                with col_ctrl1:
+                    # Date slider
+                    selected_idx = st.slider(
+                        t('money_flow_select_date'),
+                        min_value=0,
+                        max_value=len(date_range) - 1,
+                        value=len(date_range) - 1,
+                        format="%d",
+                        key='timeline_slider'
+                    )
+                    selected_date = date_range[selected_idx]
+                    st.caption(f"📅 {selected_date.strftime('%Y年%m月')}")
+                
+                with col_ctrl2:
+                    # Playback speed
+                    speed = st.selectbox(
+                        t('money_flow_speed'),
+                        options=[0.5, 1.0, 2.0],
+                        index=1,
+                        format_func=lambda x: f"{x}x"
+                    )
+                
+                with col_ctrl3:
+                    # Play button
+                    play_button = st.button(f"▶️ {t('money_flow_play')}", use_container_width=True)
+                
+                # Auto-play functionality
+                if play_button:
+                    progress_bar = st.progress(0)
+                    chart_placeholder = st.empty()
+                    metrics_placeholder = st.empty()
+                    
+                    for i, date in enumerate(date_range):
+                        # Get data for this date and previous date
+                        data = get_data_at_date(date)
+                        prev_date = date_range[i-1] if i > 0 else None
+                        prev_data = get_data_at_date(prev_date) if prev_date is not None else None
+                        
+                        # Update chart
+                        fig = create_sankey_figure(data, show_changes=True, prev_data=prev_data)
+                        fig.update_layout(title=f"📅 {date.strftime('%Y年%m月')}")
+                        chart_placeholder.plotly_chart(fig, use_container_width=True, key=f"timeline_{i}")
+                        
+                        # Update metrics
+                        with metrics_placeholder.container():
+                            mcol1, mcol2, mcol3, mcol4 = st.columns(4)
+                            with mcol1:
+                                delta = format_change(data['soma_total'], prev_data['soma_total']) if prev_data else None
+                                st.metric("Fed総資産", format_value(data['soma_total']), delta=delta)
+                            with mcol2:
+                                delta = format_change(data['net_liquidity'], prev_data['net_liquidity']) if prev_data else None
+                                st.metric("純流動性", format_value(data['net_liquidity']), delta=delta)
+                            with mcol3:
+                                delta = format_change(data['on_rrp'], prev_data['on_rrp']) if prev_data else None
+                                st.metric("RRP", format_value(data['on_rrp']), delta=delta)
+                            with mcol4:
+                                delta = format_change(data['tga'], prev_data['tga']) if prev_data else None
+                                st.metric("TGA", format_value(data['tga']), delta=delta)
+                        
+                        # Update progress
+                        progress_bar.progress((i + 1) / len(date_range))
+                        
+                        # Wait based on speed
+                        time_module.sleep(1.0 / speed)
+                    
+                    st.success(t('money_flow_playback_complete'))
+                
+                else:
+                    # Static view for selected date
+                    data = get_data_at_date(selected_date)
+                    prev_date = date_range[selected_idx - 1] if selected_idx > 0 else None
+                    prev_data = get_data_at_date(prev_date) if prev_date is not None else None
+                    
+                    fig = create_sankey_figure(data, show_changes=True, prev_data=prev_data)
+                    fig.update_layout(title=f"📅 {selected_date.strftime('%Y年%m月')}")
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Metrics with changes
+                    st.markdown(f"### {t('money_flow_key_metrics')}")
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        delta = format_change(data['soma_total'], prev_data['soma_total']) if prev_data else None
+                        st.metric("Fed総資産", format_value(data['soma_total']), delta=delta)
+                    with col2:
+                        delta = format_change(data['net_liquidity'], prev_data['net_liquidity']) if prev_data else None
+                        st.metric("純流動性", format_value(data['net_liquidity']), delta=delta)
+                    with col3:
+                        delta = format_change(data['on_rrp'], prev_data['on_rrp']) if prev_data else None
+                        st.metric("RRP", format_value(data['on_rrp']), delta=delta)
+                    with col4:
+                        delta = format_change(data['tga'], prev_data['tga']) if prev_data else None
+                        st.metric("TGA", format_value(data['tga']), delta=delta)
+                
+                # Historical comparison section
+                st.markdown("---")
+                st.markdown(f"### {t('money_flow_comparison_title')}")
+                
+                # Key events timeline
+                col_ev1, col_ev2 = st.columns(2)
+                
+                with col_ev1:
+                    st.markdown(f"**{t('money_flow_key_events')}**")
+                    st.markdown("""
+- 🔴 **2022年6月**: QT開始（Fed資産縮小）
+- 🟡 **2023年3月**: SVB破綻・緊急融資
+- 🟢 **2024年**: QT減速
+""")
+                
+                with col_ev2:
+                    # Net Liquidity trend chart
+                    if 'SOMA_Total' in df.columns and 'TGA' in df.columns and 'ON_RRP' in df.columns:
+                        # Calculate net liquidity history
+                        net_liq = df['SOMA_Total'] - df['TGA'].fillna(0) - df['ON_RRP'].fillna(0)
+                        net_liq = net_liq.dropna().tail(100)  # Last ~2 years
+                        
+                        if len(net_liq) > 0:
+                            fig_trend = go.Figure()
+                            fig_trend.add_trace(go.Scatter(
+                                x=net_liq.index,
+                                y=net_liq.values,
+                                mode='lines',
+                                name='Net Liquidity',
+                                line=dict(color='#3B82F6', width=2),
+                                fill='tozeroy',
+                                fillcolor='rgba(59, 130, 246, 0.2)'
+                            ))
+                            
+                            # Mark selected date
+                            if selected_date in net_liq.index or True:
+                                fig_trend.add_vline(
+                                    x=selected_date,
+                                    line_dash="dash",
+                                    line_color="red",
+                                    annotation_text="現在選択"
+                                )
+                            
+                            fig_trend.update_layout(
+                                title=t('money_flow_net_liquidity_trend'),
+                                height=250,
+                                margin=dict(l=20, r=20, t=40, b=20),
+                                showlegend=False,
+                                yaxis_title="$B"
+                            )
+                            st.plotly_chart(fig_trend, use_container_width=True)
+            else:
+                st.warning(t('money_flow_insufficient_data'))
+        else:
+            st.warning(t('money_flow_no_data'))
+    else:
+        st.warning(t('money_flow_no_data'))
 
-# Node colors
-node_colors = [
-    "#3B82F6",  # Fed - Blue
-    "#60A5FA",  # Treasury Holdings - Light Blue
-    "#93C5FD",  # T-Bills - Lighter Blue
-    "#8B5CF6",  # Reserves - Purple
-    "#10B981",  # TGA - Green
-    "#F59E0B",  # RRP - Orange (absorption)
-    "#EC4899",  # C&I Loans - Pink
-    "#F472B6",  # CRE Loans - Light Pink
-    "#FB7185",  # Consumer Loans - Rose
-    "#A78BFA",  # Securities - Light Purple
-    "#06B6D4",  # M2 - Cyan
-    "#EF4444",  # Markets - Red
-]
-
-# Define links (フロー定義)
-# source -> target, value
-links_source = []
-links_target = []
-links_value = []
-links_color = []
-
-# Fed総資産 → 国債保有
-links_source.append(0)
-links_target.append(1)
-links_value.append(soma_treasury)
-links_color.append("rgba(59, 130, 246, 0.4)")
-
-# Fed総資産 → T-Bills
-links_source.append(0)
-links_target.append(2)
-links_value.append(soma_bills)
-links_color.append("rgba(59, 130, 246, 0.4)")
-
-# 国債保有 → 銀行準備金 (QEの効果)
-links_source.append(1)
-links_target.append(3)
-links_value.append(reserves * 0.7)  # 準備金の大部分は国債購入由来
-links_color.append("rgba(139, 92, 246, 0.4)")
-
-# T-Bills → 銀行準備金
-links_source.append(2)
-links_target.append(3)
-links_value.append(soma_bills * 0.8)
-links_color.append("rgba(139, 92, 246, 0.4)")
-
-# 銀行準備金 → 各種融資
-links_source.append(3)
-links_target.append(6)
-links_value.append(ci_loans * 0.3)
-links_color.append("rgba(236, 72, 153, 0.4)")
-
-links_source.append(3)
-links_target.append(7)
-links_value.append(cre_loans * 0.3)
-links_color.append("rgba(244, 114, 182, 0.4)")
-
-links_source.append(3)
-links_target.append(8)
-links_value.append(consumer_loans * 0.5)
-links_color.append("rgba(251, 113, 133, 0.4)")
-
-links_source.append(3)
-links_target.append(9)
-links_value.append(bank_securities * 0.2)
-links_color.append("rgba(167, 139, 250, 0.4)")
-
-# 銀行準備金 → RRP (余剰資金の駐車)
-links_source.append(3)
-links_target.append(5)
-links_value.append(on_rrp)
-links_color.append("rgba(245, 158, 11, 0.5)")
-
-# 財務省(TGA) ← Fed (国債発行収入)
-links_source.append(0)
-links_target.append(4)
-links_value.append(tga)
-links_color.append("rgba(16, 185, 129, 0.4)")
-
-# TGA → 市場 (財政支出)
-links_source.append(4)
-links_target.append(11)
-links_value.append(tga * 0.8)
-links_color.append("rgba(16, 185, 129, 0.4)")
-
-# 融資 → M2 (信用創造)
-links_source.append(6)
-links_target.append(10)
-links_value.append(ci_loans * 0.5)
-links_color.append("rgba(6, 182, 212, 0.4)")
-
-links_source.append(7)
-links_target.append(10)
-links_value.append(cre_loans * 0.4)
-links_color.append("rgba(6, 182, 212, 0.4)")
-
-links_source.append(8)
-links_target.append(10)
-links_value.append(consumer_loans * 0.8)
-links_color.append("rgba(6, 182, 212, 0.4)")
-
-# 有価証券 → 市場
-links_source.append(9)
-links_target.append(11)
-links_value.append(bank_securities * 0.3)
-links_color.append("rgba(239, 68, 68, 0.4)")
-
-# Create Sankey diagram
-fig = go.Figure(data=[go.Sankey(
-    node=dict(
-        pad=20,
-        thickness=25,
-        line=dict(color="black", width=0.5),
-        label=node_labels,
-        color=node_colors,
-        hovertemplate='%{label}<extra></extra>',
-    ),
-    link=dict(
-        source=links_source,
-        target=links_target,
-        value=links_value,
-        color=links_color,
-        hovertemplate='%{source.label} → %{target.label}<br>%{value:.0f}B<extra></extra>',
-    ),
-    textfont=dict(size=11, color='white'),
-)])
-
-fig.update_layout(
-    font_size=12,
-    height=650,
-    margin=dict(l=10, r=10, t=40, b=10),
-    paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-# ========== KEY METRICS SUMMARY ==========
-st.markdown(f"### {t('money_flow_key_metrics')}")
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.metric(
-        t('money_flow_fed_assets'),
-        format_value(soma_total),
-        help=t('money_flow_fed_assets_help')
-    )
-
-with col2:
-    st.metric(
-        t('money_flow_net_liquidity'),
-        format_value(net_liquidity),
-        delta=f"TGA: -{format_value(tga)}, RRP: -{format_value(on_rrp)}",
-        help=t('money_flow_net_liquidity_help')
-    )
-
-with col3:
-    st.metric(
-        t('money_flow_bank_reserves'),
-        format_value(reserves),
-        help=t('money_flow_bank_reserves_help')
-    )
-
-with col4:
-    st.metric(
-        t('money_flow_m2'),
-        format_value(m2, is_trillion=True),
-        help=t('money_flow_m2_help')
-    )
-
-# ========== FLOW EXPLANATION ==========
+# ========== FLOW EXPLANATION (Common) ==========
+st.markdown("---")
 st.markdown(f"### {t('money_flow_explanation_title')}")
 
-with st.expander(t('money_flow_explanation_expand'), expanded=True):
+with st.expander(t('money_flow_explanation_expand'), expanded=False):
     st.markdown(f"""
 **{t('money_flow_step1_title')}**
 {t('money_flow_step1_desc')}
@@ -294,15 +445,19 @@ with st.expander(t('money_flow_explanation_expand'), expanded=True):
 **{t('money_flow_formula_title')}**
 ```
 {t('money_flow_formula')}
-= {format_value(soma_total)} - {format_value(tga)} - {format_value(on_rrp)}
-= {format_value(net_liquidity)}
 ```
 """)
 
-# ========== ABSORPTION ANALYSIS ==========
+# ========== ABSORPTION ANALYSIS (Common) ==========
 st.markdown(f"### {t('money_flow_absorption_title')}")
 
-# RRP vs TGA pie chart
+# Use current data for absorption analysis
+current_data = get_data_at_date(df.index.max())
+tga = current_data['tga']
+on_rrp = current_data['on_rrp']
+soma_total = current_data['soma_total']
+net_liquidity = current_data['net_liquidity']
+
 col_abs1, col_abs2 = st.columns(2)
 
 with col_abs1:
@@ -325,9 +480,8 @@ with col_abs1:
     st.plotly_chart(fig_absorption, use_container_width=True)
 
 with col_abs2:
-    # Absorption ratio analysis
     total_absorption = tga + on_rrp
-    absorption_ratio = (total_absorption / soma_total) * 100
+    absorption_ratio = (total_absorption / soma_total) * 100 if soma_total > 0 else 0
     
     st.markdown(f"#### {t('money_flow_absorption_analysis')}")
     
@@ -337,7 +491,7 @@ with col_abs2:
         delta=f"{absorption_ratio:.1f}% {t('money_flow_of_fed_assets')}"
     )
     
-    st.progress(min(absorption_ratio / 30, 1.0))  # 30%を上限として表示
+    st.progress(min(absorption_ratio / 30, 1.0))
     
     if absorption_ratio > 20:
         st.warning(t('money_flow_high_absorption_warning'))
