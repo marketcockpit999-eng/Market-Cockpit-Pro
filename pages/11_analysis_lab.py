@@ -421,275 +421,275 @@ with st.expander(t('lab_cross_spreads'), expanded=True):
 
 # ========== Multi-Region Spread Monitor ==========
 st.markdown("---")
-st.markdown("### 🌐 Multi-Region Spread Monitor")
-st.caption("📊 24-hour Bid-Ask spread monitoring across global markets")
+with st.expander("🌐 Multi-Region Spread Monitor", expanded=True):
+    st.caption("📊 24-hour Bid-Ask spread monitoring across global markets")
 
-from datetime import datetime
-try:
-    from zoneinfo import ZoneInfo
-except ImportError:
-    # For Python < 3.9, fallback to pytz
+    from datetime import datetime
     try:
-        import pytz
-        ZoneInfo = lambda x: pytz.timezone(x)
+        from zoneinfo import ZoneInfo
     except ImportError:
-        st.error("⚠️ Timezone library not available. Please install pytz or upgrade to Python 3.9+")
-        st.stop()
+        # For Python < 3.9, fallback to pytz
+        try:
+            import pytz
+            ZoneInfo = lambda x: pytz.timezone(x)
+        except ImportError:
+            st.error("⚠️ Timezone library not available. Please install pytz or upgrade to Python 3.9+")
+            st.stop()
 
-MARKET_REGIONS = {
-    'asia': {
-        'name': '🌏 Asia (Tokyo/HK)',
-        'tz': 'Asia/Tokyo',
-        'open_hour': 9,
-        'close_hour': 15,
-        'etfs': [
-            ('1321.T', 'Nikkei 225 ETF'),
-            ('2800.HK', 'HK Tracker Fund'),
-            ('EWJ', 'Japan ETF (US-listed)'),
-            ('EWH', 'Hong Kong ETF (US-listed)')
-        ]
-    },
-    'europe': {
-        'name': '🇪🇺 Europe (London/Frankfurt)',
-        'tz': 'Europe/London',
-        'open_hour': 8,
-        'close_hour': 16,
-        'etfs': [
-            ('ISF.L', 'FTSE 100 ETF'),
-            ('EXS1.DE', 'DAX ETF'),
-            ('VGK', 'Europe ETF (US-listed)'),
-            ('EWU', 'UK ETF (US-listed)')
-        ]
-    },
-    'us': {
-        'name': '🇺🇸 US (NYSE/NASDAQ)',
-        'tz': 'America/New_York',
-        'open_hour': 9,
-        'close_hour': 16,
-        'etfs': [
-            ('SPY', 'S&P 500'),
-            ('QQQ', 'NASDAQ 100'),
-            ('IWM', 'Russell 2000'),
-            ('DIA', 'Dow Jones')
-        ]
+    MARKET_REGIONS = {
+        'asia': {
+            'name': '🌏 Asia (Tokyo/HK)',
+            'tz': 'Asia/Tokyo',
+            'open_hour': 9,
+            'close_hour': 15,
+            'etfs': [
+                ('1321.T', 'Nikkei 225 ETF'),
+                ('2800.HK', 'HK Tracker Fund'),
+                ('EWJ', 'Japan ETF (US-listed)'),
+                ('EWH', 'Hong Kong ETF (US-listed)')
+            ]
+        },
+        'europe': {
+            'name': '🇪🇺 Europe (London/Frankfurt)',
+            'tz': 'Europe/London',
+            'open_hour': 8,
+            'close_hour': 16,
+            'etfs': [
+                ('ISF.L', 'FTSE 100 ETF'),
+                ('EXS1.DE', 'DAX ETF'),
+                ('VGK', 'Europe ETF (US-listed)'),
+                ('EWU', 'UK ETF (US-listed)')
+            ]
+        },
+        'us': {
+            'name': '🇺🇸 US (NYSE/NASDAQ)',
+            'tz': 'America/New_York',
+            'open_hour': 9,
+            'close_hour': 16,
+            'etfs': [
+                ('SPY', 'S&P 500'),
+                ('QQQ', 'NASDAQ 100'),
+                ('IWM', 'Russell 2000'),
+                ('DIA', 'Dow Jones')
+            ]
+        }
     }
-}
 
-def get_active_market():
-    """Determine which market(s) are currently open"""
-    active = []
-    now_utc = datetime.now(ZoneInfo('UTC'))
-    
+    def get_active_market():
+        """Determine which market(s) are currently open"""
+        active = []
+        now_utc = datetime.now(ZoneInfo('UTC'))
+        
+        for region_id, region_data in MARKET_REGIONS.items():
+            try:
+                tz = ZoneInfo(region_data['tz'])
+                local_time = now_utc.astimezone(tz)
+                
+                # Check if weekday (0=Monday, 4=Friday)
+                if local_time.weekday() > 4:
+                    continue
+                
+                current_hour = local_time.hour
+                if region_data['open_hour'] <= current_hour < region_data['close_hour']:
+                    active.append(region_id)
+            except:
+                pass
+        
+        return active
+
+    @st.cache_data(ttl=300)
+    def fetch_regional_spreads(region_id):
+        """Fetch bid-ask spreads for a specific region"""
+        region_data = MARKET_REGIONS[region_id]
+        results = []
+        
+        for symbol, name in region_data['etfs']:
+            try:
+                ticker = yf.Ticker(symbol)
+                info = ticker.info
+                bid = info.get('bid', 0) or 0
+                ask = info.get('ask', 0) or 0
+                last = info.get('regularMarketPrice', 0) or info.get('previousClose', 0) or 1
+                
+                if bid > 0 and ask > 0 and last > 0:
+                    spread_pct = ((ask - bid) / last) * 10000
+                else:
+                    spread_pct = None
+                
+                results.append({
+                    'Symbol': symbol,
+                    'Name': name,
+                    'Spread (bps)': spread_pct,
+                    'Region': region_data['name']
+                })
+            except:
+                results.append({
+                    'Symbol': symbol,
+                    'Name': name,
+                    'Spread (bps)': None,
+                    'Region': region_data['name']
+                })
+        
+        return pd.DataFrame(results)
+
+    # Market Hours Reference Table (always visible)
+    st.markdown("##### 📅 " + t('market_hours_reference'))
+
+    market_hours_data = []
     for region_id, region_data in MARKET_REGIONS.items():
+        etf_list = ', '.join([symbol for symbol, _ in region_data['etfs']])
+        market_hours_data.append({
+            t('region'): region_data['name'],
+            t('market_hours_local'): f"{region_data['open_hour']}:00-{region_data['close_hour']}:00",
+            'ETF': etf_list
+        })
+
+    st.dataframe(
+        pd.DataFrame(market_hours_data),
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.markdown("---")
+
+    # Show current time in all regions for verification
+    now_utc = datetime.now(ZoneInfo('UTC'))
+    st.markdown(f"##### 🕒 {t('current_time_verification')}")
+    time_cols = st.columns(3)
+    for i, (region_id, region_data) in enumerate(MARKET_REGIONS.items()):
         try:
             tz = ZoneInfo(region_data['tz'])
             local_time = now_utc.astimezone(tz)
-            
-            # Check if weekday (0=Monday, 4=Friday)
-            if local_time.weekday() > 4:
-                continue
-            
-            current_hour = local_time.hour
-            if region_data['open_hour'] <= current_hour < region_data['close_hour']:
-                active.append(region_id)
+            is_weekday = local_time.weekday() <= 4
+            is_market_hours = region_data['open_hour'] <= local_time.hour < region_data['close_hour']
+            status = "🟢 OPEN" if (is_weekday and is_market_hours) else "🔴 CLOSED"
+            with time_cols[i]:
+                st.caption(f"{region_data['name']}")
+                st.caption(f"{local_time.strftime('%Y-%m-%d %H:%M')} {status}")
         except:
             pass
-    
-    return active
 
-@st.cache_data(ttl=300)
-def fetch_regional_spreads(region_id):
-    """Fetch bid-ask spreads for a specific region"""
-    region_data = MARKET_REGIONS[region_id]
-    results = []
-    
-    for symbol, name in region_data['etfs']:
-        try:
-            ticker = yf.Ticker(symbol)
-            info = ticker.info
-            bid = info.get('bid', 0) or 0
-            ask = info.get('ask', 0) or 0
-            last = info.get('regularMarketPrice', 0) or info.get('previousClose', 0) or 1
-            
-            if bid > 0 and ask > 0 and last > 0:
-                spread_pct = ((ask - bid) / last) * 10000
-            else:
-                spread_pct = None
-            
-            results.append({
-                'Symbol': symbol,
-                'Name': name,
-                'Spread (bps)': spread_pct,
-                'Region': region_data['name']
-            })
-        except:
-            results.append({
-                'Symbol': symbol,
-                'Name': name,
-                'Spread (bps)': None,
-                'Region': region_data['name']
-            })
-    
-    return pd.DataFrame(results)
+    st.markdown("---")
 
-# Market Hours Reference Table (always visible)
-st.markdown("##### 📅 " + t('market_hours_reference'))
+    # Show current market status
+    active_markets = get_active_market()
 
-market_hours_data = []
-for region_id, region_data in MARKET_REGIONS.items():
-    etf_list = ', '.join([symbol for symbol, _ in region_data['etfs']])
-    market_hours_data.append({
-        t('region'): region_data['name'],
-        t('market_hours_local'): f"{region_data['open_hour']}:00-{region_data['close_hour']}:00",
-        'ETF': etf_list
-    })
-
-st.dataframe(
-    pd.DataFrame(market_hours_data),
-    use_container_width=True,
-    hide_index=True
-)
-
-st.markdown("---")
-
-# Show current time in all regions for verification
-now_utc = datetime.now(ZoneInfo('UTC'))
-st.markdown(f"##### 🕒 {t('current_time_verification')}")
-time_cols = st.columns(3)
-for i, (region_id, region_data) in enumerate(MARKET_REGIONS.items()):
-    try:
-        tz = ZoneInfo(region_data['tz'])
-        local_time = now_utc.astimezone(tz)
-        is_weekday = local_time.weekday() <= 4
-        is_market_hours = region_data['open_hour'] <= local_time.hour < region_data['close_hour']
-        status = "🟢 OPEN" if (is_weekday and is_market_hours) else "🔴 CLOSED"
-        with time_cols[i]:
-            st.caption(f"{region_data['name']}")
-            st.caption(f"{local_time.strftime('%Y-%m-%d %H:%M')} {status}")
-    except:
-        pass
-
-st.markdown("---")
-
-# Show current market status
-active_markets = get_active_market()
-
-if active_markets:
-    st.success(f"✅ Markets currently OPEN: {', '.join([MARKET_REGIONS[m]['name'] for m in active_markets])}")
-    
-    # Display spreads for active markets
-    for region_id in active_markets:
-        with st.expander(f"{MARKET_REGIONS[region_id]['name']} - Live Spreads", expanded=True):
-            region_spreads = fetch_regional_spreads(region_id)
-            
-            if not region_spreads.empty:
-                # Add status column
-                def get_spread_status(spread):
-                    if spread is None or pd.isna(spread):
-                        return "⚪ N/A"
-                    elif spread < 2:
-                        return "🟢 Tight"
-                    elif spread < 10:
-                        return "🟡 Normal"
-                    else:
-                        return "🔴 Wide"
+    if active_markets:
+        st.success(f"✅ Markets currently OPEN: {', '.join([MARKET_REGIONS[m]['name'] for m in active_markets])}")
+        
+        # Display spreads for active markets
+        for region_id in active_markets:
+            with st.expander(f"{MARKET_REGIONS[region_id]['name']} - Live Spreads", expanded=True):
+                region_spreads = fetch_regional_spreads(region_id)
                 
-                region_spreads['Status'] = region_spreads['Spread (bps)'].apply(get_spread_status)
-                
-                # Format display
-                display_cols = ['Symbol', 'Name', 'Spread (bps)', 'Status']
-                display_spreads = region_spreads[display_cols].copy()
-                display_spreads['Spread (bps)'] = display_spreads['Spread (bps)'].apply(
-                    lambda x: f"{x:.2f}" if pd.notna(x) else "N/A"
-                )
-                
-                st.dataframe(display_spreads, use_container_width=True, hide_index=True)
-                
-                # Data period and source update
-                tz = ZoneInfo(MARKET_REGIONS[region_id]['tz'])
-                local_now = now_utc.astimezone(tz)
-                st.caption(f"{t('lab_data_period')}: {local_now.strftime('%Y-%m-%d')} (Local: {local_now.strftime('%H:%M')})")
-                st.caption(f"{t('lab_source_update')}: {datetime.now().strftime('%Y-%m-%d %H:%M')} (Yahoo Finance)")
-                
-                # Chart for valid spreads
-                valid = region_spreads[region_spreads['Spread (bps)'].notna()]
-                if not valid.empty:
-                    colors = ['#00e676' if s < 2 else '#ffeb3b' if s < 10 else '#ff1744' 
-                             for s in valid['Spread (bps)']]
-                    fig = go.Figure(data=[
-                        go.Bar(x=valid['Symbol'], y=valid['Spread (bps)'], marker_color=colors)
-                    ])
-                    fig.update_layout(
-                        template='plotly_dark',
-                        height=180,
-                        yaxis_title="Spread (bps)",
-                        margin=dict(l=0, r=0, t=10, b=0)
+                if not region_spreads.empty:
+                    # Add status column
+                    def get_spread_status(spread):
+                        if spread is None or pd.isna(spread):
+                            return "⚪ N/A"
+                        elif spread < 2:
+                            return "🟢 Tight"
+                        elif spread < 10:
+                            return "🟡 Normal"
+                        else:
+                            return "🔴 Wide"
+                    
+                    region_spreads['Status'] = region_spreads['Spread (bps)'].apply(get_spread_status)
+                    
+                    # Format display
+                    display_cols = ['Symbol', 'Name', 'Spread (bps)', 'Status']
+                    display_spreads = region_spreads[display_cols].copy()
+                    display_spreads['Spread (bps)'] = display_spreads['Spread (bps)'].apply(
+                        lambda x: f"{x:.2f}" if pd.notna(x) else "N/A"
                     )
-                    st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("No data available for this region")
-else:
-    st.info("⏰ No markets currently open. Market hours:")
-    for region_id, region_data in MARKET_REGIONS.items():
-        st.caption(f"{region_data['name']}: {region_data['open_hour']}:00 - {region_data['close_hour']}:00 local time (Mon-Fri)")
-    
-    # Show all regions even when closed
-    st.markdown(f"#### 📊 {t('all_regions_title')}")
-    
-    selected_region = st.radio(
-        t('select_region'),
-        options=list(MARKET_REGIONS.keys()),
-        format_func=lambda x: MARKET_REGIONS[x]['name'],
-        horizontal=True
-    )
-    
-    region_spreads = fetch_regional_spreads(selected_region)
-    
-    if not region_spreads.empty:
-        st.caption("⚠️ Note: Data reflects last available quotes and may be stale during closed hours")
+                    
+                    st.dataframe(display_spreads, use_container_width=True, hide_index=True)
+                    
+                    # Data period and source update
+                    tz = ZoneInfo(MARKET_REGIONS[region_id]['tz'])
+                    local_now = now_utc.astimezone(tz)
+                    st.caption(f"{t('lab_data_period')}: {local_now.strftime('%Y-%m-%d')} (Local: {local_now.strftime('%H:%M')})")
+                    st.caption(f"{t('lab_source_update')}: {datetime.now().strftime('%Y-%m-%d %H:%M')} (Yahoo Finance)")
+                    
+                    # Chart for valid spreads
+                    valid = region_spreads[region_spreads['Spread (bps)'].notna()]
+                    if not valid.empty:
+                        colors = ['#00e676' if s < 2 else '#ffeb3b' if s < 10 else '#ff1744' 
+                                 for s in valid['Spread (bps)']]
+                        fig = go.Figure(data=[
+                            go.Bar(x=valid['Symbol'], y=valid['Spread (bps)'], marker_color=colors)
+                        ])
+                        fig.update_layout(
+                            template='plotly_dark',
+                            height=180,
+                            yaxis_title="Spread (bps)",
+                            margin=dict(l=0, r=0, t=10, b=0)
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("No data available for this region")
+    else:
+        st.info("⏰ No markets currently open. Market hours:")
+        for region_id, region_data in MARKET_REGIONS.items():
+            st.caption(f"{region_data['name']}: {region_data['open_hour']}:00 - {region_data['close_hour']}:00 local time (Mon-Fri)")
         
-        # Data period and source update for closed markets
-        try:
-            tz = ZoneInfo(MARKET_REGIONS[selected_region]['tz'])
-            local_now = now_utc.astimezone(tz)
-            st.caption(f"{t('lab_data_period')}: {local_now.strftime('%Y-%m-%d')} (Last close)")
-            st.caption(f"{t('lab_source_update')}: {datetime.now().strftime('%Y-%m-%d %H:%M')} (Yahoo Finance)")
-        except:
-            pass
+        # Show all regions even when closed
+        st.markdown(f"#### 📊 {t('all_regions_title')}")
         
-        def get_spread_status(spread):
-            if spread is None or pd.isna(spread):
-                return "⚪ N/A"
-            elif spread < 2:
-                return "🟢 Tight"
-            elif spread < 10:
-                return "🟡 Normal"
-            else:
-                return "🔴 Wide"
-        
-        region_spreads['Status'] = region_spreads['Spread (bps)'].apply(get_spread_status)
-        
-        display_cols = ['Symbol', 'Name', 'Spread (bps)', 'Status']
-        display_spreads = region_spreads[display_cols].copy()
-        display_spreads['Spread (bps)'] = display_spreads['Spread (bps)'].apply(
-            lambda x: f"{x:.2f}" if pd.notna(x) else "N/A"
+        selected_region = st.radio(
+            t('select_region'),
+            options=list(MARKET_REGIONS.keys()),
+            format_func=lambda x: MARKET_REGIONS[x]['name'],
+            horizontal=True
         )
         
-        st.dataframe(display_spreads, use_container_width=True, hide_index=True)
+        region_spreads = fetch_regional_spreads(selected_region)
         
-        valid = region_spreads[region_spreads['Spread (bps)'].notna()]
-        if not valid.empty:
-            colors = ['#00e676' if s < 2 else '#ffeb3b' if s < 10 else '#ff1744' 
-                     for s in valid['Spread (bps)']]
-            fig = go.Figure(data=[
-                go.Bar(x=valid['Symbol'], y=valid['Spread (bps)'], marker_color=colors)
-            ])
-            fig.update_layout(
-                template='plotly_dark',
-                height=180,
-                yaxis_title="Spread (bps)",
-                margin=dict(l=0, r=0, t=10, b=0)
+        if not region_spreads.empty:
+            st.caption("⚠️ Note: Data reflects last available quotes and may be stale during closed hours")
+            
+            # Data period and source update for closed markets
+            try:
+                tz = ZoneInfo(MARKET_REGIONS[selected_region]['tz'])
+                local_now = now_utc.astimezone(tz)
+                st.caption(f"{t('lab_data_period')}: {local_now.strftime('%Y-%m-%d')} (Last close)")
+                st.caption(f"{t('lab_source_update')}: {datetime.now().strftime('%Y-%m-%d %H:%M')} (Yahoo Finance)")
+            except:
+                pass
+            
+            def get_spread_status(spread):
+                if spread is None or pd.isna(spread):
+                    return "⚪ N/A"
+                elif spread < 2:
+                    return "🟢 Tight"
+                elif spread < 10:
+                    return "🟡 Normal"
+                else:
+                    return "🔴 Wide"
+            
+            region_spreads['Status'] = region_spreads['Spread (bps)'].apply(get_spread_status)
+            
+            display_cols = ['Symbol', 'Name', 'Spread (bps)', 'Status']
+            display_spreads = region_spreads[display_cols].copy()
+            display_spreads['Spread (bps)'] = display_spreads['Spread (bps)'].apply(
+                lambda x: f"{x:.2f}" if pd.notna(x) else "N/A"
             )
-            st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("No data available for this region")
+            
+            st.dataframe(display_spreads, use_container_width=True, hide_index=True)
+            
+            valid = region_spreads[region_spreads['Spread (bps)'].notna()]
+            if not valid.empty:
+                colors = ['#00e676' if s < 2 else '#ffeb3b' if s < 10 else '#ff1744' 
+                         for s in valid['Spread (bps)']]
+                fig = go.Figure(data=[
+                    go.Bar(x=valid['Symbol'], y=valid['Spread (bps)'], marker_color=colors)
+                ])
+                fig.update_layout(
+                    template='plotly_dark',
+                    height=180,
+                    yaxis_title="Spread (bps)",
+                    margin=dict(l=0, r=0, t=10, b=0)
+                )
+                st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No data available for this region")
