@@ -1489,24 +1489,8 @@ INDICATORS = {
         'validation': (0, 100),
         'display_pattern': 'api',
     },
-    'CNN_Fear_Greed': {
-        'source': 'SENTIMENT',
-        'id': 'cnn.com/fear-and-greed',
-        'unit': '',
-        'frequency': 'daily',
-        'freshness': 'daily',
-        'category': 'sentiment',
-        'ui_page': '08_sentiment',
-        'ai_include': True,
-        'ai_section': 'センチメント',
-        'notes': 'CNN Fear & Greed Index',
-        'df_stored': False,
-        'fetch_function': 'get_cnn_fear_greed',
-        'fetch_key': 'current',
-        'api_check': True,
-        'validation': (0, 100),
-        'display_pattern': 'api',
-    },
+    # NOTE: CNN_Fear_Greed removed 2026-01-30 - API unreliable/blocked
+    # 'CNN_Fear_Greed': {...}
 }
 
 

@@ -68,6 +68,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         'alert_credit_spread_wide': '⚠️ Credit spread widened to {value}% - Credit risk rising',
         'alert_yield_curve_inverted': '⚠️ Yield curve inverted ({value}%) - Recession warning',
         'alert_primary_credit_surge': '🔴 Discount window usage surged ({value}B) - Bank liquidity crisis signs',
+        'alert_rmp_active': 'RMP Active: +${value}B/week',
+        'alert_rmp_accelerating': 'RMP Accelerating: +${value}B/week',
         
         'sidebar_ai_status': '🤖 AI Status',
         'sidebar_ready': '✅ Ready',
@@ -1226,6 +1228,8 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         'alert_credit_spread_wide': '⚠️ クレジットスプレッドが{value}%に拡大 - 信用リスク上昇',
         'alert_yield_curve_inverted': '⚠️ イールドカーブ逆転中 ({value}%) - リセッション警告',
         'alert_primary_credit_surge': '🔴 ディスカウントウィンドウ利用急増 ({value}B) - 銀行流動性危機の兆候',
+        'alert_rmp_active': 'RMP稼働中: +${value}B/週',
+        'alert_rmp_accelerating': 'RMP加速中: +${value}B/週',
         
         'sidebar_ai_status': '🤖 AIステータス',
         'sidebar_ready': '✅ 準備完了',

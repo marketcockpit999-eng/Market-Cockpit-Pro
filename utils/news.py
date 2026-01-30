@@ -166,11 +166,11 @@ def check_for_market_alerts(df) -> list:
         rmp_weekly_change = df['RMP_Weekly_Change'].iloc[-1] if 'RMP_Weekly_Change' in df.columns else None
         
         if rmp_status_type == 'active' and rmp_weekly_change is not None:
-            rmp_text = f"RMP Active: +${rmp_weekly_change:.1f}B/week"
+            rmp_text = t('alert_rmp_active', value=f"{rmp_weekly_change:.1f}")
         elif rmp_status_type == 'accelerating' and rmp_weekly_change is not None:
-            rmp_text = f"RMP Accelerating: +${rmp_weekly_change:.1f}B/week"
+            rmp_text = t('alert_rmp_accelerating', value=f"{rmp_weekly_change:.1f}")
         else:
-            rmp_text = "RMP Active"
+            rmp_text = t('alert_rmp_active', value="?")
         
         alerts.append({
             'type': 'RMP',
