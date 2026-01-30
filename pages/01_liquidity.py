@@ -446,76 +446,74 @@ with col3:
         styled_line_chart(df[['SOMA_Bills']], height=200)
 
 st.markdown("---")
-st.subheader(t('emergency_loans'))
+with st.expander(t('emergency_loans'), expanded=True):
+    col1, col2 = st.columns(2)
 
-col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(f"#### {t('total_loans')}")
+        show_metric_with_sparkline(t('total_loans'), df.get('Total_Loans'), 'Total_Loans', "B", "Window", notes=t('total_loans_notes'))
+        if 'Total_Loans' in df.columns and not df.get('Total_Loans', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['Total_Loans']], height=250)
 
-with col1:
-    st.markdown(f"#### {t('total_loans')}")
-    show_metric_with_sparkline(t('total_loans'), df.get('Total_Loans'), 'Total_Loans', "B", "Window", notes=t('total_loans_notes'))
-    if 'Total_Loans' in df.columns and not df.get('Total_Loans', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['Total_Loans']], height=250)
-
-with col2:
-    st.markdown(f"#### {t('primary_credit')}")
-    show_metric_with_sparkline(t('primary_credit'), df.get('Primary_Credit'), 'Primary_Credit', "B", "Primary", notes=t('primary_credit_notes'), alert_func=lambda x: x>1)
-    if 'Primary_Credit' in df.columns and not df.get('Primary_Credit', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['Primary_Credit']], height=250)
-
+    with col2:
+        st.markdown(f"#### {t('primary_credit')}")
+        show_metric_with_sparkline(t('primary_credit'), df.get('Primary_Credit'), 'Primary_Credit', "B", "Primary", notes=t('primary_credit_notes'), alert_func=lambda x: x>1)
+        if 'Primary_Credit' in df.columns and not df.get('Primary_Credit', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['Primary_Credit']], height=250)
 
 st.markdown("---")
-st.subheader(t('risk_bonds'))
-st.caption(t('risk_bonds_desc'))
+with st.expander(t('risk_bonds'), expanded=True):
+    st.caption(t('risk_bonds_desc'))
 
-col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4 = st.columns(4)
 
-with col1:
-    st.markdown(f"#### {t('vix_index')}")
-    show_metric_with_sparkline(t('vix_index'), df.get('VIX'), 'VIX', "pt", "VIX", notes=t('vix_notes'), alert_func=lambda x: x>20)
-    if 'VIX' in df.columns and not df.get('VIX', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['VIX']], height=200)
+    with col1:
+        st.markdown(f"#### {t('vix_index')}")
+        show_metric_with_sparkline(t('vix_index'), df.get('VIX'), 'VIX', "pt", "VIX", notes=t('vix_notes'), alert_func=lambda x: x>20)
+        if 'VIX' in df.columns and not df.get('VIX', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['VIX']], height=200)
 
-with col2:
-    st.markdown(f"#### {t('credit_spread')}")
-    show_metric_with_sparkline(t('credit_spread'), df.get('Credit_Spread'), 'Credit_Spread', "%", "Credit_Spread", notes=t('credit_spread_notes'), decimal_places=3)
-    if 'Credit_Spread' in df.columns and not df.get('Credit_Spread', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['Credit_Spread']], height=200)
+    with col2:
+        st.markdown(f"#### {t('credit_spread')}")
+        show_metric_with_sparkline(t('credit_spread'), df.get('Credit_Spread'), 'Credit_Spread', "%", "Credit_Spread", notes=t('credit_spread_notes'), decimal_places=3)
+        if 'Credit_Spread' in df.columns and not df.get('Credit_Spread', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['Credit_Spread']], height=200)
 
-with col3:
-    st.markdown(f"#### {t('us_10y_yield')}")
-    show_metric_with_sparkline(t('us_10y_yield'), df.get('US_TNX'), 'US_TNX', "%", "US_TNX", notes=t('us_10y_notes'), decimal_places=3)
-    if 'US_TNX' in df.columns and not df.get('US_TNX', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['US_TNX']], height=200)
+    with col3:
+        st.markdown(f"#### {t('us_10y_yield')}")
+        show_metric_with_sparkline(t('us_10y_yield'), df.get('US_TNX'), 'US_TNX', "%", "US_TNX", notes=t('us_10y_notes'), decimal_places=3)
+        if 'US_TNX' in df.columns and not df.get('US_TNX', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['US_TNX']], height=200)
 
-with col4:
-    st.markdown(f"#### {t('t10y2y')}")
-    show_metric_with_sparkline(t('t10y2y'), df.get('T10Y2Y'), 'T10Y2Y', "%", "T10Y2Y", notes=t('t10y2y_notes'), decimal_places=3)
-    if 'T10Y2Y' in df.columns and not df.get('T10Y2Y', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['T10Y2Y']], height=200)
+    with col4:
+        st.markdown(f"#### {t('t10y2y')}")
+        show_metric_with_sparkline(t('t10y2y'), df.get('T10Y2Y'), 'T10Y2Y', "%", "T10Y2Y", notes=t('t10y2y_notes'), decimal_places=3)
+        if 'T10Y2Y' in df.columns and not df.get('T10Y2Y', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['T10Y2Y']], height=200)
 
 # === Corporate Bond ETFs ===
 st.markdown("---")
-st.markdown(f"### {t('corp_bond_etf_section')}")
-st.caption(t('corp_bond_etf_desc'))
+with st.expander(t('corp_bond_etf_section'), expanded=True):
+    st.caption(t('corp_bond_etf_desc'))
 
-col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2)
 
-with col1:
-    st.markdown(f"#### {t('hyg')}")
-    show_metric_with_sparkline(t('hyg'), df.get('HYG'), 'HYG', "$", "HYG", notes=t('hyg_notes'), decimal_places=2)
-    if 'HYG' in df.columns and not df.get('HYG', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['HYG']], height=200)
+    with col1:
+        st.markdown(f"#### {t('hyg')}")
+        show_metric_with_sparkline(t('hyg'), df.get('HYG'), 'HYG', "$", "HYG", notes=t('hyg_notes'), decimal_places=2)
+        if 'HYG' in df.columns and not df.get('HYG', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['HYG']], height=200)
 
-with col2:
-    st.markdown(f"#### {t('lqd')}")
-    show_metric_with_sparkline(t('lqd'), df.get('LQD'), 'LQD', "$", "LQD", notes=t('lqd_notes'), decimal_places=2)
-    if 'LQD' in df.columns and not df.get('LQD', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['LQD']], height=200)
+    with col2:
+        st.markdown(f"#### {t('lqd')}")
+        show_metric_with_sparkline(t('lqd'), df.get('LQD'), 'LQD', "$", "LQD", notes=t('lqd_notes'), decimal_places=2)
+        if 'LQD' in df.columns and not df.get('LQD', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['LQD']], height=200)
