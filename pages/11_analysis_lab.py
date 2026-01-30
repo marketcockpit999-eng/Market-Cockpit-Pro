@@ -278,56 +278,56 @@ else:
 
 # ========== Regime Detection ==========
 st.markdown("---")
-st.markdown(f"### {t('lab_regime_detection')}")
+with st.expander(t('lab_regime_detection'), expanded=True):
 
-with st.expander(t('lab_regime_about'), expanded=False):
-    st.markdown(t('lab_regime_explanation'))
+    with st.expander(t('lab_regime_about'), expanded=False):
+        st.markdown(t('lab_regime_explanation'))
 
-st.caption(t('lab_regime_desc'))
+    st.caption(t('lab_regime_desc'))
 
-if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy', pd.Series()).isna().all():
-    gl_series = df['Global_Liquidity_Proxy'].dropna()
-    
-    if len(gl_series) > 20:
-        ma20 = gl_series.rolling(window=20).mean()
-        ma20_change = ma20.pct_change(periods=5) * 100
+    if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy', pd.Series()).isna().all():
+        gl_series = df['Global_Liquidity_Proxy'].dropna()
         
-        current_change = ma20_change.iloc[-1]
-        
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            if current_change > 0:
-                st.markdown(t('lab_regime_chance'))
-                st.caption(t('lab_liquidity_accelerating'))
-            else:
-                st.markdown(t('lab_regime_caution'))
-                st.caption(t('lab_liquidity_decelerating'))
+        if len(gl_series) > 20:
+            ma20 = gl_series.rolling(window=20).mean()
+            ma20_change = ma20.pct_change(periods=5) * 100
             
-            st.metric(t('lab_ma20_change'), f"{current_change:+.2f}%", help=t('lab_ma20_help'))
-        
-        with col2:
-            regime_df = pd.DataFrame({
-                'GLP': gl_series.tail(120),
-                'MA20': ma20.tail(120)
-            })
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(x=regime_df.index, y=regime_df['GLP'], name='GLP', line=dict(color='cyan', width=1)))
-            fig.add_trace(go.Scatter(x=regime_df.index, y=regime_df['MA20'], name='MA20', line=dict(color='yellow', width=2)))
-            fig.update_layout(template='plotly_dark', height=200, margin=dict(l=0, r=0, t=10, b=0))
-            st.plotly_chart(fig, use_container_width=True)
-        
-        # Data period and Source update for Regime Detection
-        regime_data = gl_series.tail(120)
-        regime_start = regime_data.index[0].strftime('%Y-%m-%d') if len(regime_data) > 0 else 'N/A'
-        regime_end = regime_data.index[-1].strftime('%Y-%m-%d') if len(regime_data) > 0 else 'N/A'
-        st.caption(f"{t('lab_data_period')}: {regime_start} ~ {regime_end}")
-        glp_date = df.attrs.get('last_valid_dates', {}).get('Global_Liquidity_Proxy') if hasattr(df, 'attrs') else None
-        if glp_date:
-            st.caption(f"{t('lab_source_update')}: {glp_date} (FRED)")
+            current_change = ma20_change.iloc[-1]
+            
+            col1, col2 = st.columns([1, 2])
+            with col1:
+                if current_change > 0:
+                    st.markdown(t('lab_regime_chance'))
+                    st.caption(t('lab_liquidity_accelerating'))
+                else:
+                    st.markdown(t('lab_regime_caution'))
+                    st.caption(t('lab_liquidity_decelerating'))
+                
+                st.metric(t('lab_ma20_change'), f"{current_change:+.2f}%", help=t('lab_ma20_help'))
+            
+            with col2:
+                regime_df = pd.DataFrame({
+                    'GLP': gl_series.tail(120),
+                    'MA20': ma20.tail(120)
+                })
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(x=regime_df.index, y=regime_df['GLP'], name='GLP', line=dict(color='cyan', width=1)))
+                fig.add_trace(go.Scatter(x=regime_df.index, y=regime_df['MA20'], name='MA20', line=dict(color='yellow', width=2)))
+                fig.update_layout(template='plotly_dark', height=200, margin=dict(l=0, r=0, t=10, b=0))
+                st.plotly_chart(fig, use_container_width=True)
+            
+            # Data period and Source update for Regime Detection
+            regime_data = gl_series.tail(120)
+            regime_start = regime_data.index[0].strftime('%Y-%m-%d') if len(regime_data) > 0 else 'N/A'
+            regime_end = regime_data.index[-1].strftime('%Y-%m-%d') if len(regime_data) > 0 else 'N/A'
+            st.caption(f"{t('lab_data_period')}: {regime_start} ~ {regime_end}")
+            glp_date = df.attrs.get('last_valid_dates', {}).get('Global_Liquidity_Proxy') if hasattr(df, 'attrs') else None
+            if glp_date:
+                st.caption(f"{t('lab_source_update')}: {glp_date} (FRED)")
+        else:
+            st.warning(t('lab_insufficient_data_short'))
     else:
-        st.warning(t('lab_insufficient_data_short'))
-else:
-    st.warning(t('lab_glp_unavailable'))
+        st.warning(t('lab_glp_unavailable'))
 
 # ========== Cross-Asset Liquidity Monitor ==========
 st.markdown("---")

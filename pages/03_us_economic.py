@@ -434,20 +434,20 @@ with st.expander(f"📈 {t('us_economic_section_leading')}", expanded=True):
 
 # === 5. Housing ===
 st.markdown("---")
-st.markdown(f"### 🏠 {t('us_economic_section_housing')}")
-st.caption(t('housing_indicators_desc'))
-col1, col2 = st.columns(2)
+with st.expander(f"🏠 {t('us_economic_section_housing')}", expanded=True):
+    st.caption(t('housing_indicators_desc'))
+    col1, col2 = st.columns(2)
 
-with col1:
-    st.markdown(f"#### {t('housing_starts_title')}")
-    houst_series = df.get('Housing_Starts')
-    show_metric_with_sparkline(t('housing_starts_label'), houst_series, 'Housing_Starts', "K", "Housing_Starts", notes=t('housing_starts_notes'))
-    if houst_series is not None and not houst_series.isna().all():
-        styled_line_chart(houst_series, height=150)
+    with col1:
+        st.markdown(f"#### {t('housing_starts_title')}")
+        houst_series = df.get('Housing_Starts')
+        show_metric_with_sparkline(t('housing_starts_label'), houst_series, 'Housing_Starts', "K", "Housing_Starts", notes=t('housing_starts_notes'))
+        if houst_series is not None and not houst_series.isna().all():
+            styled_line_chart(houst_series, height=150)
 
-with col2:
-    st.markdown(f"#### {t('building_permits_title')}")
-    permit_series = df.get('Building_Permits')
-    show_metric_with_sparkline(t('building_permits_label'), permit_series, 'Building_Permits', "K", "Building_Permits", notes=t('building_permits_notes'))
-    if permit_series is not None and not permit_series.isna().all():
-        styled_line_chart(permit_series, height=150)
+    with col2:
+        st.markdown(f"#### {t('building_permits_title')}")
+        permit_series = df.get('Building_Permits')
+        show_metric_with_sparkline(t('building_permits_label'), permit_series, 'Building_Permits', "K", "Building_Permits", notes=t('building_permits_notes'))
+        if permit_series is not None and not permit_series.isna().all():
+            styled_line_chart(permit_series, height=150)
