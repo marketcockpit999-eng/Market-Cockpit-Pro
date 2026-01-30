@@ -188,35 +188,35 @@ with st.expander(t('us_economic_section_inflation'), expanded=True):
 
 # === 3. Economy ===
 st.markdown("---")
-st.markdown(f"### {t('us_economic_section_economy')}")
-col1, col2 = st.columns(2)
+with st.expander(t('us_economic_section_economy'), expanded=True):
+    col1, col2 = st.columns(2)
 
-with col1:
-    display_macro_card(t('retail_sales_title'), df.get('RetailSales'), 'RetailSales', df_original=df_original, unit="$M", notes=t('retail_sales_notes'))
-    st.markdown("---")
-    display_macro_card(t('consumer_sentiment_title'), df.get('ConsumerSent'), 'ConsumerSent', df_original=df_original, unit="pt", notes=t('consumer_sentiment_notes'))
+    with col1:
+        display_macro_card(t('retail_sales_title'), df.get('RetailSales'), 'RetailSales', df_original=df_original, unit="$M", notes=t('retail_sales_notes'))
+        st.markdown("---")
+        display_macro_card(t('consumer_sentiment_title'), df.get('ConsumerSent'), 'ConsumerSent', df_original=df_original, unit="pt", notes=t('consumer_sentiment_notes'))
 
-with col2:
-    st.markdown(f"#### {t('gdp_title')}")
-    gdp_series = df.get('RealGDP')
-    if gdp_series is not None and len(gdp_series.dropna()) >= 2:
-        gdp_data = gdp_series.dropna()
-        gdp_curr = gdp_data.iloc[-1]
-        qoq_pct = (gdp_curr / gdp_data.iloc[-2] - 1)
-        annualized = ((1 + qoq_pct) ** 4 - 1) * 100
-        st.metric(t('qoq_annualized'), f"{annualized:+.1f}%", delta=f"{t('level')}: ${gdp_curr:,.0f}B", delta_color="off")
-    show_metric_with_sparkline(t('gdp_label'), gdp_series, 'RealGDP', "$B", "RealGDP", notes=t('gdp_notes'))
-    if gdp_series is not None and not gdp_series.isna().all():
-        styled_line_chart(gdp_series, height=150)
-    
-    st.markdown("---")
-    st.markdown(f"#### {t('yield_curve_title')}")
-    show_metric_with_sparkline(t('yield_curve_label'), df.get('T10Y2Y'), 'T10Y2Y', "%", "T10Y2Y", notes=t('yield_curve_notes'))
-    if 'T10Y2Y' in df.columns:
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=df.index, y=df['T10Y2Y'], name='2Y-10Y Spread', line=dict(color='cyan')))
-        fig.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('inversion_boundary'))
-        st.plotly_chart(fig, use_container_width=True, key=f"yield_curve_{uuid.uuid4().hex[:8]}")
+    with col2:
+        st.markdown(f"#### {t('gdp_title')}")
+        gdp_series = df.get('RealGDP')
+        if gdp_series is not None and len(gdp_series.dropna()) >= 2:
+            gdp_data = gdp_series.dropna()
+            gdp_curr = gdp_data.iloc[-1]
+            qoq_pct = (gdp_curr / gdp_data.iloc[-2] - 1)
+            annualized = ((1 + qoq_pct) ** 4 - 1) * 100
+            st.metric(t('qoq_annualized'), f"{annualized:+.1f}%", delta=f"{t('level')}: ${gdp_curr:,.0f}B", delta_color="off")
+        show_metric_with_sparkline(t('gdp_label'), gdp_series, 'RealGDP', "$B", "RealGDP", notes=t('gdp_notes'))
+        if gdp_series is not None and not gdp_series.isna().all():
+            styled_line_chart(gdp_series, height=150)
+        
+        st.markdown("---")
+        st.markdown(f"#### {t('yield_curve_title')}")
+        show_metric_with_sparkline(t('yield_curve_label'), df.get('T10Y2Y'), 'T10Y2Y', "%", "T10Y2Y", notes=t('yield_curve_notes'))
+        if 'T10Y2Y' in df.columns:
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=df.index, y=df['T10Y2Y'], name='2Y-10Y Spread', line=dict(color='cyan')))
+            fig.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('inversion_boundary'))
+            st.plotly_chart(fig, use_container_width=True, key=f"yield_curve_{uuid.uuid4().hex[:8]}")
 
 # === Michigan Inflation Expectations ===
 st.markdown("---")
