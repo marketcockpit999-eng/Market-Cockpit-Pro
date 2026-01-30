@@ -172,19 +172,19 @@ with col2:
 
 # === 2. Inflation ===
 st.markdown("---")
-st.markdown(f"### {t('us_economic_section_inflation')}")
-col1, col2 = st.columns(2)
+with st.expander(t('us_economic_section_inflation'), expanded=True):
+    col1, col2 = st.columns(2)
 
-with col1:
-    display_macro_card(t('cpi_title'), df.get('CPI'), 'CPI', df_original=df_original, notes=t('cpi_notes_full'))
-    st.markdown("---")
-    
-    display_macro_card(t('core_pce_title'), df.get('CorePCE'), 'CorePCE', df_original=df_original, notes=t('core_pce_notes'))
+    with col1:
+        display_macro_card(t('cpi_title'), df.get('CPI'), 'CPI', df_original=df_original, notes=t('cpi_notes_full'))
+        st.markdown("---")
         
-with col2:
-    display_macro_card(t('core_cpi_title'), df.get('CPICore'), 'CPICore', df_original=df_original, notes=t('core_cpi_notes'))
-    st.markdown("---")
-    display_macro_card(t('ppi_title'), df.get('PPI'), 'PPI', df_original=df_original, notes=t('ppi_notes_full'))
+        display_macro_card(t('core_pce_title'), df.get('CorePCE'), 'CorePCE', df_original=df_original, notes=t('core_pce_notes'))
+            
+    with col2:
+        display_macro_card(t('core_cpi_title'), df.get('CPICore'), 'CPICore', df_original=df_original, notes=t('core_cpi_notes'))
+        st.markdown("---")
+        display_macro_card(t('ppi_title'), df.get('PPI'), 'PPI', df_original=df_original, notes=t('ppi_notes_full'))
 
 # === 3. Economy ===
 st.markdown("---")
@@ -220,21 +220,21 @@ with col2:
 
 # === Michigan Inflation Expectations ===
 st.markdown("---")
-st.markdown(f"#### {t('michigan_inflation_title')}")
-st.caption(t('michigan_inflation_desc'))
-mich_series = df.get('Michigan_Inflation_Exp')
-col1, col2 = st.columns([1, 2])
+with st.expander(t('michigan_inflation_title'), expanded=True):
+    st.caption(t('michigan_inflation_desc'))
+    mich_series = df.get('Michigan_Inflation_Exp')
+    col1, col2 = st.columns([1, 2])
 
-with col1:
-    show_metric_with_sparkline(t('michigan_inflation_label'), mich_series, 'Michigan_Inflation_Exp', "%", "Michigan_Inflation_Exp", notes=t('michigan_inflation_notes'))
+    with col1:
+        show_metric_with_sparkline(t('michigan_inflation_label'), mich_series, 'Michigan_Inflation_Exp', "%", "Michigan_Inflation_Exp", notes=t('michigan_inflation_notes'))
 
-with col2:
-    if mich_series is not None and not mich_series.isna().all():
-        fig_mich = go.Figure()
-        fig_mich.add_trace(go.Scatter(x=mich_series.index, y=mich_series.values, name='1Y Inflation Exp', line=dict(color='#ff6b6b')))
-        fig_mich.add_hline(y=2.0, line_dash='dash', line_color='green', annotation_text=t('fed_target'))
-        fig_mich.update_layout(height=200, margin=dict(l=0, r=0, t=20, b=0))
-        st.plotly_chart(fig_mich, use_container_width=True, key=f"mich_inf_{uuid.uuid4().hex[:8]}")
+    with col2:
+        if mich_series is not None and not mich_series.isna().all():
+            fig_mich = go.Figure()
+            fig_mich.add_trace(go.Scatter(x=mich_series.index, y=mich_series.values, name='1Y Inflation Exp', line=dict(color='#ff6b6b')))
+            fig_mich.add_hline(y=2.0, line_dash='dash', line_color='green', annotation_text=t('fed_target'))
+            fig_mich.update_layout(height=200, margin=dict(l=0, r=0, t=20, b=0))
+            st.plotly_chart(fig_mich, use_container_width=True, key=f"mich_inf_{uuid.uuid4().hex[:8]}")
 
 # === 4. Manufacturing ===
 st.markdown("---")
@@ -420,17 +420,17 @@ with st.expander(t('services_guide').split('\n')[0], expanded=False):
 
 # === 6. Leading Indicators ===
 st.markdown("---")
-st.markdown(f"### 📈 {t('us_economic_section_leading')}")
-st.caption(t('leading_indicators_desc'))
+with st.expander(f"📈 {t('us_economic_section_leading')}", expanded=True):
+    st.caption(t('leading_indicators_desc'))
 
-st.markdown(f"#### {t('leading_index_title')}")
-lei_series = df.get('Leading_Index')
-show_metric_with_sparkline(t('leading_index_label'), lei_series, 'Leading_Index', "idx", "Leading_Index", notes=t('leading_index_notes'))
-if lei_series is not None and not lei_series.isna().all():
-    fig_lei = go.Figure()
-    fig_lei.add_trace(go.Scatter(x=lei_series.index, y=lei_series.values, name='CFNAI (3-mo MA)', line=dict(color='#00ff88')))
-    fig_lei.add_hline(y=0, line_dash='dash', line_color='orange', annotation_text=t('zero_line'))
-    st.plotly_chart(fig_lei, use_container_width=True, key=f"leading_index_{uuid.uuid4().hex[:8]}")
+    st.markdown(f"#### {t('leading_index_title')}")
+    lei_series = df.get('Leading_Index')
+    show_metric_with_sparkline(t('leading_index_label'), lei_series, 'Leading_Index', "idx", "Leading_Index", notes=t('leading_index_notes'))
+    if lei_series is not None and not lei_series.isna().all():
+        fig_lei = go.Figure()
+        fig_lei.add_trace(go.Scatter(x=lei_series.index, y=lei_series.values, name='CFNAI (3-mo MA)', line=dict(color='#00ff88')))
+        fig_lei.add_hline(y=0, line_dash='dash', line_color='orange', annotation_text=t('zero_line'))
+        st.plotly_chart(fig_lei, use_container_width=True, key=f"leading_index_{uuid.uuid4().hex[:8]}")
 
 # === 5. Housing ===
 st.markdown("---")
