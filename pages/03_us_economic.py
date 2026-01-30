@@ -329,94 +329,94 @@ with st.expander(t('us_economic_section_manufacturing'), expanded=True):
 
 # === 5. Services (Nonmanufacturing) ===
 st.markdown("---")
-st.markdown(f"### {t('us_economic_section_services')}")
-st.caption(t('services_indicators_desc'))
+with st.expander(t('us_economic_section_services'), expanded=True):
+    st.caption(t('services_indicators_desc'))
 
-# Services indicators in 2x2 grid
-svc_col1, svc_col2 = st.columns(2)
+    # Services indicators in 2x2 grid
+    svc_col1, svc_col2 = st.columns(2)
 
-with svc_col1:
-    st.markdown(f"#### {t('philly_fed_services_title')}")
-    philly_svc_series = df.get('Philly_Fed_Services')
-    show_metric_with_sparkline(t('philly_fed_services_label'), philly_svc_series, 'Philly_Fed_Services', "idx", "Philly_Fed_Services", notes=t('philly_fed_services_notes'))
-    if philly_svc_series is not None and not philly_svc_series.isna().all():
-        fig_philly_svc = go.Figure()
-        fig_philly_svc.add_trace(go.Scatter(x=philly_svc_series.index, y=philly_svc_series.values, name='Philly Fed Services', line=dict(color='#2196F3')))
-        fig_philly_svc.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('services_boundary'))
-        fig_philly_svc.update_layout(height=150, margin=dict(l=0, r=0, t=20, b=0))
-        st.plotly_chart(fig_philly_svc, use_container_width=True, key=f"philly_svc_{uuid.uuid4().hex[:8]}")
-    
-    st.markdown("---")
-    st.markdown(f"#### {t('ny_fed_services_title')}")
-    ny_svc_series = df.get('NY_Fed_Services')
-    show_metric_with_sparkline(t('ny_fed_services_label'), ny_svc_series, 'NY_Fed_Services', "idx", "NY_Fed_Services", notes=t('ny_fed_services_notes'))
-    if ny_svc_series is not None and not ny_svc_series.isna().all():
-        fig_ny_svc = go.Figure()
-        fig_ny_svc.add_trace(go.Scatter(x=ny_svc_series.index, y=ny_svc_series.values, name='NY Fed Services', line=dict(color='#4CAF50')))
-        fig_ny_svc.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('services_boundary'))
-        fig_ny_svc.update_layout(height=150, margin=dict(l=0, r=0, t=20, b=0))
-        st.plotly_chart(fig_ny_svc, use_container_width=True, key=f"ny_svc_{uuid.uuid4().hex[:8]}")
+    with svc_col1:
+        st.markdown(f"#### {t('philly_fed_services_title')}")
+        philly_svc_series = df.get('Philly_Fed_Services')
+        show_metric_with_sparkline(t('philly_fed_services_label'), philly_svc_series, 'Philly_Fed_Services', "idx", "Philly_Fed_Services", notes=t('philly_fed_services_notes'))
+        if philly_svc_series is not None and not philly_svc_series.isna().all():
+            fig_philly_svc = go.Figure()
+            fig_philly_svc.add_trace(go.Scatter(x=philly_svc_series.index, y=philly_svc_series.values, name='Philly Fed Services', line=dict(color='#2196F3')))
+            fig_philly_svc.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('services_boundary'))
+            fig_philly_svc.update_layout(height=150, margin=dict(l=0, r=0, t=20, b=0))
+            st.plotly_chart(fig_philly_svc, use_container_width=True, key=f"philly_svc_{uuid.uuid4().hex[:8]}")
+        
+        st.markdown("---")
+        st.markdown(f"#### {t('ny_fed_services_title')}")
+        ny_svc_series = df.get('NY_Fed_Services')
+        show_metric_with_sparkline(t('ny_fed_services_label'), ny_svc_series, 'NY_Fed_Services', "idx", "NY_Fed_Services", notes=t('ny_fed_services_notes'))
+        if ny_svc_series is not None and not ny_svc_series.isna().all():
+            fig_ny_svc = go.Figure()
+            fig_ny_svc.add_trace(go.Scatter(x=ny_svc_series.index, y=ny_svc_series.values, name='NY Fed Services', line=dict(color='#4CAF50')))
+            fig_ny_svc.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('services_boundary'))
+            fig_ny_svc.update_layout(height=150, margin=dict(l=0, r=0, t=20, b=0))
+            st.plotly_chart(fig_ny_svc, use_container_width=True, key=f"ny_svc_{uuid.uuid4().hex[:8]}")
 
-with svc_col2:
-    st.markdown(f"#### {t('dallas_fed_services_title')}")
-    dallas_svc_series = df.get('Dallas_Fed_Services')
-    show_metric_with_sparkline(t('dallas_fed_services_label'), dallas_svc_series, 'Dallas_Fed_Services', "idx", "Dallas_Fed_Services", notes=t('dallas_fed_services_notes'))
-    if dallas_svc_series is not None and not dallas_svc_series.isna().all():
-        fig_dallas_svc = go.Figure()
-        fig_dallas_svc.add_trace(go.Scatter(x=dallas_svc_series.index, y=dallas_svc_series.values, name='Dallas Fed Services', line=dict(color='#FF9800')))
-        fig_dallas_svc.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('services_boundary'))
-        fig_dallas_svc.update_layout(height=150, margin=dict(l=0, r=0, t=20, b=0))
-        st.plotly_chart(fig_dallas_svc, use_container_width=True, key=f"dallas_svc_{uuid.uuid4().hex[:8]}")
-    
-    st.markdown("---")
-    st.markdown(f"#### {t('richmond_fed_services_title')}")
-    
-    # Richmond Fed Services: Fetch from web (not in main DataFrame)
-    richmond_svc_data = get_richmond_fed_services_survey()
-    
-    if richmond_svc_data is not None:
-        # Display current value
-        current_val = richmond_svc_data.get('current')
-        change_val = richmond_svc_data.get('change')
-        data_date = richmond_svc_data.get('date')
-        release_date = richmond_svc_data.get('release_date')
+    with svc_col2:
+        st.markdown(f"#### {t('dallas_fed_services_title')}")
+        dallas_svc_series = df.get('Dallas_Fed_Services')
+        show_metric_with_sparkline(t('dallas_fed_services_label'), dallas_svc_series, 'Dallas_Fed_Services', "idx", "Dallas_Fed_Services", notes=t('dallas_fed_services_notes'))
+        if dallas_svc_series is not None and not dallas_svc_series.isna().all():
+            fig_dallas_svc = go.Figure()
+            fig_dallas_svc.add_trace(go.Scatter(x=dallas_svc_series.index, y=dallas_svc_series.values, name='Dallas Fed Services', line=dict(color='#FF9800')))
+            fig_dallas_svc.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('services_boundary'))
+            fig_dallas_svc.update_layout(height=150, margin=dict(l=0, r=0, t=20, b=0))
+            st.plotly_chart(fig_dallas_svc, use_container_width=True, key=f"dallas_svc_{uuid.uuid4().hex[:8]}")
         
-        if current_val is not None:
-            delta_str = f"{change_val:+.1f} pts" if change_val is not None else None
-            # Import help texts
-            from utils.help_texts import HELP_EN, HELP_JA
-            from utils.i18n import get_current_language
-            help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
-            help_text = help_dict.get('help_Richmond_Fed_Services', '')
-            st.metric(t('richmond_fed_services_label'), f"{current_val:.1f}", delta=delta_str, help=help_text)
+        st.markdown("---")
+        st.markdown(f"#### {t('richmond_fed_services_title')}")
         
-        # Show both data_period and source_update like other indicators
-        if data_date:
-            st.caption(f"📅 {t('data_period')}: {data_date} ({t('freq_monthly')})")
-        if release_date:
-            st.caption(f"🔄 {t('source_update')}: {release_date}")
+        # Richmond Fed Services: Fetch from web (not in main DataFrame)
+        richmond_svc_data = get_richmond_fed_services_survey()
         
-        st.caption(t('richmond_fed_services_notes'))
-        
-        # Plot history if available
-        history_df = richmond_svc_data.get('history')
-        if history_df is not None and not history_df.empty:
-            fig_richmond_svc = go.Figure()
-            fig_richmond_svc.add_trace(go.Scatter(
-                x=history_df.index, 
-                y=history_df['Composite Index'].values, 
-                name='Richmond Fed Services', 
-                line=dict(color='#9C27B0')
-            ))
-            fig_richmond_svc.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('services_boundary'))
-            fig_richmond_svc.update_layout(height=150, margin=dict(l=0, r=0, t=20, b=0))
-            st.plotly_chart(fig_richmond_svc, use_container_width=True, key=f"richmond_svc_{uuid.uuid4().hex[:8]}")
-    else:
-        st.info(t('data_fetch_failed'))
+        if richmond_svc_data is not None:
+            # Display current value
+            current_val = richmond_svc_data.get('current')
+            change_val = richmond_svc_data.get('change')
+            data_date = richmond_svc_data.get('date')
+            release_date = richmond_svc_data.get('release_date')
+            
+            if current_val is not None:
+                delta_str = f"{change_val:+.1f} pts" if change_val is not None else None
+                # Import help texts
+                from utils.help_texts import HELP_EN, HELP_JA
+                from utils.i18n import get_current_language
+                help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
+                help_text = help_dict.get('help_Richmond_Fed_Services', '')
+                st.metric(t('richmond_fed_services_label'), f"{current_val:.1f}", delta=delta_str, help=help_text)
+            
+            # Show both data_period and source_update like other indicators
+            if data_date:
+                st.caption(f"📅 {t('data_period')}: {data_date} ({t('freq_monthly')})")
+            if release_date:
+                st.caption(f"🔄 {t('source_update')}: {release_date}")
+            
+            st.caption(t('richmond_fed_services_notes'))
+            
+            # Plot history if available
+            history_df = richmond_svc_data.get('history')
+            if history_df is not None and not history_df.empty:
+                fig_richmond_svc = go.Figure()
+                fig_richmond_svc.add_trace(go.Scatter(
+                    x=history_df.index, 
+                    y=history_df['Composite Index'].values, 
+                    name='Richmond Fed Services', 
+                    line=dict(color='#9C27B0')
+                ))
+                fig_richmond_svc.add_hline(y=0, line_dash='dash', line_color='red', annotation_text=t('services_boundary'))
+                fig_richmond_svc.update_layout(height=150, margin=dict(l=0, r=0, t=20, b=0))
+                st.plotly_chart(fig_richmond_svc, use_container_width=True, key=f"richmond_svc_{uuid.uuid4().hex[:8]}")
+        else:
+            st.info(t('data_fetch_failed'))
 
-# Services guide
-with st.expander(t('services_guide').split('\n')[0], expanded=False):
-    st.markdown(t('services_guide'))
+    # Services guide
+    with st.expander(t('services_guide').split('\n')[0], expanded=False):
+        st.markdown(t('services_guide'))
 
 # === 6. Leading Indicators ===
 st.markdown("---")
