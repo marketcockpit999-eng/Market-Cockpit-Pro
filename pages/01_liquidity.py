@@ -374,76 +374,76 @@ with col2:
         styled_line_chart(df[valid_rates], height=200)
 
 # === FF Target Rate (Upper/Lower) ===
-st.markdown("")
-col_ff1, col_ff2 = st.columns(2)
+st.markdown("---")
+with st.expander(t('ff_target_rate'), expanded=True):
+    col_ff1, col_ff2 = st.columns(2)
 
-with col_ff1:
-    st.markdown(f"#### {t('ff_upper')}")
-    show_metric_with_sparkline(t('ff_upper'), df.get('FedFundsUpper'), 'FedFundsUpper', "%", "FF_Upper", notes=t('ff_upper_notes'), decimal_places=2)
-    if 'FedFundsUpper' in df.columns and not df.get('FedFundsUpper', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['FedFundsUpper']], height=200)
+    with col_ff1:
+        st.markdown(f"#### {t('ff_upper')}")
+        show_metric_with_sparkline(t('ff_upper'), df.get('FedFundsUpper'), 'FedFundsUpper', "%", "FF_Upper", notes=t('ff_upper_notes'), decimal_places=2)
+        if 'FedFundsUpper' in df.columns and not df.get('FedFundsUpper', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['FedFundsUpper']], height=200)
 
-with col_ff2:
-    st.markdown(f"#### {t('ff_lower')}")
-    show_metric_with_sparkline(t('ff_lower'), df.get('FedFundsLower'), 'FedFundsLower', "%", "FF_Lower", notes=t('ff_lower_notes'), decimal_places=2)
-    if 'FedFundsLower' in df.columns and not df.get('FedFundsLower', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['FedFundsLower']], height=200)
+    with col_ff2:
+        st.markdown(f"#### {t('ff_lower')}")
+        show_metric_with_sparkline(t('ff_lower'), df.get('FedFundsLower'), 'FedFundsLower', "%", "FF_Lower", notes=t('ff_lower_notes'), decimal_places=2)
+        if 'FedFundsLower' in df.columns and not df.get('FedFundsLower', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['FedFundsLower']], height=200)
 
 st.markdown("---")
-st.subheader(t('fed_balance_sheet'))
+with st.expander(t('fed_balance_sheet'), expanded=True):
+    # RMP Status (i18n support)
+    # Get status type and weekly change from data
+    rmp_status_type_series = df.get('RMP_Status_Type')
+    rmp_status_type = rmp_status_type_series.iloc[-1] if hasattr(rmp_status_type_series, 'iloc') and len(rmp_status_type_series) > 0 else 'monitoring'
+    rmp_weekly_change_series = df.get('RMP_Weekly_Change')
+    rmp_weekly_change = rmp_weekly_change_series.iloc[-1] if hasattr(rmp_weekly_change_series, 'iloc') and len(rmp_weekly_change_series) > 0 else None
+    rmp_active_series = df.get('RMP_Alert_Active', pd.Series([False]))
+    rmp_active = rmp_active_series.iloc[-1] if hasattr(rmp_active_series, 'iloc') and len(rmp_active_series) > 0 else False
 
-# RMP Status (i18n support)
-# Get status type and weekly change from data
-rmp_status_type_series = df.get('RMP_Status_Type')
-rmp_status_type = rmp_status_type_series.iloc[-1] if hasattr(rmp_status_type_series, 'iloc') and len(rmp_status_type_series) > 0 else 'monitoring'
-rmp_weekly_change_series = df.get('RMP_Weekly_Change')
-rmp_weekly_change = rmp_weekly_change_series.iloc[-1] if hasattr(rmp_weekly_change_series, 'iloc') and len(rmp_weekly_change_series) > 0 else None
-rmp_active_series = df.get('RMP_Alert_Active', pd.Series([False]))
-rmp_active = rmp_active_series.iloc[-1] if hasattr(rmp_active_series, 'iloc') and len(rmp_active_series) > 0 else False
+    # Build translated RMP status text
+    if rmp_status_type == 'monitoring' or rmp_weekly_change is None:
+        rmp_status = t('rmp_monitoring')
+    elif rmp_status_type == 'active':
+        rmp_status = t('rmp_active').replace('${value}', f'{rmp_weekly_change:.1f}')
+    elif rmp_status_type == 'accelerating':
+        rmp_status = t('rmp_accelerating').replace('${value}', f'{rmp_weekly_change:.1f}')
+    elif rmp_status_type == 'slowing':
+        rmp_status = t('rmp_slowing').replace('${value}', f'{rmp_weekly_change:.1f}')
+    elif rmp_status_type == 'selling':
+        rmp_status = t('rmp_selling').replace('${value}', f'{rmp_weekly_change:.1f}')
+    else:
+        rmp_status = t('rmp_monitoring')
 
-# Build translated RMP status text
-if rmp_status_type == 'monitoring' or rmp_weekly_change is None:
-    rmp_status = t('rmp_monitoring')
-elif rmp_status_type == 'active':
-    rmp_status = t('rmp_active').replace('${value}', f'{rmp_weekly_change:.1f}')
-elif rmp_status_type == 'accelerating':
-    rmp_status = t('rmp_accelerating').replace('${value}', f'{rmp_weekly_change:.1f}')
-elif rmp_status_type == 'slowing':
-    rmp_status = t('rmp_slowing').replace('${value}', f'{rmp_weekly_change:.1f}')
-elif rmp_status_type == 'selling':
-    rmp_status = t('rmp_selling').replace('${value}', f'{rmp_weekly_change:.1f}')
-else:
-    rmp_status = t('rmp_monitoring')
+    if rmp_active:
+        st.info(f"{t('rmp_status')}: {rmp_status}")
+    else:
+        st.warning(f"ℹ️ {t('rmp_status')}: {rmp_status}")
 
-if rmp_active:
-    st.info(f"{t('rmp_status')}: {rmp_status}")
-else:
-    st.warning(f"ℹ️ {t('rmp_status')}: {rmp_status}")
+    st.markdown(f"##### {t('soma_composition')}")
+    plot_soma_composition(df)
 
-st.markdown(f"##### {t('soma_composition')}")
-plot_soma_composition(df)
+    col1, col2, col3 = st.columns(3)
 
-col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(f"#### {t('soma_total')}")
+        show_metric_with_sparkline(t('soma_total'), df.get('SOMA_Total'), 'SOMA_Total', "B", "SOMA_Total", notes=t('soma_total_notes'))
 
-with col1:
-    st.markdown(f"#### {t('soma_total')}")
-    show_metric_with_sparkline(t('soma_total'), df.get('SOMA_Total'), 'SOMA_Total', "B", "SOMA_Total", notes=t('soma_total_notes'))
+    with col2:
+        st.markdown(f"#### {t('soma_treasury')}")
+        show_metric_with_sparkline(t('soma_treasury'), df.get('SOMA_Treasury'), 'SOMA_Treasury', "B", "SOMA_Treasury", notes=t('soma_treasury_notes'))
+        if 'SOMA_Treasury' in df.columns and not df.get('SOMA_Treasury', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['SOMA_Treasury']], height=200)
 
-with col2:
-    st.markdown(f"#### {t('soma_treasury')}")
-    show_metric_with_sparkline(t('soma_treasury'), df.get('SOMA_Treasury'), 'SOMA_Treasury', "B", "SOMA_Treasury", notes=t('soma_treasury_notes'))
-    if 'SOMA_Treasury' in df.columns and not df.get('SOMA_Treasury', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['SOMA_Treasury']], height=200)
-
-with col3:
-    st.markdown(f"#### {t('soma_bills')}")
-    show_metric_with_sparkline(t('soma_bills'), df.get('SOMA_Bills'), 'SOMA_Bills', "B", "SOMA_Bills", notes=t('soma_bills_notes'))
-    if 'SOMA_Bills' in df.columns and not df.get('SOMA_Bills', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['SOMA_Bills']], height=200)
+    with col3:
+        st.markdown(f"#### {t('soma_bills')}")
+        show_metric_with_sparkline(t('soma_bills'), df.get('SOMA_Bills'), 'SOMA_Bills', "B", "SOMA_Bills", notes=t('soma_bills_notes'))
+        if 'SOMA_Bills' in df.columns and not df.get('SOMA_Bills', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['SOMA_Bills']], height=200)
 
 st.markdown("---")
 with st.expander(t('emergency_loans'), expanded=True):
