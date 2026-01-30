@@ -331,93 +331,93 @@ with st.expander(t('lab_regime_detection'), expanded=True):
 
 # ========== Cross-Asset Liquidity Monitor ==========
 st.markdown("---")
-st.markdown(f"### {t('lab_cross_spreads')}")
-st.caption(t('lab_spreads_desc'))
+with st.expander(t('lab_cross_spreads'), expanded=True):
+    st.caption(t('lab_spreads_desc'))
 
-import yfinance as yf
+    import yfinance as yf
 
-@st.cache_data(ttl=300)
-def fetch_etf_spreads():
-    """Fetch bid-ask spreads for major ETFs"""
-    etfs = ['SPY', 'TLT', 'LQD', 'HYG', 'GLD', 'SLV', 'USO']
-    asset_names = {
-        'SPY': 'Equity', 'TLT': 'Long Treasury', 'LQD': 'IG Corp Bond',
-        'HYG': 'HY Corp Bond', 'GLD': 'Gold', 'SLV': 'Silver', 'USO': 'Oil'
-    }
-    results = []
-    
-    for symbol in etfs:
-        try:
-            ticker = yf.Ticker(symbol)
-            info = ticker.info
-            bid = info.get('bid', 0) or 0
-            ask = info.get('ask', 0) or 0
-            last = info.get('regularMarketPrice', 0) or info.get('previousClose', 0) or 1
-            
-            if bid > 0 and ask > 0:
-                spread_pct = ((ask - bid) / last) * 10000
+    @st.cache_data(ttl=300)
+    def fetch_etf_spreads():
+        """Fetch bid-ask spreads for major ETFs"""
+        etfs = ['SPY', 'TLT', 'LQD', 'HYG', 'GLD', 'SLV', 'USO']
+        asset_names = {
+            'SPY': 'Equity', 'TLT': 'Long Treasury', 'LQD': 'IG Corp Bond',
+            'HYG': 'HY Corp Bond', 'GLD': 'Gold', 'SLV': 'Silver', 'USO': 'Oil'
+        }
+        results = []
+        
+        for symbol in etfs:
+            try:
+                ticker = yf.Ticker(symbol)
+                info = ticker.info
+                bid = info.get('bid', 0) or 0
+                ask = info.get('ask', 0) or 0
+                last = info.get('regularMarketPrice', 0) or info.get('previousClose', 0) or 1
+                
+                if bid > 0 and ask > 0:
+                    spread_pct = ((ask - bid) / last) * 10000
+                else:
+                    spread_pct = None
+                
+                results.append({
+                    'Symbol': symbol,
+                    'Spread (bps)': spread_pct,
+                    'Asset': asset_names.get(symbol, symbol)
+                })
+            except:
+                results.append({
+                    'Symbol': symbol,
+                    'Spread (bps)': None,
+                    'Asset': asset_names.get(symbol, symbol)
+                })
+        
+        return pd.DataFrame(results)
+
+    spread_df = fetch_etf_spreads()
+
+    if not spread_df.empty:
+        def get_spread_status(spread):
+            if spread is None or pd.isna(spread):
+                return t('lab_status_na')
+            elif spread < 2:
+                return t('lab_status_good')
+            elif spread < 10:
+                return t('lab_status_normal')
             else:
-                spread_pct = None
-            
-            results.append({
-                'Symbol': symbol,
-                'Spread (bps)': spread_pct,
-                'Asset': asset_names.get(symbol, symbol)
-            })
-        except:
-            results.append({
-                'Symbol': symbol,
-                'Spread (bps)': None,
-                'Asset': asset_names.get(symbol, symbol)
-            })
-    
-    return pd.DataFrame(results)
-
-spread_df = fetch_etf_spreads()
-
-if not spread_df.empty:
-    def get_spread_status(spread):
-        if spread is None or pd.isna(spread):
-            return t('lab_status_na')
-        elif spread < 2:
-            return t('lab_status_good')
-        elif spread < 10:
-            return t('lab_status_normal')
-        else:
-            return t('lab_status_warning')
-    
-    spread_df['Status'] = spread_df['Spread (bps)'].apply(get_spread_status)
-    
-    display_df = spread_df[['Symbol', 'Asset', 'Spread (bps)', 'Status']].copy()
-    display_df['Spread (bps)'] = display_df['Spread (bps)'].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "N/A")
-    st.dataframe(display_df, use_container_width=True, hide_index=True)
-    
-    # Show market hours notice if many N/A
-    na_count = spread_df['Spread (bps)'].isna().sum()
-    if na_count >= 3:
-        st.caption("⚠️ Bid-Ask data available during US market hours only (9:30-16:00 ET, Mon-Fri)")
-    
-    valid_spreads = spread_df[spread_df['Spread (bps)'].notna()]
-    if not valid_spreads.empty:
-        colors = ['#00e676' if s < 2 else '#ffeb3b' if s < 10 else '#ff1744' for s in valid_spreads['Spread (bps)']]
-        fig = go.Figure(data=[
-            go.Bar(x=valid_spreads['Symbol'], y=valid_spreads['Spread (bps)'], marker_color=colors)
-        ])
-        fig.update_layout(
-            template='plotly_dark', 
-            height=200, 
-            yaxis_title="Spread (bps)",
-            margin=dict(l=0, r=0, t=10, b=0)
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    
-    # Data period and Source update for Cross-Asset Spreads
-    from datetime import datetime
-    now = datetime.now()
-    st.caption(f"{t('lab_data_period')}: {now.strftime('%Y-%m-%d')} (Intraday)")
-    st.caption(f"{t('lab_source_update')}: {now.strftime('%Y-%m-%d %H:%M')} (Yahoo Finance)")
-else:
-    st.info(t('lab_spreads_no_data'))
+                return t('lab_status_warning')
+        
+        spread_df['Status'] = spread_df['Spread (bps)'].apply(get_spread_status)
+        
+        display_df = spread_df[['Symbol', 'Asset', 'Spread (bps)', 'Status']].copy()
+        display_df['Spread (bps)'] = display_df['Spread (bps)'].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "N/A")
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
+        
+        # Show market hours notice if many N/A
+        na_count = spread_df['Spread (bps)'].isna().sum()
+        if na_count >= 3:
+            st.caption("⚠️ Bid-Ask data available during US market hours only (9:30-16:00 ET, Mon-Fri)")
+        
+        valid_spreads = spread_df[spread_df['Spread (bps)'].notna()]
+        if not valid_spreads.empty:
+            colors = ['#00e676' if s < 2 else '#ffeb3b' if s < 10 else '#ff1744' for s in valid_spreads['Spread (bps)']]
+            fig = go.Figure(data=[
+                go.Bar(x=valid_spreads['Symbol'], y=valid_spreads['Spread (bps)'], marker_color=colors)
+            ])
+            fig.update_layout(
+                template='plotly_dark', 
+                height=200, 
+                yaxis_title="Spread (bps)",
+                margin=dict(l=0, r=0, t=10, b=0)
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+        # Data period and Source update for Cross-Asset Spreads
+        from datetime import datetime
+        now = datetime.now()
+        st.caption(f"{t('lab_data_period')}: {now.strftime('%Y-%m-%d')} (Intraday)")
+        st.caption(f"{t('lab_source_update')}: {now.strftime('%Y-%m-%d %H:%M')} (Yahoo Finance)")
+    else:
+        st.info(t('lab_spreads_no_data'))
 
 # ========== Multi-Region Spread Monitor ==========
 st.markdown("---")
