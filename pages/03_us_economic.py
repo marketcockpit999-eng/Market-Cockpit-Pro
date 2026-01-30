@@ -62,113 +62,113 @@ if df is None:
 st.subheader(t('us_economic_page_title'))
 
 # === 1. Employment ===
-st.markdown(f"### {t('us_economic_section_employment')}")
-col1, col2 = st.columns(2)
+with st.expander(t('us_economic_section_employment'), expanded=True):
+    col1, col2 = st.columns(2)
 
-with col1:
-    st.markdown(f"#### {t('nfp_title')}")
-    nfp_original = df_original.get('NFP') if df_original is not None else None
-    
-    if nfp_original is not None and len(nfp_original.dropna()) >= 2:
-        nfp_data = nfp_original.dropna()
-        nfp_change = nfp_data.iloc[-1] - nfp_data.iloc[-2]
-        from utils.help_texts import HELP_EN, HELP_JA
-        from utils.i18n import get_current_language
-        help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
-        st.metric(t('result'), f"{nfp_change:+,.0f}K", help=help_dict.get('help_NFP', ''))
-        show_date_info(df, 'NFP')
+    with col1:
+        st.markdown(f"#### {t('nfp_title')}")
+        nfp_original = df_original.get('NFP') if df_original is not None else None
         
-        nfp_changes = nfp_data.diff().dropna()
-        if len(nfp_changes) > 0:
-            st.markdown(f"###### {t('nfp_monthly_change')}")
-            styled_line_chart(nfp_changes, height=150)
-    
-    st.markdown("---")
-    st.markdown(f"#### {t('adp_title')}")
-    adp_original = df_original.get('ADP') if df_original is not None else None
-    
-    if adp_original is not None and len(adp_original.dropna()) >= 2:
-        adp_data = adp_original.dropna()
-        adp_change = adp_data.iloc[-1] - adp_data.iloc[-2]
-        from utils.help_texts import HELP_EN, HELP_JA
-        from utils.i18n import get_current_language
-        help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
-        st.metric(t('adp_label'), f"{adp_change:+,.0f}K", help=help_dict.get('help_ADP', ''))
-        show_date_info(df, 'ADP')
+        if nfp_original is not None and len(nfp_original.dropna()) >= 2:
+            nfp_data = nfp_original.dropna()
+            nfp_change = nfp_data.iloc[-1] - nfp_data.iloc[-2]
+            from utils.help_texts import HELP_EN, HELP_JA
+            from utils.i18n import get_current_language
+            help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
+            st.metric(t('result'), f"{nfp_change:+,.0f}K", help=help_dict.get('help_NFP', ''))
+            show_date_info(df, 'NFP')
+            
+            nfp_changes = nfp_data.diff().dropna()
+            if len(nfp_changes) > 0:
+                st.markdown(f"###### {t('nfp_monthly_change')}")
+                styled_line_chart(nfp_changes, height=150)
         
-        adp_changes = adp_data.diff().dropna()
-        if len(adp_changes) > 0:
-            st.markdown(f"###### {t('adp_monthly_change')}")
-            styled_line_chart(adp_changes, height=120)
-    
-    st.markdown("---")
-    st.markdown(f"#### {t('unemployment_rate')}")
-    unemp_original = df_original.get('UNRATE') if df_original is not None else None
-    unemp_series = df.get('UNRATE')
-    
-    if unemp_original is not None and len(unemp_original.dropna()) >= 2:
-        unemp_data = unemp_original.dropna()
-        unemp_curr = unemp_data.iloc[-1]
-        unemp_change = unemp_curr - unemp_data.iloc[-2]
-        from utils.help_texts import HELP_EN, HELP_JA
-        from utils.i18n import get_current_language
-        help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
-        st.metric(t('unemployment_rate'), f"{unemp_curr:.1f}%", delta=f"{unemp_change:+.1f}pp {t('vs_last_month')}", help=help_dict.get('help_UNRATE', ''))
-        show_date_info(df, 'UNRATE')
-    
-    if unemp_series is not None and not unemp_series.isna().all():
-        styled_line_chart(unemp_series, height=150)
+        st.markdown("---")
+        st.markdown(f"#### {t('adp_title')}")
+        adp_original = df_original.get('ADP') if df_original is not None else None
+        
+        if adp_original is not None and len(adp_original.dropna()) >= 2:
+            adp_data = adp_original.dropna()
+            adp_change = adp_data.iloc[-1] - adp_data.iloc[-2]
+            from utils.help_texts import HELP_EN, HELP_JA
+            from utils.i18n import get_current_language
+            help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
+            st.metric(t('adp_label'), f"{adp_change:+,.0f}K", help=help_dict.get('help_ADP', ''))
+            show_date_info(df, 'ADP')
+            
+            adp_changes = adp_data.diff().dropna()
+            if len(adp_changes) > 0:
+                st.markdown(f"###### {t('adp_monthly_change')}")
+                styled_line_chart(adp_changes, height=120)
+        
+        st.markdown("---")
+        st.markdown(f"#### {t('unemployment_rate')}")
+        unemp_original = df_original.get('UNRATE') if df_original is not None else None
+        unemp_series = df.get('UNRATE')
+        
+        if unemp_original is not None and len(unemp_original.dropna()) >= 2:
+            unemp_data = unemp_original.dropna()
+            unemp_curr = unemp_data.iloc[-1]
+            unemp_change = unemp_curr - unemp_data.iloc[-2]
+            from utils.help_texts import HELP_EN, HELP_JA
+            from utils.i18n import get_current_language
+            help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
+            st.metric(t('unemployment_rate'), f"{unemp_curr:.1f}%", delta=f"{unemp_change:+.1f}pp {t('vs_last_month')}", help=help_dict.get('help_UNRATE', ''))
+            show_date_info(df, 'UNRATE')
+        
+        if unemp_series is not None and not unemp_series.isna().all():
+            styled_line_chart(unemp_series, height=150)
 
-with col2:
-    st.markdown(f"#### {t('avg_hourly_earnings')}")
-    ahe_original = df_original.get('AvgHourlyEarnings') if df_original is not None else None
-    
-    if ahe_original is not None and len(ahe_original.dropna()) >= 2:
-        ahe_data = ahe_original.dropna()
-        ahe_curr = ahe_data.iloc[-1]
-        mom = (ahe_curr / ahe_data.iloc[-2] - 1) * 100
+    with col2:
+        st.markdown(f"#### {t('avg_hourly_earnings')}")
+        ahe_original = df_original.get('AvgHourlyEarnings') if df_original is not None else None
         
-        yoy = None
-        if len(ahe_data) > 12:
-            yoy = (ahe_curr / ahe_data.iloc[-13] - 1) * 100
+        if ahe_original is not None and len(ahe_original.dropna()) >= 2:
+            ahe_data = ahe_original.dropna()
+            ahe_curr = ahe_data.iloc[-1]
+            mom = (ahe_curr / ahe_data.iloc[-2] - 1) * 100
+            
+            yoy = None
+            if len(ahe_data) > 12:
+                yoy = (ahe_curr / ahe_data.iloc[-13] - 1) * 100
+            
+            m_col1, m_col2 = st.columns(2)
+            m_col1.metric(t('mom'), f"{mom:+.1f}%")
+            if yoy is not None:
+                m_col2.metric(t('yoy'), f"{yoy:+.1f}%")
+            
+            styled_line_chart(ahe_data, height=120)
+            show_date_info(df, 'AvgHourlyEarnings')
         
-        m_col1, m_col2 = st.columns(2)
-        m_col1.metric(t('mom'), f"{mom:+.1f}%")
-        if yoy is not None:
-            m_col2.metric(t('yoy'), f"{yoy:+.1f}%")
+        st.markdown("---")
+        st.markdown(f"#### {t('jolts_title')}")
+        jolts_series = df.get('JOLTS')
+        show_metric_with_sparkline(t('jolts_label'), jolts_series, 'JOLTS', "K", "JOLTS", notes=t('jolts_notes'))
+        if jolts_series is not None and not jolts_series.isna().all():
+            styled_line_chart(jolts_series, height=150)
         
-        styled_line_chart(ahe_data, height=120)
-        show_date_info(df, 'AvgHourlyEarnings')
-    
-    st.markdown("---")
-    st.markdown(f"#### {t('jolts_title')}")
-    jolts_series = df.get('JOLTS')
-    show_metric_with_sparkline(t('jolts_label'), jolts_series, 'JOLTS', "K", "JOLTS", notes=t('jolts_notes'))
-    if jolts_series is not None and not jolts_series.isna().all():
-        styled_line_chart(jolts_series, height=150)
-    
-    st.markdown("---")
-    st.markdown(f"#### {t('icsa_title')}")
-    icsa_series = df.get('ICSA')
-    if icsa_series is not None and len(icsa_series.dropna()) >= 2:
-        icsa_data = icsa_series.dropna() / 1000
-        icsa_curr = icsa_data.iloc[-1]
-        icsa_change = icsa_curr - icsa_data.iloc[-2]
-        from utils.help_texts import HELP_EN, HELP_JA
-        from utils.i18n import get_current_language
-        help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
-        st.metric(t('latest_week'), f"{icsa_curr:,.0f}K", delta=f"{icsa_change:+,.0f}K {t('vs_last_week')}", delta_color="inverse", help=help_dict.get('help_ICSA', ''))
-        show_date_info(df, 'ICSA')
-        st.caption(t('icsa_notes'))
-        # 60-day sparkline
-        icsa_60d = icsa_data.tail(60)
-        if len(icsa_60d) > 0:
-            st.caption(f"📊 {t('sparkline_label')}")
-            styled_line_chart(icsa_60d, height=80)
-        # Long-term trend
-        styled_line_chart(icsa_data, height=150)
-    else:
-        st.info(t('no_data'))
+        st.markdown("---")
+        st.markdown(f"#### {t('icsa_title')}")
+        icsa_series = df.get('ICSA')
+        if icsa_series is not None and len(icsa_series.dropna()) >= 2:
+            icsa_data = icsa_series.dropna() / 1000
+            icsa_curr = icsa_data.iloc[-1]
+            icsa_change = icsa_curr - icsa_data.iloc[-2]
+            from utils.help_texts import HELP_EN, HELP_JA
+            from utils.i18n import get_current_language
+            help_dict = HELP_JA if get_current_language() == 'ja' else HELP_EN
+            st.metric(t('latest_week'), f"{icsa_curr:,.0f}K", delta=f"{icsa_change:+,.0f}K {t('vs_last_week')}", delta_color="inverse", help=help_dict.get('help_ICSA', ''))
+            show_date_info(df, 'ICSA')
+            st.caption(t('icsa_notes'))
+            # 60-day sparkline
+            icsa_60d = icsa_data.tail(60)
+            if len(icsa_60d) > 0:
+                st.caption(f"📊 {t('sparkline_label')}")
+                styled_line_chart(icsa_60d, height=80)
+            # Long-term trend
+            styled_line_chart(icsa_data, height=150)
+        else:
+            st.info(t('no_data'))
 
 # === 2. Inflation ===
 st.markdown("---")
