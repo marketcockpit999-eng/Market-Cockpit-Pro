@@ -92,110 +92,109 @@ with st.expander(t('bank_h8_consumer'), expanded=True):
 
 # === Financial Stress Indicators ===
 st.markdown("---")
-st.markdown(f"### {t('bank_stress_section')}")
+with st.expander(t('bank_stress_section'), expanded=True):
+    col1, col2, col3, col4 = st.columns(4)
 
-col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.markdown(f"#### {t('bank_move')}")
+        st.caption(t('bank_move_desc'))
+        show_metric_with_sparkline("MOVE", df.get('MOVE'), 'MOVE', "pt", "MOVE", notes=t('bank_move_notes'))
+        if 'MOVE' in df.columns and not df.get('MOVE', pd.Series()).isna().all():
+            styled_line_chart(df[['MOVE']], height=150)
 
-with col1:
-    st.markdown(f"#### {t('bank_move')}")
-    st.caption(t('bank_move_desc'))
-    show_metric_with_sparkline("MOVE", df.get('MOVE'), 'MOVE', "pt", "MOVE", notes=t('bank_move_notes'))
-    if 'MOVE' in df.columns and not df.get('MOVE', pd.Series()).isna().all():
-        styled_line_chart(df[['MOVE']], height=150)
+    with col2:
+        st.markdown(f"#### {t('bank_small_deposits')}")
+        st.caption(t('bank_small_deposits_desc'))
+        show_metric_with_sparkline("Small Banks", df.get('Small_Bank_Deposits'), 'Small_Bank_Deposits', "B", "Small_Bank_Deposits", notes=t('bank_small_deposits_notes'))
+        if 'Small_Bank_Deposits' in df.columns and not df.get('Small_Bank_Deposits', pd.Series()).isna().all():
+            styled_line_chart(df[['Small_Bank_Deposits']], height=150)
 
-with col2:
-    st.markdown(f"#### {t('bank_small_deposits')}")
-    st.caption(t('bank_small_deposits_desc'))
-    show_metric_with_sparkline("Small Banks", df.get('Small_Bank_Deposits'), 'Small_Bank_Deposits', "B", "Small_Bank_Deposits", notes=t('bank_small_deposits_notes'))
-    if 'Small_Bank_Deposits' in df.columns and not df.get('Small_Bank_Deposits', pd.Series()).isna().all():
-        styled_line_chart(df[['Small_Bank_Deposits']], height=150)
+    with col3:
+        st.markdown(f"#### {t('bank_nfci')}")
+        st.caption(t('bank_nfci_desc'))
+        show_metric_with_sparkline("NFCI", df.get('NFCI'), 'NFCI', "", "NFCI", notes=t('bank_nfci_notes'))
+        if 'NFCI' in df.columns and not df.get('NFCI', pd.Series()).isna().all():
+            styled_line_chart(df[['NFCI']], height=150)
 
-with col3:
-    st.markdown(f"#### {t('bank_nfci')}")
-    st.caption(t('bank_nfci_desc'))
-    show_metric_with_sparkline("NFCI", df.get('NFCI'), 'NFCI', "", "NFCI", notes=t('bank_nfci_notes'))
-    if 'NFCI' in df.columns and not df.get('NFCI', pd.Series()).isna().all():
-        styled_line_chart(df[['NFCI']], height=150)
+    with col4:
+        st.markdown(f"#### {t('bank_cc_delinquency')}")
+        st.caption(t('bank_cc_delinquency_desc'))
+        show_metric_with_sparkline("Delinquency", df.get('CC_Delinquency'), 'CC_Delinquency', "%", "CC_Delinquency", notes=t('bank_cc_delinquency_notes'))
+        if 'CC_Delinquency' in df.columns and not df.get('CC_Delinquency', pd.Series()).isna().all():
+            styled_line_chart(df[['CC_Delinquency']], height=150)
 
-with col4:
-    st.markdown(f"#### {t('bank_cc_delinquency')}")
-    st.caption(t('bank_cc_delinquency_desc'))
-    show_metric_with_sparkline("Delinquency", df.get('CC_Delinquency'), 'CC_Delinquency', "%", "CC_Delinquency", notes=t('bank_cc_delinquency_notes'))
-    if 'CC_Delinquency' in df.columns and not df.get('CC_Delinquency', pd.Series()).isna().all():
-        styled_line_chart(df[['CC_Delinquency']], height=150)
+    # Row 2: More stress indicators
+    col1, col2, col3, col4 = st.columns(4)
 
-# Row 2: More stress indicators
-col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.markdown(f"#### {t('bank_breakeven')}")
+        st.caption(t('bank_breakeven_desc'))
+        show_metric_with_sparkline("Breakeven", df.get('Breakeven_10Y'), 'Breakeven_10Y', "%", "Breakeven_10Y", notes=t('bank_breakeven_notes'))
+        if 'Breakeven_10Y' in df.columns and not df.get('Breakeven_10Y', pd.Series()).isna().all():
+            styled_line_chart(df[['Breakeven_10Y']], height=150)
 
-with col1:
-    st.markdown(f"#### {t('bank_breakeven')}")
-    st.caption(t('bank_breakeven_desc'))
-    show_metric_with_sparkline("Breakeven", df.get('Breakeven_10Y'), 'Breakeven_10Y', "%", "Breakeven_10Y", notes=t('bank_breakeven_notes'))
-    if 'Breakeven_10Y' in df.columns and not df.get('Breakeven_10Y', pd.Series()).isna().all():
-        styled_line_chart(df[['Breakeven_10Y']], height=150)
+    with col2:
+        st.markdown(f"#### {t('bank_cp_spread')}")
+        st.caption(t('bank_cp_spread_desc'))
+        show_metric_with_sparkline("CP-FF", df.get('CP_Spread'), 'CP_Spread', "%", "CP_Spread", notes=t('bank_cp_spread_notes'))
+        if 'CP_Spread' in df.columns and not df.get('CP_Spread', pd.Series()).isna().all():
+            styled_line_chart(df[['CP_Spread']], height=150)
 
-with col2:
-    st.markdown(f"#### {t('bank_cp_spread')}")
-    st.caption(t('bank_cp_spread_desc'))
-    show_metric_with_sparkline("CP-FF", df.get('CP_Spread'), 'CP_Spread', "%", "CP_Spread", notes=t('bank_cp_spread_notes'))
-    if 'CP_Spread' in df.columns and not df.get('CP_Spread', pd.Series()).isna().all():
-        styled_line_chart(df[['CP_Spread']], height=150)
+    with col3:
+        st.markdown(f"#### {t('bank_total_loans')}")
+        st.caption(t('bank_total_loans_desc'))
+        show_metric_with_sparkline("Loans", df.get('Total_Loans'), 'Total_Loans', "B", "Total_Loans", notes=t('bank_total_loans_notes'))
+        if 'Total_Loans' in df.columns and not df.get('Total_Loans', pd.Series()).isna().all():
+            styled_line_chart(df[['Total_Loans']], height=150)
 
-with col3:
-    st.markdown(f"#### {t('bank_total_loans')}")
-    st.caption(t('bank_total_loans_desc'))
-    show_metric_with_sparkline("Loans", df.get('Total_Loans'), 'Total_Loans', "B", "Total_Loans", notes=t('bank_total_loans_notes'))
-    if 'Total_Loans' in df.columns and not df.get('Total_Loans', pd.Series()).isna().all():
-        styled_line_chart(df[['Total_Loans']], height=150)
-
-with col4:
-    st.markdown(f"#### {t('bank_copper_gold')}")
-    st.caption(t('bank_copper_gold_desc'))
-    if 'Copper' in df.columns and 'Gold' in df.columns:
-        copper = df.get('Copper')
-        gold = df.get('Gold')
-        if copper is not None and gold is not None:
-            ratio_series = (copper / gold) * 1000
-            latest_val = ratio_series.dropna().iloc[-1] if not ratio_series.dropna().empty else 0
-            st.metric(t('bank_cu_au_ratio'), f"{latest_val:.2f}", help=t('bank_cu_au_help'))
-            
-            # 日付情報を表示
-            if hasattr(df, 'attrs'):
-                copper_date = df.attrs.get('last_valid_dates', {}).get('Copper')
-                if copper_date:
-                    st.caption(f"📅 {t('data_period')}: {copper_date} ({t('freq_daily')})")
-                    st.caption(f"🔄 {t('source_update')}: {copper_date}")  # yFinanceはlast_valid_datesを使用
-                st.caption(t('bank_cu_au_notes'))  # Rise=Risk-on, Fall=Risk-off
-            
-            # 60日推移（スパークライン）
-            if not ratio_series.dropna().empty:
-                recent_60 = ratio_series.tail(60)
-                st.caption(f"📊 {t('sparkline_label')}")
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(
-                    x=recent_60.index,
-                    y=recent_60.values,
-                    mode='lines',
-                    line=dict(color='#FF9F43', width=2),
-                    fill='tozeroy',
-                    fillcolor='rgba(255, 159, 67, 0.3)',
-                    showlegend=False
-                ))
-                fig.update_layout(
-                    height=100,
-                    margin=dict(l=0, r=0, t=0, b=0),
-                    xaxis=dict(visible=False),
-                    yaxis=dict(visible=False),
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    hovermode=False
-                )
-                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False},
-                               key=f"spark_cu_au_{uuid.uuid4().hex[:8]}")
+    with col4:
+        st.markdown(f"#### {t('bank_copper_gold')}")
+        st.caption(t('bank_copper_gold_desc'))
+        if 'Copper' in df.columns and 'Gold' in df.columns:
+            copper = df.get('Copper')
+            gold = df.get('Gold')
+            if copper is not None and gold is not None:
+                ratio_series = (copper / gold) * 1000
+                latest_val = ratio_series.dropna().iloc[-1] if not ratio_series.dropna().empty else 0
+                st.metric(t('bank_cu_au_ratio'), f"{latest_val:.2f}", help=t('bank_cu_au_help'))
                 
-                # 長期推移
-                st.markdown(f"###### {t('long_term_trend')}")
-                styled_line_chart(ratio_series, height=150)
+                # 日付情報を表示
+                if hasattr(df, 'attrs'):
+                    copper_date = df.attrs.get('last_valid_dates', {}).get('Copper')
+                    if copper_date:
+                        st.caption(f"📅 {t('data_period')}: {copper_date} ({t('freq_daily')})")
+                        st.caption(f"🔄 {t('source_update')}: {copper_date}")  # yFinanceはlast_valid_datesを使用
+                    st.caption(t('bank_cu_au_notes'))  # Rise=Risk-on, Fall=Risk-off
+                
+                # 60日推移（スパークライン）
+                if not ratio_series.dropna().empty:
+                    recent_60 = ratio_series.tail(60)
+                    st.caption(f"📊 {t('sparkline_label')}")
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(
+                        x=recent_60.index,
+                        y=recent_60.values,
+                        mode='lines',
+                        line=dict(color='#FF9F43', width=2),
+                        fill='tozeroy',
+                        fillcolor='rgba(255, 159, 67, 0.3)',
+                        showlegend=False
+                    ))
+                    fig.update_layout(
+                        height=100,
+                        margin=dict(l=0, r=0, t=0, b=0),
+                        xaxis=dict(visible=False),
+                        yaxis=dict(visible=False),
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        hovermode=False
+                    )
+                    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False},
+                                   key=f"spark_cu_au_{uuid.uuid4().hex[:8]}")
+                    
+                    # 長期推移
+                    st.markdown(f"###### {t('long_term_trend')}")
+                    styled_line_chart(ratio_series, height=150)
 
 st.markdown("---")
 
