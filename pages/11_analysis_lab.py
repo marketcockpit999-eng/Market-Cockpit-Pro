@@ -22,96 +22,96 @@ st.caption(t('lab_subtitle'))
 
 # ========== Global Liquidity Proxy ==========
 st.markdown("---")
-st.markdown(f"### {t('lab_glp_section')}")
+with st.expander(t('lab_glp_section'), expanded=True):
 
-with st.expander(t('lab_glp_about'), expanded=False):
-    st.markdown(t('lab_glp_explanation'))
+    with st.expander(t('lab_glp_about'), expanded=False):
+        st.markdown(t('lab_glp_explanation'))
 
-if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy', pd.Series()).isna().all():
-    gl = df['Global_Liquidity_Proxy'].dropna()
-    
-    glp_latest_date = None
-    if hasattr(df, 'attrs') and 'last_valid_dates' in df.attrs:
-        glp_latest_date = df.attrs['last_valid_dates'].get('Global_Liquidity_Proxy')
-    
-    # Get source dates for components
-    fed_date = None
-    ecb_date = None
-    if hasattr(df, 'attrs') and 'last_valid_dates' in df.attrs:
-        fed_date = df.attrs['last_valid_dates'].get('SOMA_Total')
-        ecb_date = df.attrs['last_valid_dates'].get('ECB_Assets')
-    
-    col1, col2 = st.columns([1,2])
-    with col1:
-        st.metric("GLP", f"${gl.iloc[-1]/1000:.2f}T", help="Fed + ECB - TGA - RRP")
-        if glp_latest_date:
-            st.caption(f"{t('lab_data_period')}: {glp_latest_date}")
-        # Show source update with component dates
-        if fed_date or ecb_date:
-            source_info = f"Fed: {fed_date or 'N/A'}, ECB: {ecb_date or 'N/A'}"
-            st.caption(f"{t('lab_source_update')}: {source_info}")
-        st.caption(f"🔄 {t('lab_calculated')}: GLP = Fed + ECB(USD) - TGA - RRP")
-    with col2:
-        if 'SP500' in df.columns:
-            fig = make_subplots(specs=[[{"secondary_y": True}]])
-            fig.add_trace(go.Scatter(x=gl.index, y=gl, name='GLP', line=dict(color='cyan')), secondary_y=False)
-            fig.add_trace(go.Scatter(x=df.index, y=df['SP500'], name='S&P500', line=dict(color='orange', dash='dot')), secondary_y=True)
-            fig.update_layout(template='plotly_dark', height=280, margin=dict(l=0,r=0,t=10,b=0))
-            st.plotly_chart(fig, use_container_width=True)
-else:
-    st.warning(t('lab_glp_no_data'))
-
-# === GLP YoY Growth ===
-if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy', pd.Series()).isna().all():
-    gl_series = df['Global_Liquidity_Proxy'].dropna()
-    
-    st.markdown(f"##### 📊 {t('yoy_growth')}")
-    st.caption(t('yoy_growth_desc'))
-    
-    if len(gl_series) > 252:
-        yoy_growth = gl_series.pct_change(periods=252) * 100
-        yoy_growth = yoy_growth.dropna().tail(365)
+    if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy', pd.Series()).isna().all():
+        gl = df['Global_Liquidity_Proxy'].dropna()
         
-        if not yoy_growth.empty:
-            fig_yoy = go.Figure()
-            colors = ['#00e676' if v >= 0 else '#ff1744' for v in yoy_growth]
-            
-            fig_yoy.add_trace(go.Bar(
-                x=yoy_growth.index,
-                y=yoy_growth,
-                marker_color=colors,
-                name='YoY %'
-            ))
-            
-            fig_yoy.add_hline(y=0, line_dash="dash", line_color="white", line_width=1)
-            
-            fig_yoy.update_layout(
-                template='plotly_dark',
-                height=200,
-                margin=dict(l=0, r=0, t=10, b=0),
-                showlegend=False,
-                yaxis_title="YoY (%)"
-            )
-            st.plotly_chart(fig_yoy, use_container_width=True)
-            
-            current_yoy = yoy_growth.iloc[-1]
-            if current_yoy > 0:
-                st.success(f"{t('liquidity_expanding')}: {current_yoy:+.2f}% YoY")
-            else:
-                st.warning(f"{t('liquidity_contracting')}: {current_yoy:+.2f}% YoY")
-            
-            # Add data period and source update for YoY Growth
-            yoy_start = yoy_growth.index[0].strftime('%Y-%m-%d') if len(yoy_growth) > 0 else 'N/A'
-            yoy_end = yoy_growth.index[-1].strftime('%Y-%m-%d') if len(yoy_growth) > 0 else 'N/A'
-            st.caption(f"{t('lab_data_period')}: {yoy_start} ~ {yoy_end}")
-            # Get source date (fallback if not defined earlier)
-            yoy_source_date = None
-            if hasattr(df, 'attrs') and 'last_valid_dates' in df.attrs:
-                yoy_source_date = df.attrs['last_valid_dates'].get('Global_Liquidity_Proxy')
-            if yoy_source_date:
-                st.caption(f"{t('lab_source_update')}: {yoy_source_date} (FRED)")
+        glp_latest_date = None
+        if hasattr(df, 'attrs') and 'last_valid_dates' in df.attrs:
+            glp_latest_date = df.attrs['last_valid_dates'].get('Global_Liquidity_Proxy')
+        
+        # Get source dates for components
+        fed_date = None
+        ecb_date = None
+        if hasattr(df, 'attrs') and 'last_valid_dates' in df.attrs:
+            fed_date = df.attrs['last_valid_dates'].get('SOMA_Total')
+            ecb_date = df.attrs['last_valid_dates'].get('ECB_Assets')
+        
+        col1, col2 = st.columns([1,2])
+        with col1:
+            st.metric("GLP", f"${gl.iloc[-1]/1000:.2f}T", help="Fed + ECB - TGA - RRP")
+            if glp_latest_date:
+                st.caption(f"{t('lab_data_period')}: {glp_latest_date}")
+            # Show source update with component dates
+            if fed_date or ecb_date:
+                source_info = f"Fed: {fed_date or 'N/A'}, ECB: {ecb_date or 'N/A'}"
+                st.caption(f"{t('lab_source_update')}: {source_info}")
+            st.caption(f"🔄 {t('lab_calculated')}: GLP = Fed + ECB(USD) - TGA - RRP")
+        with col2:
+            if 'SP500' in df.columns:
+                fig = make_subplots(specs=[[{"secondary_y": True}]])
+                fig.add_trace(go.Scatter(x=gl.index, y=gl, name='GLP', line=dict(color='cyan')), secondary_y=False)
+                fig.add_trace(go.Scatter(x=df.index, y=df['SP500'], name='S&P500', line=dict(color='orange', dash='dot')), secondary_y=True)
+                fig.update_layout(template='plotly_dark', height=280, margin=dict(l=0,r=0,t=10,b=0))
+                st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info(t('insufficient_data_yoy'))
+        st.warning(t('lab_glp_no_data'))
+
+    # === GLP YoY Growth ===
+    if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy', pd.Series()).isna().all():
+        gl_series = df['Global_Liquidity_Proxy'].dropna()
+        
+        st.markdown(f"##### 📊 {t('yoy_growth')}")
+        st.caption(t('yoy_growth_desc'))
+        
+        if len(gl_series) > 252:
+            yoy_growth = gl_series.pct_change(periods=252) * 100
+            yoy_growth = yoy_growth.dropna().tail(365)
+            
+            if not yoy_growth.empty:
+                fig_yoy = go.Figure()
+                colors = ['#00e676' if v >= 0 else '#ff1744' for v in yoy_growth]
+                
+                fig_yoy.add_trace(go.Bar(
+                    x=yoy_growth.index,
+                    y=yoy_growth,
+                    marker_color=colors,
+                    name='YoY %'
+                ))
+                
+                fig_yoy.add_hline(y=0, line_dash="dash", line_color="white", line_width=1)
+                
+                fig_yoy.update_layout(
+                    template='plotly_dark',
+                    height=200,
+                    margin=dict(l=0, r=0, t=10, b=0),
+                    showlegend=False,
+                    yaxis_title="YoY (%)"
+                )
+                st.plotly_chart(fig_yoy, use_container_width=True)
+                
+                current_yoy = yoy_growth.iloc[-1]
+                if current_yoy > 0:
+                    st.success(f"{t('liquidity_expanding')}: {current_yoy:+.2f}% YoY")
+                else:
+                    st.warning(f"{t('liquidity_contracting')}: {current_yoy:+.2f}% YoY")
+                
+                # Add data period and source update for YoY Growth
+                yoy_start = yoy_growth.index[0].strftime('%Y-%m-%d') if len(yoy_growth) > 0 else 'N/A'
+                yoy_end = yoy_growth.index[-1].strftime('%Y-%m-%d') if len(yoy_growth) > 0 else 'N/A'
+                st.caption(f"{t('lab_data_period')}: {yoy_start} ~ {yoy_end}")
+                # Get source date (fallback if not defined earlier)
+                yoy_source_date = None
+                if hasattr(df, 'attrs') and 'last_valid_dates' in df.attrs:
+                    yoy_source_date = df.attrs['last_valid_dates'].get('Global_Liquidity_Proxy')
+                if yoy_source_date:
+                    st.caption(f"{t('lab_source_update')}: {yoy_source_date} (FRED)")
+        else:
+            st.info(t('insufficient_data_yoy'))
 
 # ========== M2 Velocity ==========
 st.markdown("---")
