@@ -289,89 +289,88 @@ with col2:
         styled_line_chart(df[['Reserves']], height=250)
 
 st.markdown("---")
-st.subheader(t('market_plumbing'))
+with st.expander(t('market_plumbing'), expanded=True):
+    col1, col2 = st.columns(2)
 
-col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(f"#### {t('srf')}")
+        show_metric_with_sparkline(t('srf'), df.get('SRF'), 'SRF', "B", "SRF", notes=t('srf_notes'))
+        if 'SRF' in df.columns and not df.get('SRF', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['SRF']], height=200)
+        
+        st.markdown("")
+        
+        st.markdown(f"#### {t('sofr')}")
+        show_metric_with_sparkline(t('sofr'), df.get('SOFR'), 'SOFR', "%", "SOFR", notes=t('sofr_notes'), decimal_places=3)
+        if 'SOFR' in df.columns and not df.get('SOFR', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['SOFR']], height=200)
 
-with col1:
-    st.markdown(f"#### {t('srf')}")
-    show_metric_with_sparkline(t('srf'), df.get('SRF'), 'SRF', "B", "SRF", notes=t('srf_notes'))
-    if 'SRF' in df.columns and not df.get('SRF', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['SRF']], height=200)
-    
-    st.markdown("")
-    
-    st.markdown(f"#### {t('sofr')}")
-    show_metric_with_sparkline(t('sofr'), df.get('SOFR'), 'SOFR', "%", "SOFR", notes=t('sofr_notes'), decimal_places=3)
-    if 'SOFR' in df.columns and not df.get('SOFR', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['SOFR']], height=200)
-
-with col2:
-    st.markdown(f"#### {t('fima')}")
-    show_metric_with_sparkline(t('fima'), df.get('FIMA'), 'FIMA', "B", "FIMA", notes=t('fima_notes'))
-    if 'FIMA' in df.columns and not df.get('FIMA', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['FIMA']], height=200)
-    
-    st.markdown("")
-    
-    st.markdown(f"#### {t('effr_iorb')}")
-    diff = None
-    if 'EFFR' in df.columns and 'IORB' in df.columns:
-        diff = (df['EFFR'] - df['IORB']) * 100
-        diff.name = 'EFFR_IORB'  # Set name for proper handling
-    # notesを除いて表示（日付の後にnotesを手動表示するため）
-    show_metric(t('effr_iorb'), diff, "bps", explanation_key="EFFR_IORB")
-    
-    # EFFR-IORB用の日付情報を手動表示（計算値なのでEFFRの日付を使用）
-    if 'EFFR' in df.columns and hasattr(df, 'attrs'):
-        effr_date = df.attrs.get('last_valid_dates', {}).get('EFFR')
-        effr_release = df.attrs.get('fred_release_dates', {}).get('EFFR')
-        if effr_date:
-            freq_key = DATA_FREQUENCY.get('EFFR', '')
-            if freq_key:
-                freq_label = t(f'freq_{freq_key}')
-                st.caption(f"📅 {t('data_period')}: {effr_date} ({freq_label})")
-            else:
-                st.caption(f"📅 {t('data_period')}: {effr_date}")
-        if effr_release:
-            st.caption(f"🔄 {t('source_update')}: {effr_release}")
-    # notesは日付の後に表示（他の指標と同じ順序にする）
-    st.caption(t('effr_iorb_notes'))
-    
-    # EFFR-IORB専用sparkline（計算値なので手動で追加）
-    if diff is not None and not diff.isna().all():
-        recent_diff = diff.tail(60)
-        st.caption(f"📊 {t('sparkline_label')}")
-        fig_spark = go.Figure()
-        fig_spark.add_trace(go.Scatter(
-            x=recent_diff.index,
-            y=recent_diff.values,
-            mode='lines',
-            line=dict(color='#FF9F43', width=2),
-            fill='tozeroy',
-            fillcolor='rgba(255, 159, 67, 0.3)',
-            showlegend=False
-        ))
-        fig_spark.update_layout(
-            height=100,
-            margin=dict(l=0, r=0, t=0, b=0),
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False),
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            hovermode=False
-        )
-        st.plotly_chart(fig_spark, use_container_width=True, config={'displayModeBar': False},
-                       key=f"spark_effr_iorb_{uuid.uuid4().hex[:8]}")
-    
-    rate_cols = ['EFFR', 'IORB']
-    valid_rates = [c for c in rate_cols if c in df.columns and not df.get(c, pd.Series()).isna().all()]
-    if valid_rates:
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[valid_rates], height=200)
+    with col2:
+        st.markdown(f"#### {t('fima')}")
+        show_metric_with_sparkline(t('fima'), df.get('FIMA'), 'FIMA', "B", "FIMA", notes=t('fima_notes'))
+        if 'FIMA' in df.columns and not df.get('FIMA', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['FIMA']], height=200)
+        
+        st.markdown("")
+        
+        st.markdown(f"#### {t('effr_iorb')}")
+        diff = None
+        if 'EFFR' in df.columns and 'IORB' in df.columns:
+            diff = (df['EFFR'] - df['IORB']) * 100
+            diff.name = 'EFFR_IORB'  # Set name for proper handling
+        # notesを除いて表示（日付の後にnotesを手動表示するため）
+        show_metric(t('effr_iorb'), diff, "bps", explanation_key="EFFR_IORB")
+        
+        # EFFR-IORB用の日付情報を手動表示（計算値なのでEFFRの日付を使用）
+        if 'EFFR' in df.columns and hasattr(df, 'attrs'):
+            effr_date = df.attrs.get('last_valid_dates', {}).get('EFFR')
+            effr_release = df.attrs.get('fred_release_dates', {}).get('EFFR')
+            if effr_date:
+                freq_key = DATA_FREQUENCY.get('EFFR', '')
+                if freq_key:
+                    freq_label = t(f'freq_{freq_key}')
+                    st.caption(f"📅 {t('data_period')}: {effr_date} ({freq_label})")
+                else:
+                    st.caption(f"📅 {t('data_period')}: {effr_date}")
+            if effr_release:
+                st.caption(f"🔄 {t('source_update')}: {effr_release}")
+        # notesは日付の後に表示（他の指標と同じ順序にする）
+        st.caption(t('effr_iorb_notes'))
+        
+        # EFFR-IORB専用sparkline（計算値なので手動で追加）
+        if diff is not None and not diff.isna().all():
+            recent_diff = diff.tail(60)
+            st.caption(f"📊 {t('sparkline_label')}")
+            fig_spark = go.Figure()
+            fig_spark.add_trace(go.Scatter(
+                x=recent_diff.index,
+                y=recent_diff.values,
+                mode='lines',
+                line=dict(color='#FF9F43', width=2),
+                fill='tozeroy',
+                fillcolor='rgba(255, 159, 67, 0.3)',
+                showlegend=False
+            ))
+            fig_spark.update_layout(
+                height=100,
+                margin=dict(l=0, r=0, t=0, b=0),
+                xaxis=dict(visible=False),
+                yaxis=dict(visible=False),
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                hovermode=False
+            )
+            st.plotly_chart(fig_spark, use_container_width=True, config={'displayModeBar': False},
+                           key=f"spark_effr_iorb_{uuid.uuid4().hex[:8]}")
+        
+        rate_cols = ['EFFR', 'IORB']
+        valid_rates = [c for c in rate_cols if c in df.columns and not df.get(c, pd.Series()).isna().all()]
+        if valid_rates:
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[valid_rates], height=200)
 
 # === FF Target Rate (Upper/Lower) ===
 st.markdown("---")
