@@ -26,6 +26,9 @@ logs/*.log
 # Handoff files (internal use only)
 handoffs/
 
+# Strategic planning documents (internal use only)
+PROJECT_STATE.md
+
 # Local Windows shortcuts and scripts
 *.lnk
 *.vbs
