@@ -40,13 +40,10 @@ if df is None:
 st.subheader(t('liquidity_title'))
 
 # === VALUATION & LEVERAGE SECTION ===
-st.markdown(f"#### {t('valuation_leverage')}")
-st.caption(t('valuation_leverage_desc'))
-
 pe_data = get_pe_ratios()
 leverage_data = get_crypto_leverage_data()
 
-# Record API status for health monitoring
+# Record API status for health monitoring (keep outside expander)
 record_api_status('SP500_PE', pe_data is not None and pe_data.get('sp500_pe') is not None)
 record_api_status('NASDAQ_PE', pe_data is not None and pe_data.get('nasdaq_pe') is not None)
 record_api_status('BTC_Funding_Rate', leverage_data is not None and leverage_data.get('btc_funding_rate') is not None)
@@ -55,192 +52,194 @@ record_api_status('BTC_Long_Short_Ratio', leverage_data is not None and leverage
 record_api_status('ETH_Funding_Rate', leverage_data is not None and leverage_data.get('eth_funding_rate') is not None)
 record_api_status('ETH_Open_Interest', leverage_data is not None and leverage_data.get('eth_open_interest') is not None)
 
-# Show data source timestamps
-data_sources = []
-if pe_data and pe_data.get('timestamp'):
-    data_sources.append(f"P/E: {pe_data['timestamp'][:16]}")
-if leverage_data and leverage_data.get('timestamp'):
-    data_sources.append(f"Leverage: {leverage_data['timestamp'][:16]}")
-if leverage_data and leverage_data.get('data_source'):
-    data_sources.append(f"Source: {leverage_data['data_source']}")
-if data_sources:
-    st.caption(f"🔄 {t('source_update')}: {' | '.join(data_sources)}")
+with st.expander(t('valuation_leverage'), expanded=True):
+    st.caption(t('valuation_leverage_desc'))
 
-col_val1, col_val2, col_val3, col_val4, col_val5 = st.columns(5)
+    # Show data source timestamps
+    data_sources = []
+    if pe_data and pe_data.get('timestamp'):
+        data_sources.append(f"P/E: {pe_data['timestamp'][:16]}")
+    if leverage_data and leverage_data.get('timestamp'):
+        data_sources.append(f"Leverage: {leverage_data['timestamp'][:16]}")
+    if leverage_data and leverage_data.get('data_source'):
+        data_sources.append(f"Source: {leverage_data['data_source']}")
+    if data_sources:
+        st.caption(f"🔄 {t('source_update')}: {' | '.join(data_sources)}")
 
-with col_val1:
-    if pe_data and pe_data.get('sp500_pe'):
-        pe = pe_data['sp500_pe']
-        avg = pe_data['sp500_pe_avg']
-        delta = pe - avg
-        color = "🔴" if pe > 25 else "🟡" if pe > 20 else "🟢"
-        st.metric(
-            f"{color} {t('sp500_pe')}",
-            f"{pe:.1f}",
-            delta=f"{delta:+.1f} {t('vs_avg')} ({avg:.1f})",
-            help=t('sp500_pe_help')
-        )
-    else:
-        st.metric(t('sp500_pe'), t('loading'))
+    col_val1, col_val2, col_val3, col_val4, col_val5 = st.columns(5)
 
-with col_val2:
-    if pe_data and pe_data.get('nasdaq_pe'):
-        pe = pe_data['nasdaq_pe']
-        color = "🔴" if pe > 35 else "🟡" if pe > 28 else "🟢"
-        st.metric(
-            f"{color} {t('nasdaq_pe')}",
-            f"{pe:.1f}",
-            help=t('nasdaq_pe_help')
-        )
-    else:
-        st.metric(t('nasdaq_pe'), t('loading'))
-
-with col_val3:
-    if leverage_data and leverage_data.get('btc_funding_rate') is not None:
-        fr = leverage_data['btc_funding_rate']
-        if fr > 0.05:
-            color = "🔴"
-            status = t('long_heavy')
-        elif fr < -0.05:
-            color = "🔵"
-            status = t('short_heavy')
+    with col_val1:
+        if pe_data and pe_data.get('sp500_pe'):
+            pe = pe_data['sp500_pe']
+            avg = pe_data['sp500_pe_avg']
+            delta = pe - avg
+            color = "🔴" if pe > 25 else "🟡" if pe > 20 else "🟢"
+            st.metric(
+                f"{color} {t('sp500_pe')}",
+                f"{pe:.1f}",
+                delta=f"{delta:+.1f} {t('vs_avg')} ({avg:.1f})",
+                help=t('sp500_pe_help')
+            )
         else:
-            color = "🟢"
-            status = t('neutral')
-        st.metric(
-            f"{color} {t('btc_funding_rate')}",
-            f"{fr:.4f}%",
-            delta=status,
-            help=t('funding_rate_help')
-        )
-    else:
-        st.metric(t('btc_funding_rate'), t('loading'))
+            st.metric(t('sp500_pe'), t('loading'))
 
-with col_val4:
-    if leverage_data and leverage_data.get('eth_funding_rate') is not None:
-        fr = leverage_data['eth_funding_rate']
-        if fr > 0.05:
-            color = "🔴"
-            status = t('long_heavy')
-        elif fr < -0.05:
-            color = "🔵"
-            status = t('short_heavy')
+    with col_val2:
+        if pe_data and pe_data.get('nasdaq_pe'):
+            pe = pe_data['nasdaq_pe']
+            color = "🔴" if pe > 35 else "🟡" if pe > 28 else "🟢"
+            st.metric(
+                f"{color} {t('nasdaq_pe')}",
+                f"{pe:.1f}",
+                help=t('nasdaq_pe_help')
+            )
         else:
-            color = "🟢"
-            status = t('neutral')
-        st.metric(
-            f"{color} {t('eth_funding_rate')}",
-            f"{fr:.4f}%",
-            delta=status,
-            help=t('funding_rate_help')
-        )
-    else:
-        st.metric(t('eth_funding_rate'), t('loading'))
+            st.metric(t('nasdaq_pe'), t('loading'))
 
-with col_val5:
-    if leverage_data and leverage_data.get('btc_long_short_ratio'):
-        ratio = leverage_data['btc_long_short_ratio']
-        if ratio > 1.5:
-            color = "🔴"
-            status = t('long_biased')
-        elif ratio < 0.7:
-            color = "🔵"
-            status = t('short_biased')
+    with col_val3:
+        if leverage_data and leverage_data.get('btc_funding_rate') is not None:
+            fr = leverage_data['btc_funding_rate']
+            if fr > 0.05:
+                color = "🔴"
+                status = t('long_heavy')
+            elif fr < -0.05:
+                color = "🔵"
+                status = t('short_heavy')
+            else:
+                color = "🟢"
+                status = t('neutral')
+            st.metric(
+                f"{color} {t('btc_funding_rate')}",
+                f"{fr:.4f}%",
+                delta=status,
+                help=t('funding_rate_help')
+            )
         else:
-            color = "🟢"
-            status = t('balanced')
-        st.metric(
-            f"{color} {t('btc_ls_ratio')}",
-            f"{ratio:.2f}",
-            delta=status,
-            help=t('ls_ratio_help')
-        )
-    else:
-        st.metric(t('btc_ls_ratio'), t('loading'))
+            st.metric(t('btc_funding_rate'), t('loading'))
+
+    with col_val4:
+        if leverage_data and leverage_data.get('eth_funding_rate') is not None:
+            fr = leverage_data['eth_funding_rate']
+            if fr > 0.05:
+                color = "🔴"
+                status = t('long_heavy')
+            elif fr < -0.05:
+                color = "🔵"
+                status = t('short_heavy')
+            else:
+                color = "🟢"
+                status = t('neutral')
+            st.metric(
+                f"{color} {t('eth_funding_rate')}",
+                f"{fr:.4f}%",
+                delta=status,
+                help=t('funding_rate_help')
+            )
+        else:
+            st.metric(t('eth_funding_rate'), t('loading'))
+
+    with col_val5:
+        if leverage_data and leverage_data.get('btc_long_short_ratio'):
+            ratio = leverage_data['btc_long_short_ratio']
+            if ratio > 1.5:
+                color = "🔴"
+                status = t('long_biased')
+            elif ratio < 0.7:
+                color = "🔵"
+                status = t('short_biased')
+            else:
+                color = "🟢"
+                status = t('balanced')
+            st.metric(
+                f"{color} {t('btc_ls_ratio')}",
+                f"{ratio:.2f}",
+                delta=status,
+                help=t('ls_ratio_help')
+            )
+        else:
+            st.metric(t('btc_ls_ratio'), t('loading'))
 
 # === Open Interest ===
 if leverage_data:
-    st.markdown(f"#### {t('open_interest_title')}")
-    
-    col_btc, col_eth = st.columns(2)
-    
-    with col_btc:
-        oi = leverage_data.get('btc_open_interest', 0)
-        avg = leverage_data.get('btc_oi_avg_30d')
-        ath = leverage_data.get('btc_oi_ath')
+    with st.expander(t('open_interest_title'), expanded=True):
+        col_btc, col_eth = st.columns(2)
         
-        if oi and avg:
-            pct_vs_avg = ((oi - avg) / avg) * 100
-            pct_vs_ath = (oi / ath * 100) if ath else 0
+        with col_btc:
+            oi = leverage_data.get('btc_open_interest', 0)
+            avg = leverage_data.get('btc_oi_avg_30d')
+            ath = leverage_data.get('btc_oi_ath')
             
-            if pct_vs_avg > 20:
-                color = "🔴"
-                status = t('danger_zone')
-            elif pct_vs_avg > 5:
-                color = "🟡"
-                status = t('elevated')
-            elif pct_vs_avg < -20:
-                color = "🔵"
-                status = t('low')
+            if oi and avg:
+                pct_vs_avg = ((oi - avg) / avg) * 100
+                pct_vs_ath = (oi / ath * 100) if ath else 0
+                
+                if pct_vs_avg > 20:
+                    color = "🔴"
+                    status = t('danger_zone')
+                elif pct_vs_avg > 5:
+                    color = "🟡"
+                    status = t('elevated')
+                elif pct_vs_avg < -20:
+                    color = "🔵"
+                    status = t('low')
+                else:
+                    color = "🟢"
+                    status = t('normal')
+                
+                st.metric(
+                    f"{color} {t('btc_open_interest')}",
+                    f"{oi:,.0f} BTC",
+                    delta=f"{pct_vs_avg:+.1f}% {t('vs_30d_avg')}",
+                    help=f"30d avg: {avg:,.0f} BTC | 30d high: {ath:,.0f} BTC ({pct_vs_ath:.0f}%)"
+                )
+                oi_source = leverage_data.get('btc_oi_data_source', 'Bybit/OKX')
+                st.caption(f"📊 {t('ath_ratio')}: **{pct_vs_ath:.0f}%** | {t('status')}: **{status}** | {t('source')}: {oi_source}")
             else:
-                color = "🟢"
-                status = t('normal')
-            
-            st.metric(
-                f"{color} {t('btc_open_interest')}",
-                f"{oi:,.0f} BTC",
-                delta=f"{pct_vs_avg:+.1f}% {t('vs_30d_avg')}",
-                help=f"30d avg: {avg:,.0f} BTC | 30d high: {ath:,.0f} BTC ({pct_vs_ath:.0f}%)"
-            )
-            oi_source = leverage_data.get('btc_oi_data_source', 'Bybit/OKX')
-            st.caption(f"📊 {t('ath_ratio')}: **{pct_vs_ath:.0f}%** | {t('status')}: **{status}** | {t('source')}: {oi_source}")
-        else:
-            days = leverage_data.get('btc_oi_days_available', 0)
-            st.metric(t('btc_open_interest'), f"{oi:,.0f} BTC" if oi else t('loading'))
-            if oi and days > 0:
-                st.caption(t('accumulating_data', days=days))
-            elif oi:
-                st.caption(t('accumulating_data', days=0))
+                days = leverage_data.get('btc_oi_days_available', 0)
+                st.metric(t('btc_open_interest'), f"{oi:,.0f} BTC" if oi else t('loading'))
+                if oi and days > 0:
+                    st.caption(t('accumulating_data', days=days))
+                elif oi:
+                    st.caption(t('accumulating_data', days=0))
     
-    with col_eth:
-        oi = leverage_data.get('eth_open_interest', 0)
-        avg = leverage_data.get('eth_oi_avg_30d')
-        ath = leverage_data.get('eth_oi_ath')
+        with col_eth:
+            oi = leverage_data.get('eth_open_interest', 0)
+            avg = leverage_data.get('eth_oi_avg_30d')
+            ath = leverage_data.get('eth_oi_ath')
+            
+            if oi and avg:
+                pct_vs_avg = ((oi - avg) / avg) * 100
+                pct_vs_ath = (oi / ath * 100) if ath else 0
+                
+                if pct_vs_avg > 20:
+                    color = "🔴"
+                    status = t('danger_zone')
+                elif pct_vs_avg > 5:
+                    color = "🟡"
+                    status = t('elevated')
+                elif pct_vs_avg < -20:
+                    color = "🔵"
+                    status = t('low')
+                else:
+                    color = "🟢"
+                    status = t('normal')
+                
+                st.metric(
+                    f"{color} {t('eth_open_interest')}",
+                    f"{oi:,.0f} ETH",
+                    delta=f"{pct_vs_avg:+.1f}% {t('vs_30d_avg')}",
+                    help=f"30d avg: {avg:,.0f} ETH | 30d high: {ath:,.0f} ETH ({pct_vs_ath:.0f}%)"
+                )
+                oi_source = leverage_data.get('eth_oi_data_source', 'Bybit/OKX')
+                st.caption(f"📊 {t('ath_ratio')}: **{pct_vs_ath:.0f}%** | {t('status')}: **{status}** | {t('source')}: {oi_source}")
+            else:
+                days = leverage_data.get('eth_oi_days_available', 0)
+                st.metric(t('eth_open_interest'), f"{oi:,.0f} ETH" if oi else t('loading'))
+                if oi and days > 0:
+                    st.caption(t('accumulating_data', days=days))
+                elif oi:
+                    st.caption(t('accumulating_data', days=0))
         
-        if oi and avg:
-            pct_vs_avg = ((oi - avg) / avg) * 100
-            pct_vs_ath = (oi / ath * 100) if ath else 0
-            
-            if pct_vs_avg > 20:
-                color = "🔴"
-                status = t('danger_zone')
-            elif pct_vs_avg > 5:
-                color = "🟡"
-                status = t('elevated')
-            elif pct_vs_avg < -20:
-                color = "🔵"
-                status = t('low')
-            else:
-                color = "🟢"
-                status = t('normal')
-            
-            st.metric(
-                f"{color} {t('eth_open_interest')}",
-                f"{oi:,.0f} ETH",
-                delta=f"{pct_vs_avg:+.1f}% {t('vs_30d_avg')}",
-                help=f"30d avg: {avg:,.0f} ETH | 30d high: {ath:,.0f} ETH ({pct_vs_ath:.0f}%)"
-            )
-            oi_source = leverage_data.get('eth_oi_data_source', 'Bybit/OKX')
-            st.caption(f"📊 {t('ath_ratio')}: **{pct_vs_ath:.0f}%** | {t('status')}: **{status}** | {t('source')}: {oi_source}")
-        else:
-            days = leverage_data.get('eth_oi_days_available', 0)
-            st.metric(t('eth_open_interest'), f"{oi:,.0f} ETH" if oi else t('loading'))
-            if oi and days > 0:
-                st.caption(t('accumulating_data', days=days))
-            elif oi:
-                st.caption(t('accumulating_data', days=0))
-    
-    st.caption(t('open_interest_guide'))
+        st.caption(t('open_interest_guide'))
 
 st.markdown("---")
 with st.expander(t('net_liquidity'), expanded=True):

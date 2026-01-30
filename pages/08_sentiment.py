@@ -48,8 +48,7 @@ vix_value = df.get('VIX').iloc[-1] if df.get('VIX') is not None else None
 record_api_status('Crypto_Fear_Greed', crypto_fg is not None and crypto_fg.get('current') is not None)
 
 # === ROW 1: Fear & Greed and VIX ===
-st.markdown(f"### {t('sent_fg_section')}")
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 
 with col1:
     st.markdown(f"#### {t('sent_crypto_fg')}")
@@ -83,43 +82,6 @@ with col1:
         st.warning(t('sent_crypto_error'))
 
 with col2:
-    st.markdown(f"#### {t('sent_cnn_fg')}")
-    # CNN Fear & Greed from dataframe (if available)
-    cnn_fg_series = df.get('CNN_Fear_Greed')
-    if cnn_fg_series is not None and not cnn_fg_series.isna().all():
-        cnn_fg_value = cnn_fg_series.dropna().iloc[-1]
-        
-        if cnn_fg_value <= 25:
-            color = "🔴"
-            cnn_class = "Extreme Fear"
-        elif cnn_fg_value <= 45:
-            color = "🟠"
-            cnn_class = "Fear"
-        elif cnn_fg_value <= 55:
-            color = "🟡"
-            cnn_class = "Neutral"
-        elif cnn_fg_value <= 75:
-            color = "🟢"
-            cnn_class = "Greed"
-        else:
-            color = "🟣"
-            cnn_class = "Extreme Greed"
-        
-        st.metric(f"{color} {cnn_class}", f"{int(cnn_fg_value)}")
-        st.progress(cnn_fg_value / 100)
-        
-        cnn_fg_60d = cnn_fg_series.dropna().tail(60)
-        if len(cnn_fg_60d) > 0:
-            latest_date = cnn_fg_60d.index[-1]
-            start_date = cnn_fg_60d.index[0]
-            st.caption(f"📅 {t('data_period')}: {start_date.strftime('%Y-%m-%d')} ~ {latest_date.strftime('%Y-%m-%d')}")
-            st.caption(t('source_update_date', date=latest_date.strftime('%Y-%m-%d')))
-            st.caption(t('sent_60d_trend'))
-            styled_line_chart(cnn_fg_60d, height=120)
-    else:
-        st.info(t('sent_cnn_unavailable'))
-
-with col3:
     st.markdown(f"#### {t('sent_vix')}")
     if vix_value is not None:
         if vix_value < 15:

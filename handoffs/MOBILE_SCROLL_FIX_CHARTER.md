@@ -276,7 +276,7 @@ After:
 | 4-2 | Corp Bond ETFs, Risk Bonds, Emergency Loans | ⬜ 未着手 |
 | 4-3 | Fed Balance Sheet, FF Target Rate | ⬜ 未着手 |
 | 4-4 | Market Plumbing | ⬜ 未着手 |
-| 4-5 | Net Liquidity, ON RRP/Reserves/TGA | ⬜ 未着手 |
+| 4-5 | Net Liquidity, ON RRP/Reserves/TGA | ✅ 完了 |
 | 4-6 | Valuation & Leverage, Open Interest | ⬜ 未着手 |
 
 **Phase 4 特有の注意点**:
