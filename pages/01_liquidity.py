@@ -243,50 +243,46 @@ if leverage_data:
     st.caption(t('open_interest_guide'))
 
 st.markdown("---")
-
-# === Net Liquidity ===
-st.markdown(f"#### {t('net_liquidity')}")
-
-col1, col2 = st.columns([1, 3])
-with col1:
-    # Get S&P500 date for extra_sources
-    extra_src = {'_primary': 'Fed BS'}  # Primary source label
-    if 'SP500' in df.columns and not df.get('SP500', pd.Series()).isna().all():
-        sp500_series = df['SP500'].dropna()
-        if len(sp500_series) > 0:
-            sp500_date = sp500_series.index[-1].strftime('%Y-%m-%d')
-            extra_src['S&P500'] = sp500_date
-    show_metric_with_sparkline(t('net_liquidity'), df.get('Net_Liquidity'), 'Net_Liquidity', "B", "Net_Liquidity", notes=t('net_liquidity_notes'), extra_sources=extra_src)
-with col2:
-    st.markdown(f"##### {t('net_liquidity_chart_title')}")
-    plot_dual_axis(df, 'Net_Liquidity', 'SP500', 'Net Liquidity (L)', 'S&P 500 (R)')
+with st.expander(t('net_liquidity'), expanded=True):
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        # Get S&P500 date for extra_sources
+        extra_src = {'_primary': 'Fed BS'}  # Primary source label
+        if 'SP500' in df.columns and not df.get('SP500', pd.Series()).isna().all():
+            sp500_series = df['SP500'].dropna()
+            if len(sp500_series) > 0:
+                sp500_date = sp500_series.index[-1].strftime('%Y-%m-%d')
+                extra_src['S&P500'] = sp500_date
+        show_metric_with_sparkline(t('net_liquidity'), df.get('Net_Liquidity'), 'Net_Liquidity', "B", "Net_Liquidity", notes=t('net_liquidity_notes'), extra_sources=extra_src)
+    with col2:
+        st.markdown(f"##### {t('net_liquidity_chart_title')}")
+        plot_dual_axis(df, 'Net_Liquidity', 'SP500', 'Net Liquidity (L)', 'S&P 500 (R)')
 
 st.markdown("---")
+with st.expander(t('liquidity_components'), expanded=True):
+    col1, col2 = st.columns(2)
 
-# === ON RRP, Reserves, TGA ===
-col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(f"#### {t('on_rrp')}")
+        show_metric_with_sparkline(t('on_rrp'), df.get('ON_RRP'), 'ON_RRP', "B", "ON_RRP", notes=t('on_rrp_notes'))
+        if 'ON_RRP' in df.columns and not df.get('ON_RRP', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['ON_RRP']], height=250)
+        
+        st.markdown("")
+        
+        st.markdown(f"#### {t('tga')}")
+        show_metric_with_sparkline(t('tga'), df.get('TGA'), 'TGA', "B", "TGA", notes=t('tga_notes'))
+        if 'TGA' in df.columns and not df.get('TGA', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['TGA']], height=250)
 
-with col1:
-    st.markdown(f"#### {t('on_rrp')}")
-    show_metric_with_sparkline(t('on_rrp'), df.get('ON_RRP'), 'ON_RRP', "B", "ON_RRP", notes=t('on_rrp_notes'))
-    if 'ON_RRP' in df.columns and not df.get('ON_RRP', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['ON_RRP']], height=250)
-    
-    st.markdown("")
-    
-    st.markdown(f"#### {t('tga')}")
-    show_metric_with_sparkline(t('tga'), df.get('TGA'), 'TGA', "B", "TGA", notes=t('tga_notes'))
-    if 'TGA' in df.columns and not df.get('TGA', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['TGA']], height=250)
-
-with col2:
-    st.markdown(f"#### {t('reserves')}")
-    show_metric_with_sparkline(t('reserves'), df.get('Reserves'), 'Reserves', "B", "Reserves", notes=t('reserves_notes'))
-    if 'Reserves' in df.columns and not df.get('Reserves', pd.Series()).isna().all():
-        st.markdown(f"###### {t('long_term_trend')}")
-        styled_line_chart(df[['Reserves']], height=250)
+    with col2:
+        st.markdown(f"#### {t('reserves')}")
+        show_metric_with_sparkline(t('reserves'), df.get('Reserves'), 'Reserves', "B", "Reserves", notes=t('reserves_notes'))
+        if 'Reserves' in df.columns and not df.get('Reserves', pd.Series()).isna().all():
+            st.markdown(f"###### {t('long_term_trend')}")
+            styled_line_chart(df[['Reserves']], height=250)
 
 st.markdown("---")
 with st.expander(t('market_plumbing'), expanded=True):
