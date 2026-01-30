@@ -195,86 +195,86 @@ with st.expander(t('lab_fsi_section'), expanded=True):
 
 # ========== Lag Correlation Analysis ==========
 st.markdown("---")
-st.markdown(f"### {t('lab_lag_correlation')}")
+with st.expander(t('lab_lag_correlation'), expanded=True):
 
-with st.expander(t('lab_lag_about'), expanded=False):
-    st.markdown(t('lab_lag_explanation'))
+    with st.expander(t('lab_lag_about'), expanded=False):
+        st.markdown(t('lab_lag_explanation'))
 
-st.caption(t('lab_lag_desc'))
+    st.caption(t('lab_lag_desc'))
 
-def calculate_lag_correlation(series1, series2, max_lag=60):
-    """Calculate cross-correlation at different lags"""
-    correlations = []
-    for lag in range(max_lag + 1):
-        if lag == 0:
-            corr = series1.corr(series2)
-        else:
-            corr = series1.iloc[:-lag].reset_index(drop=True).corr(
-                series2.iloc[lag:].reset_index(drop=True)
-            )
-        correlations.append((lag, corr))
-    return correlations
-
-if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy', pd.Series()).isna().all():
-    gl_clean = df['Global_Liquidity_Proxy'].dropna()
-    
-    target_col = st.selectbox(t('lab_compare_with'), ["SP500", "BTC"], key="lag_target")
-    
-    if target_col in df.columns and not df.get(target_col, pd.Series()).isna().all():
-        target_clean = df[target_col].dropna()
-        
-        common_idx = gl_clean.index.intersection(target_clean.index)
-        if len(common_idx) > 100:
-            gl_aligned = gl_clean.loc[common_idx]
-            target_aligned = target_clean.loc[common_idx]
-            
-            correlations = calculate_lag_correlation(gl_aligned, target_aligned, max_lag=60)
-            
-            best_lag, best_corr = max(correlations, key=lambda x: x[1] if not pd.isna(x[1]) else -1)
-            
-            col1, col2 = st.columns([1, 2])
-            with col1:
-                st.metric(t('lab_best_lag'), f"{best_lag} days", help=t('lab_lag_help'))
-                st.metric(t('lab_correlation'), f"{best_corr:.3f}", help=t('lab_correlation_help'))
-                if best_corr > 0.7:
-                    st.success(t('lab_strong_positive'))
-                elif best_corr > 0.4:
-                    st.info(t('lab_moderate'))
-                else:
-                    st.warning(t('lab_weak'))
-            
-            with col2:
-                lag_df = pd.DataFrame(correlations, columns=['Lag (days)', 'Correlation'])
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(
-                    x=lag_df['Lag (days)'], 
-                    y=lag_df['Correlation'],
-                    mode='lines+markers',
-                    line=dict(color='cyan'),
-                    marker=dict(size=4)
-                ))
-                fig.add_vline(x=best_lag, line_dash="dash", line_color="yellow", annotation_text=f"Best: {best_lag}d")
-                fig.update_layout(
-                    template='plotly_dark', 
-                    height=250, 
-                    xaxis_title="Lag (days)",
-                    yaxis_title="Correlation",
-                    margin=dict(l=0, r=0, t=10, b=0)
+    def calculate_lag_correlation(series1, series2, max_lag=60):
+        """Calculate cross-correlation at different lags"""
+        correlations = []
+        for lag in range(max_lag + 1):
+            if lag == 0:
+                corr = series1.corr(series2)
+            else:
+                corr = series1.iloc[:-lag].reset_index(drop=True).corr(
+                    series2.iloc[lag:].reset_index(drop=True)
                 )
-                st.plotly_chart(fig, use_container_width=True)
-            # Data period and Source update for Lag Correlation
-            common_start = common_idx[0].strftime('%Y-%m-%d') if len(common_idx) > 0 else 'N/A'
-            common_end = common_idx[-1].strftime('%Y-%m-%d') if len(common_idx) > 0 else 'N/A'
-            st.caption(f"{t('lab_data_period')}: {common_start} ~ {common_end}")
-            glp_date = df.attrs.get('last_valid_dates', {}).get('Global_Liquidity_Proxy') if hasattr(df, 'attrs') else None
-            if glp_date:
-                st.caption(f"{t('lab_source_update')}: {glp_date} (FRED)")
+            correlations.append((lag, corr))
+        return correlations
+
+    if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy', pd.Series()).isna().all():
+        gl_clean = df['Global_Liquidity_Proxy'].dropna()
+        
+        target_col = st.selectbox(t('lab_compare_with'), ["SP500", "BTC"], key="lag_target")
+        
+        if target_col in df.columns and not df.get(target_col, pd.Series()).isna().all():
+            target_clean = df[target_col].dropna()
+            
+            common_idx = gl_clean.index.intersection(target_clean.index)
+            if len(common_idx) > 100:
+                gl_aligned = gl_clean.loc[common_idx]
+                target_aligned = target_clean.loc[common_idx]
+                
+                correlations = calculate_lag_correlation(gl_aligned, target_aligned, max_lag=60)
+                
+                best_lag, best_corr = max(correlations, key=lambda x: x[1] if not pd.isna(x[1]) else -1)
+                
+                col1, col2 = st.columns([1, 2])
+                with col1:
+                    st.metric(t('lab_best_lag'), f"{best_lag} days", help=t('lab_lag_help'))
+                    st.metric(t('lab_correlation'), f"{best_corr:.3f}", help=t('lab_correlation_help'))
+                    if best_corr > 0.7:
+                        st.success(t('lab_strong_positive'))
+                    elif best_corr > 0.4:
+                        st.info(t('lab_moderate'))
+                    else:
+                        st.warning(t('lab_weak'))
+                
+                with col2:
+                    lag_df = pd.DataFrame(correlations, columns=['Lag (days)', 'Correlation'])
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(
+                        x=lag_df['Lag (days)'], 
+                        y=lag_df['Correlation'],
+                        mode='lines+markers',
+                        line=dict(color='cyan'),
+                        marker=dict(size=4)
+                    ))
+                    fig.add_vline(x=best_lag, line_dash="dash", line_color="yellow", annotation_text=f"Best: {best_lag}d")
+                    fig.update_layout(
+                        template='plotly_dark', 
+                        height=250, 
+                        xaxis_title="Lag (days)",
+                        yaxis_title="Correlation",
+                        margin=dict(l=0, r=0, t=10, b=0)
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                # Data period and Source update for Lag Correlation
+                common_start = common_idx[0].strftime('%Y-%m-%d') if len(common_idx) > 0 else 'N/A'
+                common_end = common_idx[-1].strftime('%Y-%m-%d') if len(common_idx) > 0 else 'N/A'
+                st.caption(f"{t('lab_data_period')}: {common_start} ~ {common_end}")
+                glp_date = df.attrs.get('last_valid_dates', {}).get('Global_Liquidity_Proxy') if hasattr(df, 'attrs') else None
+                if glp_date:
+                    st.caption(f"{t('lab_source_update')}: {glp_date} (FRED)")
+            else:
+                st.warning(t('lab_insufficient_data_lag'))
         else:
-            st.warning(t('lab_insufficient_data_lag'))
+            st.warning(t('lab_target_unavailable', target=target_col))
     else:
-        st.warning(t('lab_target_unavailable', target=target_col))
-else:
-    st.warning(t('lab_glp_unavailable'))
+        st.warning(t('lab_glp_unavailable'))
 
 # ========== Regime Detection ==========
 st.markdown("---")
