@@ -115,83 +115,83 @@ if 'Global_Liquidity_Proxy' in df.columns and not df.get('Global_Liquidity_Proxy
 
 # ========== M2 Velocity ==========
 st.markdown("---")
-st.markdown(f"### {t('lab_m2v_section')}")
+with st.expander(t('lab_m2v_section'), expanded=True):
 
-with st.expander(t('lab_m2v_about'), expanded=False):
-    st.markdown(t('lab_m2v_explanation'))
+    with st.expander(t('lab_m2v_about'), expanded=False):
+        st.markdown(t('lab_m2v_explanation'))
 
-if 'M2_Velocity' in df.columns and not df.get('M2_Velocity', pd.Series()).isna().all():
-    m2v = df['M2_Velocity'].dropna()
-    m2v_val = m2v.iloc[-1]
-    
-    m2v_latest_date = None
-    m2v_release_date = None
-    if hasattr(df, 'attrs'):
-        if 'last_valid_dates' in df.attrs:
-            m2v_latest_date = df.attrs['last_valid_dates'].get('M2_Velocity')
-        if 'fred_release_dates' in df.attrs:
-            m2v_release_date = df.attrs['fred_release_dates'].get('M2_Velocity')
-    
-    if m2v_val < 1.2:
-        status = t('lab_m2v_historic_low')
-    elif m2v_val < 1.5:
-        status = t('lab_m2v_low')
+    if 'M2_Velocity' in df.columns and not df.get('M2_Velocity', pd.Series()).isna().all():
+        m2v = df['M2_Velocity'].dropna()
+        m2v_val = m2v.iloc[-1]
+        
+        m2v_latest_date = None
+        m2v_release_date = None
+        if hasattr(df, 'attrs'):
+            if 'last_valid_dates' in df.attrs:
+                m2v_latest_date = df.attrs['last_valid_dates'].get('M2_Velocity')
+            if 'fred_release_dates' in df.attrs:
+                m2v_release_date = df.attrs['fred_release_dates'].get('M2_Velocity')
+        
+        if m2v_val < 1.2:
+            status = t('lab_m2v_historic_low')
+        elif m2v_val < 1.5:
+            status = t('lab_m2v_low')
+        else:
+            status = t('lab_m2v_normal')
+        
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            st.metric("M2V", f"{m2v_val:.2f}", help="GDP ÷ M2")
+            st.caption(status)
+            if m2v_latest_date:
+                st.caption(f"{t('lab_data_period')}: {m2v_latest_date}")
+            if m2v_release_date:
+                st.caption(f"{t('lab_source_update')}: {m2v_release_date}")
+        with col2:
+            st.line_chart(m2v, height=200)
     else:
-        status = t('lab_m2v_normal')
-    
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.metric("M2V", f"{m2v_val:.2f}", help="GDP ÷ M2")
-        st.caption(status)
-        if m2v_latest_date:
-            st.caption(f"{t('lab_data_period')}: {m2v_latest_date}")
-        if m2v_release_date:
-            st.caption(f"{t('lab_source_update')}: {m2v_release_date}")
-    with col2:
-        st.line_chart(m2v, height=200)
-else:
-    st.info(t('lab_m2v_unavailable'))
+        st.info(t('lab_m2v_unavailable'))
 
 # ========== Financial Stress Index ==========
 st.markdown("---")
-st.markdown(f"### {t('lab_fsi_section')}")
+with st.expander(t('lab_fsi_section'), expanded=True):
 
-with st.expander(t('lab_fsi_about'), expanded=False):
-    st.markdown(t('lab_fsi_explanation'))
+    with st.expander(t('lab_fsi_about'), expanded=False):
+        st.markdown(t('lab_fsi_explanation'))
 
-if 'Financial_Stress' in df.columns and not df.get('Financial_Stress', pd.Series()).isna().all():
-    fs = df['Financial_Stress'].dropna()
-    fs_val = fs.iloc[-1]
-    
-    fsi_latest_date = None
-    fsi_release_date = None
-    if hasattr(df, 'attrs'):
-        if 'last_valid_dates' in df.attrs:
-            fsi_latest_date = df.attrs['last_valid_dates'].get('Financial_Stress')
-        if 'fred_release_dates' in df.attrs:
-            fsi_release_date = df.attrs['fred_release_dates'].get('Financial_Stress')
-    
-    if fs_val < -0.5:
-        status = t('lab_fsi_loose')
-    elif fs_val < 0.5:
-        status = t('lab_fsi_normal')
-    elif fs_val < 1.5:
-        status = t('lab_fsi_caution')
+    if 'Financial_Stress' in df.columns and not df.get('Financial_Stress', pd.Series()).isna().all():
+        fs = df['Financial_Stress'].dropna()
+        fs_val = fs.iloc[-1]
+        
+        fsi_latest_date = None
+        fsi_release_date = None
+        if hasattr(df, 'attrs'):
+            if 'last_valid_dates' in df.attrs:
+                fsi_latest_date = df.attrs['last_valid_dates'].get('Financial_Stress')
+            if 'fred_release_dates' in df.attrs:
+                fsi_release_date = df.attrs['fred_release_dates'].get('Financial_Stress')
+        
+        if fs_val < -0.5:
+            status = t('lab_fsi_loose')
+        elif fs_val < 0.5:
+            status = t('lab_fsi_normal')
+        elif fs_val < 1.5:
+            status = t('lab_fsi_caution')
+        else:
+            status = t('lab_fsi_crisis')
+        
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            st.metric("FSI", f"{fs_val:.2f}", help="St. Louis Fed Financial Stress Index")
+            st.caption(status)
+            if fsi_latest_date:
+                st.caption(f"{t('lab_data_period')}: {fsi_latest_date}")
+            if fsi_release_date:
+                st.caption(f"{t('lab_source_update')}: {fsi_release_date}")
+        with col2:
+            st.line_chart(fs.tail(500), height=200)
     else:
-        status = t('lab_fsi_crisis')
-    
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.metric("FSI", f"{fs_val:.2f}", help="St. Louis Fed Financial Stress Index")
-        st.caption(status)
-        if fsi_latest_date:
-            st.caption(f"{t('lab_data_period')}: {fsi_latest_date}")
-        if fsi_release_date:
-            st.caption(f"{t('lab_source_update')}: {fsi_release_date}")
-    with col2:
-        st.line_chart(fs.tail(500), height=200)
-else:
-    st.info(t('lab_fsi_unavailable'))
+        st.info(t('lab_fsi_unavailable'))
 
 # ========== Lag Correlation Analysis ==========
 st.markdown("---")
