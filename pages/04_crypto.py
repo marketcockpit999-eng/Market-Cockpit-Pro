@@ -292,11 +292,7 @@ with st.expander(t('market_depth'), expanded=True):
         col1, col2 = st.columns([1, 2])
         with col1:
             st.metric(t('avg_cex_spread'), f"{avg_cex:.4f}%", help="Binance, Coinbase, Kraken...")
-            if avg_cex > 0:
-                ratio = avg_dex/avg_cex
-                st.metric(t('avg_dex_spread'), f"{avg_dex:.4f}%", delta=t('higher_cost', ratio=f"{ratio:.1f}"), delta_color="inverse", help="Uniswap, Curve (WBTC)")
-            else:
-                 st.metric(t('avg_dex_spread'), f"{avg_dex:.4f}%")
+            # DEXスプレッドは取得不可のため削除 (2026-01-31)
         
         with col2:
             # Bar chart
@@ -304,9 +300,7 @@ with st.expander(t('market_depth'), expanded=True):
             # CEX Bar
             cex_sorted = cex_rows.sort_values('Spread (%)')
             fig.add_trace(go.Bar(x=cex_sorted['Market'], y=cex_sorted['Spread (%)'], name='CEX', marker_color='#00e676'))
-            # DEX Bar
-            dex_sorted = dex_rows.sort_values('Spread (%)').head(5) # Limit to top 5 DEX pools
-            fig.add_trace(go.Bar(x=dex_sorted['Market'], y=dex_sorted['Spread (%)'], name='DEX', marker_color='#ff1744'))
+            # DEX Bar removed (2026-01-31) - DEX data unavailable
             
             fig.update_layout(title='Bid-Ask Spread (%) Comparison', template='plotly_dark', height=300)
             st.plotly_chart(fig, use_container_width=True)
