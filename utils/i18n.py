@@ -213,7 +213,6 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 - **+20% vs 30-day avg** 🔴: Excessive leverage → High liquidation cascade risk
 - **±5% vs 30-day avg** 🟢: Normal range
 - **Source**: Hyperliquid (DEX) - Decentralized exchange data auto-accumulated
-- **Accumulation**: Comparison available after 7 days, full function after 30 days
 ''',
         
         # --- Global Money Page ---
@@ -1375,7 +1374,6 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
 - **30日平均+20%以上** 🔴: レバレッジ過剰 → ロスカット連鎖リスク大
 - **30日平均±5%** 🟢: 正常範囲
 - **ソース**: Hyperliquid (DEX) - 分散取引所データを自動蓄積
-- **蓄積期間**: 7日後から比較可能、30日後でフル機能
 ''',
         
         # --- Global Money Page ---
