@@ -5,12 +5,10 @@ MARKET VERDICT - Sentiment Score Calculator
 センチメントスコア（0-100）を計算するモジュール
 Howard Marksの「極端を避ける」思想を反映
 
-スコア構成 (5本柱):
-  - VIXスコア（逆）× 20%            ← VIX高=Fear=低スコア
-  - Credit Spreadスコア（逆）× 20%   ← スプレッド拡大=Fear=低スコア
-  - MA乖離スコア × 20%               ← MA上=Greed=高スコア
-  - ConsumerSent × 20%               ← 消費者信頼感
-  - NFCI × 20%                       ← 金融環境指数（逆）
+スコア構成 (3本柱):
+  - VIXスコア（逆）× 35%            ← VIX高=Fear=低スコア
+  - NFCI × 35%                       ← 金融環境指数（逆）
+  - ConsumerSent × 30%               ← 消費者信頼感
 
 使用方法:
   from utils.verdict_sentiment import calculate_sentiment_score
@@ -200,28 +198,23 @@ def score_nfci(value: float, series: Optional[pd.Series] = None) -> float:
 
 def calculate_sentiment_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
     """
-    センチメントスコアを計算（5本柱）
+    センチメントスコアを計算（3本柱）
     
     Args:
         data: データ辞書
             'VIX': VIX値またはSeries
-            'Credit_Spread': 信用スプレッド値またはSeries
-            'SP500': S&P500価格Series（MA乖離計算用）
             'ConsumerSent': ミシガン大消費者信頼感
             'NFCI': シカゴ連銀金融環境指数
     
     Returns:
         (総合スコア, 詳細辞書)
     """
-    # 5本柱: 各20%
-    WEIGHT = 0.20
+    # 3本柱: VIX 35%, NFCI 35%, ConsumerSent 30%
     
     details = {
-        'vix': {'value': None, 'score': None, 'weight': WEIGHT},
-        'credit_spread': {'value': None, 'score': None, 'weight': WEIGHT},
-        'ma_deviation': {'value': None, 'score': None, 'weight': WEIGHT},
-        'consumer_sent': {'value': None, 'score': None, 'weight': WEIGHT},
-        'nfci': {'value': None, 'score': None, 'weight': WEIGHT},
+        'vix': {'value': None, 'score': None, 'weight': 0.35},
+        'nfci': {'value': None, 'score': None, 'weight': 0.35},
+        'consumer_sent': {'value': None, 'score': None, 'weight': 0.30},
         'components_available': 0,
         'data_quality': 'unknown'
     }
@@ -229,7 +222,7 @@ def calculate_sentiment_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
     weighted_sum = 0.0
     total_weight = 0.0
     
-    # --- 1. VIX (20%) ---
+    # --- 1. VIX (35%) ---
     vix_data = data.get('VIX')
     if vix_data is not None:
         if isinstance(vix_data, pd.Series) and len(vix_data) > 0:
@@ -246,64 +239,11 @@ def calculate_sentiment_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
             details['vix']['value'] = vix_val
             vix_score = score_vix(vix_val, vix_series)
             details['vix']['score'] = vix_score
-            weighted_sum += vix_score * WEIGHT
-            total_weight += WEIGHT
+            weighted_sum += vix_score * 0.35
+            total_weight += 0.35
             details['components_available'] += 1
     
-    # --- 2. Credit Spread (20%) ---
-    spread_data = data.get('Credit_Spread')
-    if spread_data is not None:
-        if isinstance(spread_data, pd.Series) and len(spread_data) > 0:
-            spread_val = spread_data.iloc[-1]
-            spread_series = spread_data
-        elif isinstance(spread_data, (int, float)):
-            spread_val = float(spread_data)
-            spread_series = None
-        else:
-            spread_val = None
-            spread_series = None
-        
-        if spread_val is not None and not pd.isna(spread_val):
-            details['credit_spread']['value'] = spread_val
-            spread_score = score_credit_spread(spread_val, spread_series)
-            details['credit_spread']['score'] = spread_score
-            weighted_sum += spread_score * WEIGHT
-            total_weight += WEIGHT
-            details['components_available'] += 1
-    
-    # --- 3. MA Deviation (20%) ---
-    sp500_data = data.get('SP500')
-    if sp500_data is not None and isinstance(sp500_data, pd.Series) and len(sp500_data) >= 200:
-        ma_score, deviation_pct = score_ma_deviation(sp500_data)
-        details['ma_deviation']['value'] = deviation_pct
-        details['ma_deviation']['deviation_pct'] = deviation_pct
-        details['ma_deviation']['score'] = ma_score
-        weighted_sum += ma_score * WEIGHT
-        total_weight += WEIGHT
-        details['components_available'] += 1
-    
-    # --- 4. Consumer Sentiment (20%) ---
-    cs_data = data.get('ConsumerSent')
-    if cs_data is not None:
-        if isinstance(cs_data, pd.Series) and len(cs_data) > 0:
-            cs_val = cs_data.iloc[-1]
-            cs_series = cs_data
-        elif isinstance(cs_data, (int, float)):
-            cs_val = float(cs_data)
-            cs_series = None
-        else:
-            cs_val = None
-            cs_series = None
-        
-        if cs_val is not None and not pd.isna(cs_val):
-            details['consumer_sent']['value'] = cs_val
-            cs_score = score_consumer_sentiment(cs_val, cs_series)
-            details['consumer_sent']['score'] = cs_score
-            weighted_sum += cs_score * WEIGHT
-            total_weight += WEIGHT
-            details['components_available'] += 1
-    
-    # --- 5. NFCI (20%) ---
+    # --- 2. NFCI (35%) ---
     nfci_data = data.get('NFCI')
     if nfci_data is not None:
         if isinstance(nfci_data, pd.Series) and len(nfci_data) > 0:
@@ -320,8 +260,29 @@ def calculate_sentiment_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
             details['nfci']['value'] = nfci_val
             nfci_score = score_nfci(nfci_val, nfci_series)
             details['nfci']['score'] = nfci_score
-            weighted_sum += nfci_score * WEIGHT
-            total_weight += WEIGHT
+            weighted_sum += nfci_score * 0.35
+            total_weight += 0.35
+            details['components_available'] += 1
+    
+    # --- 3. Consumer Sentiment (30%) ---
+    cs_data = data.get('ConsumerSent')
+    if cs_data is not None:
+        if isinstance(cs_data, pd.Series) and len(cs_data) > 0:
+            cs_val = cs_data.iloc[-1]
+            cs_series = cs_data
+        elif isinstance(cs_data, (int, float)):
+            cs_val = float(cs_data)
+            cs_series = None
+        else:
+            cs_val = None
+            cs_series = None
+        
+        if cs_val is not None and not pd.isna(cs_val):
+            details['consumer_sent']['value'] = cs_val
+            cs_score = score_consumer_sentiment(cs_val, cs_series)
+            details['consumer_sent']['score'] = cs_score
+            weighted_sum += cs_score * 0.30
+            total_weight += 0.30
             details['components_available'] += 1
     
     # --- 総合スコア計算 ---
@@ -332,8 +293,8 @@ def calculate_sentiment_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
     else:
         final_score = 50.0
     
-    # データ品質判定（5本柱）
-    if details['components_available'] >= 4:
+    # データ品質判定（3本柱）
+    if details['components_available'] >= 3:
         details['data_quality'] = 'good'
     elif details['components_available'] >= 2:
         details['data_quality'] = 'partial'
@@ -401,8 +362,6 @@ if __name__ == '__main__':
     
     test_data = {
         'VIX': pd.Series(np.random.normal(18, 5, 300), index=dates),
-        'Credit_Spread': pd.Series(np.random.normal(4, 1, 300), index=dates),
-        'SP500': pd.Series(np.cumsum(np.random.randn(300) * 0.5 + 0.1) + 4500, index=dates),
         'ConsumerSent': pd.Series(np.random.normal(70, 10, 300), index=dates),
         'NFCI': pd.Series(np.random.normal(-0.2, 0.3, 300), index=dates),
     }
@@ -412,5 +371,5 @@ if __name__ == '__main__':
     
     print(f"Sentiment Score: {score:.1f}")
     print(f"Interpretation: {interpretation['label']} ({interpretation['level']})")
-    print(f"Components available: {details['components_available']}/5")
+    print(f"Components available: {details['components_available']}/3")
     print(f"Data quality: {details['data_quality']}")

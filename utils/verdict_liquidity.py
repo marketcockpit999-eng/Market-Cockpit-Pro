@@ -5,10 +5,9 @@ MARKET VERDICT - Liquidity Score Calculator
 流動性スコア（0-100）を計算するモジュール
 
 スコア構成:
-  - Net Liquidity パーセンタイル × 40%
+  - Net Liquidity パーセンタイル × 50%
   - Reserves パーセンタイル × 30%
-  - ON_RRP 逆パーセンタイル × 20%  (低いほど良い)
-  - M2 YoY変化率スコア × 10%
+  - M2 YoY変化率スコア × 20%
 
 使用方法:
   from utils.verdict_liquidity import calculate_liquidity_score
@@ -96,10 +95,9 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
     details = {
         'fed_assets': {'value': None, 'score': None, 'weight': 0.00},  # 参考情報
         'tga': {'value': None, 'score': None, 'weight': 0.00},  # 参考情報
-        'net_liquidity': {'value': None, 'score': None, 'weight': 0.40},
+        'net_liquidity': {'value': None, 'score': None, 'weight': 0.50},
         'reserves': {'value': None, 'score': None, 'weight': 0.30},
-        'on_rrp': {'value': None, 'score': None, 'weight': 0.20},
-        'm2_growth': {'value': None, 'score': None, 'weight': 0.10},
+        'm2_growth': {'value': None, 'score': None, 'weight': 0.20},
         'components_available': 0,
         'data_quality': 'unknown'
     }
@@ -145,7 +143,7 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
         tga_pct = get_percentile_rank(tga_series, tga_val) if tga_series is not None else 50.0
         details['tga']['score'] = 100 - tga_pct  # 低TGA = 高スコア
     
-    # --- 1. Net Liquidity (40%) ---
+    # --- 1. Net Liquidity (50%) ---
     if all(v is not None for v in [fed_val, tga_val, rrp_val]):
         net_liq = calculate_net_liquidity(fed_val, tga_val, rrp_val)
         details['net_liquidity']['value'] = net_liq
@@ -165,8 +163,8 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
             percentile = 50.0
         
         details['net_liquidity']['score'] = percentile
-        weighted_sum += percentile * 0.40
-        total_weight += 0.40
+        weighted_sum += percentile * 0.50
+        total_weight += 0.50
         details['components_available'] += 1
     
     # --- 2. Reserves (30%) ---
@@ -178,17 +176,7 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
         total_weight += 0.30
         details['components_available'] += 1
     
-    # --- 3. ON_RRP (20%) - 逆スコア（低いほど良い） ---
-    if rrp_val is not None:
-        details['on_rrp']['value'] = rrp_val
-        percentile = get_percentile_rank(rrp_series, rrp_val) if rrp_series is not None else 50.0
-        inverse_percentile = 100 - percentile  # 低いほどスコア高
-        details['on_rrp']['score'] = inverse_percentile
-        weighted_sum += inverse_percentile * 0.20
-        total_weight += 0.20
-        details['components_available'] += 1
-    
-    # --- 4. M2 Growth (10%) ---
+    # --- 3. M2 Growth (20%) ---
     if m2_series is not None and len(m2_series) > 252:
         yoy_score = get_yoy_change_score(m2_series)
         # YoY変化率も計算してvalueに保存
@@ -198,8 +186,8 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
             yoy_pct = ((current - year_ago) / abs(year_ago)) * 100
             details['m2_growth']['value'] = yoy_pct
         details['m2_growth']['score'] = yoy_score
-        weighted_sum += yoy_score * 0.10
-        total_weight += 0.10
+        weighted_sum += yoy_score * 0.20
+        total_weight += 0.20
         details['components_available'] += 1
     
     # --- 総合スコア計算 ---
@@ -210,7 +198,7 @@ def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
         final_score = 50.0  # データなし時は中立
     
     # データ品質判定
-    if details['components_available'] >= 4:
+    if details['components_available'] >= 3:
         details['data_quality'] = 'good'
     elif details['components_available'] >= 2:
         details['data_quality'] = 'partial'
@@ -282,5 +270,5 @@ if __name__ == '__main__':
     
     print(f"Liquidity Score: {score:.1f}")
     print(f"Interpretation: {interpretation['label']} ({interpretation['level']})")
-    print(f"Components available: {details['components_available']}/4")
+    print(f"Components available: {details['components_available']}/3")
     print(f"Data quality: {details['data_quality']}")
