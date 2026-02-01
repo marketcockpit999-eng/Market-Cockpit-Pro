@@ -425,6 +425,183 @@ def score_tga_pressure(tga_series: pd.Series) -> Tuple[float, Dict[str, Any]]:
     }
 
 
+# =============================================================================
+# V2 スコア計算関数（Tier 2）
+# =============================================================================
+
+def score_reserves_deviation(reserves_series: pd.Series) -> Tuple[float, Dict[str, Any]]:
+    """
+    準備金の5年平均からの偏差をスコア化（0-12点）
+    
+    金融的根拠:
+      - 2019年レポ危機は準備金不足が原因
+      - Fed目安: 最低準備金水準は約2,500B
+      - 5年平均からの乖離で「相対的な余裕度」を測定
+    
+    スコア変換:
+      deviation +10%以上 → 12点（準備金潤沢）
+      deviation 0～+10% → 9点（平均以上）
+      deviation -10%～0% → 6点（平均以下）
+      deviation -20%～-10% → 3点（逼迫警告）
+      deviation -20%以下 → 0点（危機水準）
+    """
+    MAX_POINTS = 12
+    NEUTRAL_SCORE = MAX_POINTS / 2  # 6
+    LOOKBACK_WEEKS = 260  # 約5年
+    
+    if reserves_series is None or len(reserves_series) < 52:  # 最低1年
+        return NEUTRAL_SCORE, {'value': None, 'status': 'insufficient_data'}
+    
+    current = reserves_series.iloc[-1]
+    
+    if pd.isna(current):
+        return NEUTRAL_SCORE, {'value': None, 'status': 'nan'}
+    
+    # 5年平均（または利用可能な全期間）
+    lookback = min(LOOKBACK_WEEKS, len(reserves_series))
+    avg_5y = reserves_series.tail(lookback).mean()
+    
+    if avg_5y == 0 or pd.isna(avg_5y):
+        return NEUTRAL_SCORE, {'value': current, 'status': 'avg_nan'}
+    
+    deviation_pct = (current - avg_5y) / avg_5y * 100
+    
+    # スコア変換
+    if deviation_pct >= 10:
+        score = 12
+    elif deviation_pct >= 0:
+        score = 9 + (deviation_pct / 10) * 3
+    elif deviation_pct >= -10:
+        score = 6 + (deviation_pct + 10) / 10 * 3
+    elif deviation_pct >= -20:
+        score = 3 + (deviation_pct + 20) / 10 * 3
+    else:
+        score = max(0, 3 + (deviation_pct + 20) / 10 * 3)
+    
+    return float(np.clip(score, 0, MAX_POINTS)), {
+        'value': current,
+        'avg_5y': avg_5y,
+        'deviation_pct': deviation_pct,
+        'status': 'ok'
+    }
+
+
+def score_sofr_appropriateness(sofr_series: pd.Series, 
+                                ff_upper_series: pd.Series) -> Tuple[float, Dict[str, Any]]:
+    """
+    SOFR適正性をスコア化（0-10点）
+    
+    金融的根拠:
+      - SOFRがFF上限を上回る = 短期金融市場のストレス
+      - 2019年レポ危機時、SOFRは一時的に急騰
+      - 通常、SOFRはFF上限より5-15bp低い
+    
+    スコア変換:
+      spread <= -5bp → 10点（SOFR正常、余裕あり）
+      spread -5～0bp → 8点（正常範囲）
+      spread 0～+5bp → 6点（タイト気味）
+      spread +5～+15bp → 4点（ストレス兆候）
+      spread +15bp以上 → 2点（短期市場ストレス）
+    """
+    MAX_POINTS = 10
+    NEUTRAL_SCORE = MAX_POINTS / 2  # 5
+    
+    if sofr_series is None or ff_upper_series is None:
+        return NEUTRAL_SCORE, {'value': None, 'status': 'insufficient_data'}
+    
+    if len(sofr_series) == 0 or len(ff_upper_series) == 0:
+        return NEUTRAL_SCORE, {'value': None, 'status': 'insufficient_data'}
+    
+    sofr = sofr_series.iloc[-1]
+    ff_upper = ff_upper_series.iloc[-1]
+    
+    if pd.isna(sofr) or pd.isna(ff_upper):
+        return NEUTRAL_SCORE, {'value': None, 'status': 'nan'}
+    
+    # スプレッド計算（bps）
+    spread_bps = (sofr - ff_upper) * 100
+    
+    # スコア変換
+    if spread_bps <= -5:
+        score = 10
+    elif spread_bps <= 0:
+        score = 8 + (-spread_bps / 5) * 2
+    elif spread_bps <= 5:
+        score = 6 - (spread_bps / 5) * 2
+    elif spread_bps <= 15:
+        score = 4 - (spread_bps - 5) / 10 * 2
+    else:
+        score = max(0, 2 - (spread_bps - 15) / 10 * 2)
+    
+    return float(np.clip(score, 0, MAX_POINTS)), {
+        'sofr': sofr,
+        'ff_upper': ff_upper,
+        'spread_bps': spread_bps,
+        'status': 'ok'
+    }
+
+
+def score_real_m2_growth(m2_series: pd.Series, 
+                          pce_series: pd.Series) -> Tuple[float, Dict[str, Any]]:
+    """
+    M2実質成長率をスコア化（0-13点）
+    
+    金融的根拠:
+      - 名目M2成長がインフレ率を下回る = 実質流動性縮小
+      - 実質M2成長率 = 経済への実質的な流動性供給
+      - Michael Howell理論: 実質流動性が資産価格を決定
+    
+    スコア変換:
+      real_growth +5%以上 → 13点（実質拡大）
+      real_growth +2～+5% → 10点（穏やかな拡大）
+      real_growth 0～+2% → 7点（維持）
+      real_growth -3%～0% → 4点（実質縮小）
+      real_growth -3%以下 → 1点（大幅な実質縮小）
+    """
+    MAX_POINTS = 13
+    NEUTRAL_SCORE = MAX_POINTS / 2  # 6.5
+    
+    if m2_series is None or len(m2_series) < 252:  # 1年分
+        return NEUTRAL_SCORE, {'value': None, 'status': 'insufficient_data'}
+    
+    m2_current = m2_series.iloc[-1]
+    m2_1y_ago = m2_series.iloc[-252] if len(m2_series) >= 252 else m2_series.iloc[0]
+    
+    if pd.isna(m2_current) or pd.isna(m2_1y_ago) or m2_1y_ago == 0:
+        return NEUTRAL_SCORE, {'value': None, 'status': 'nan'}
+    
+    m2_yoy = (m2_current - m2_1y_ago) / m2_1y_ago * 100
+    
+    # CorePCE取得（すでにYoY%として提供）
+    if pce_series is not None and len(pce_series) > 0:
+        core_pce = pce_series.iloc[-1]
+        if pd.isna(core_pce):
+            core_pce = 2.5  # デフォルト
+    else:
+        core_pce = 2.5  # デフォルト
+    
+    real_growth = m2_yoy - core_pce
+    
+    # スコア変換
+    if real_growth >= 5:
+        score = 13
+    elif real_growth >= 2:
+        score = 10 + (real_growth - 2) / 3 * 3
+    elif real_growth >= 0:
+        score = 7 + (real_growth / 2) * 3
+    elif real_growth >= -3:
+        score = 4 + (real_growth + 3) / 3 * 3
+    else:
+        score = max(0, 1 + (real_growth + 3) / 3 * 3)
+    
+    return float(np.clip(score, 0, MAX_POINTS)), {
+        'm2_yoy': m2_yoy,
+        'core_pce': core_pce,
+        'real_growth': real_growth,
+        'status': 'ok'
+    }
+
+
 def calculate_liquidity_score_v2(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
     """
     流動性スコアv2を計算（0-100点）
@@ -435,7 +612,7 @@ def calculate_liquidity_score_v2(data: Dict[str, Any]) -> Tuple[float, Dict[str,
         ├─ ON RRP枯渇度:       15点
         └─ TGA圧力指数:        20点
       
-      【Tier 2】システミック指標（35点）- スレッド4で実装予定
+      【Tier 2】システミック指標（35点）
         ├─ 銀行準備金偏差:     12点
         ├─ SOFR適正性:         10点
         └─ M2実質成長率:       13点
@@ -533,14 +710,48 @@ def calculate_liquidity_score_v2(data: Dict[str, Any]) -> Tuple[float, Dict[str,
     details['components_available'] += tier1_components
     
     # =================================================================
-    # Tier 2: システミック指標（35点）- スレッド4で実装予定
+    # Tier 2: システミック指標（35点）
     # =================================================================
-    # 中立スコアで埋める（Tier 2の50%）
-    tier2_neutral = 35 / 2  # 17.5
-    details['tier2']['subtotal'] = tier2_neutral
-    details['tier2']['reserves_deviation']['score'] = 6  # 12の半分
-    details['tier2']['sofr_appropriateness']['score'] = 5  # 10の半分
-    details['tier2']['real_m2_growth']['score'] = 6.5  # 13の半分
+    tier2_total = 0
+    tier2_components = 0
+    
+    # 2.1 準備金偏差（12点）
+    reserves_series = extract_series('Reserves')
+    score, meta = score_reserves_deviation(reserves_series)
+    details['tier2']['reserves_deviation']['score'] = score
+    details['tier2']['reserves_deviation']['details'] = meta
+    if meta.get('status') == 'ok':
+        tier2_total += score
+        tier2_components += 1
+    else:
+        tier2_total += score  # 中立スコアも加算
+    
+    # 2.2 SOFR適正性（10点）
+    sofr_series = extract_series('SOFR')
+    ff_upper_series = extract_series('FedFundsUpper')
+    score, meta = score_sofr_appropriateness(sofr_series, ff_upper_series)
+    details['tier2']['sofr_appropriateness']['score'] = score
+    details['tier2']['sofr_appropriateness']['details'] = meta
+    if meta.get('status') == 'ok':
+        tier2_total += score
+        tier2_components += 1
+    else:
+        tier2_total += score
+    
+    # 2.3 M2実質成長率（13点）
+    m2_series = extract_series('M2SL')
+    pce_series = extract_series('CorePCE')
+    score, meta = score_real_m2_growth(m2_series, pce_series)
+    details['tier2']['real_m2_growth']['score'] = score
+    details['tier2']['real_m2_growth']['details'] = meta
+    if meta.get('status') == 'ok':
+        tier2_total += score
+        tier2_components += 1
+    else:
+        tier2_total += score
+    
+    details['tier2']['subtotal'] = tier2_total
+    details['components_available'] += tier2_components
     
     # =================================================================
     # Tier 3: 市場シグナル（15点）- スレッド5で実装予定
@@ -563,10 +774,11 @@ def calculate_liquidity_score_v2(data: Dict[str, Any]) -> Tuple[float, Dict[str,
     
     details['total_score'] = float(np.clip(total_score, 0, 100))
     
-    # データ品質判定（現在はTier 1の3指標のみ）
-    if tier1_components >= 3:
+    # データ品質判定（Tier 1 + Tier 2 の6指標で判定）
+    total_components = tier1_components + tier2_components
+    if total_components >= 5:
         details['data_quality'] = 'good'
-    elif tier1_components >= 2:
+    elif total_components >= 3:
         details['data_quality'] = 'partial'
     else:
         details['data_quality'] = 'insufficient'
@@ -583,11 +795,16 @@ if __name__ == '__main__':
     
     dates = pd.date_range('2022-01-01', periods=600, freq='D')
     test_data = {
+        # Tier 1 data
         'SOMA_Total': pd.Series(np.random.normal(7500, 200, 600), index=dates),
         'TGA': pd.Series(np.random.normal(500, 100, 600), index=dates),
         'ON_RRP': pd.Series(np.random.normal(500, 200, 600), index=dates),
+        # Tier 2 data
         'Reserves': pd.Series(np.random.normal(3200, 150, 600), index=dates),
         'M2SL': pd.Series(np.linspace(20000, 21000, 600), index=dates),
+        'SOFR': pd.Series(np.random.normal(4.30, 0.05, 600), index=dates),
+        'FedFundsUpper': pd.Series(np.full(600, 4.50), index=dates),
+        'CorePCE': pd.Series(np.random.normal(2.8, 0.2, 600), index=dates),
     }
     
     score, details = calculate_liquidity_score(test_data)
@@ -599,7 +816,7 @@ if __name__ == '__main__':
     print(f"Data quality: {details['data_quality']}")
     
     print("\n" + "="*50)
-    print("V2 Score Test (Tier 1 only)")
+    print("V2 Score Test (Tier 1 + Tier 2)")
     print("="*50)
     
     # V2テスト
@@ -608,8 +825,10 @@ if __name__ == '__main__':
     
     print(f"Liquidity Score (v2): {score_v2:.1f}")
     print(f"Interpretation: {interpretation_v2['label']} ({interpretation_v2['level']})")
+    print(f"Components available: {details_v2['components_available']}/6")
     print(f"Data quality: {details_v2['data_quality']}")
-    print(f"\nTier 1 Details:")
+    
+    print(f"\nTier 1 Details (50 points):")
     t1 = details_v2['tier1']
     print(f"  Fed Assets Change: {t1['fed_assets_change']['score']:.1f}/15")
     print(f"    -> MoM%: {t1['fed_assets_change']['details'].get('value', 'N/A')}")
@@ -621,5 +840,21 @@ if __name__ == '__main__':
     print(f"    -> Level: {t1['tga_pressure']['details'].get('level_score', 'N/A')}/10")
     print(f"    -> Speed: {t1['tga_pressure']['details'].get('speed_score', 'N/A')}/10")
     print(f"  Subtotal: {t1['subtotal']:.1f}/50")
-    print(f"\nTier 2 (placeholder): {details_v2['tier2']['subtotal']:.1f}/35")
-    print(f"Tier 3 (placeholder): {details_v2['tier3']['subtotal']:.1f}/15")
+    
+    print(f"\nTier 2 Details (35 points):")
+    t2 = details_v2['tier2']
+    print(f"  Reserves Deviation: {t2['reserves_deviation']['score']:.1f}/12")
+    print(f"    -> Value: {t2['reserves_deviation']['details'].get('value', 'N/A')}B")
+    print(f"    -> 5Y Avg: {t2['reserves_deviation']['details'].get('avg_5y', 'N/A')}B")
+    print(f"    -> Deviation: {t2['reserves_deviation']['details'].get('deviation_pct', 'N/A')}%")
+    print(f"  SOFR Appropriateness: {t2['sofr_appropriateness']['score']:.1f}/10")
+    print(f"    -> SOFR: {t2['sofr_appropriateness']['details'].get('sofr', 'N/A')}%")
+    print(f"    -> FF Upper: {t2['sofr_appropriateness']['details'].get('ff_upper', 'N/A')}%")
+    print(f"    -> Spread: {t2['sofr_appropriateness']['details'].get('spread_bps', 'N/A')}bp")
+    print(f"  Real M2 Growth: {t2['real_m2_growth']['score']:.1f}/13")
+    print(f"    -> M2 YoY: {t2['real_m2_growth']['details'].get('m2_yoy', 'N/A')}%")
+    print(f"    -> Core PCE: {t2['real_m2_growth']['details'].get('core_pce', 'N/A')}%")
+    print(f"    -> Real Growth: {t2['real_m2_growth']['details'].get('real_growth', 'N/A')}%")
+    print(f"  Subtotal: {t2['subtotal']:.1f}/35")
+    
+    print(f"\nTier 3 (placeholder): {details_v2['tier3']['subtotal']:.1f}/15")
