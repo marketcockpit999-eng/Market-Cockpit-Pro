@@ -897,7 +897,7 @@ def calculate_tier4_score(data: Dict[str, Any]) -> Tuple[Optional[float], Dict]:
 # =============================================================================
 
 # 新旧切り替えフラグ
-USE_NEW_CYCLE_LOGIC = False  # True: 新4-Tier方式, False: 旧7本柱方式
+USE_NEW_CYCLE_LOGIC = True  # True: 新4-Tier方式, False: 旧7本柱方式
 
 
 def calculate_new_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
@@ -972,155 +972,41 @@ def calculate_new_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, An
     return details['total_score'], details
 
 
-def calculate_old_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
-    """
-    サイクル位置スコアを計算 (7本柱)
-    
-    Args:
-        data: データ辞書
-            'T10Y2Y': イールドカーブ
-            'UNRATE': 失業率
-            'Credit_Spread': 信用スプレッド
-            'Leading_Index': 先行指標
-            'CI_Std_Large': SLOOS C&I基準（大企業）
-            'CI_Std_Small': SLOOS C&I基準（小企業）
-            + 地区連銀製造業・サービス業
-    
-    Returns:
-        (総合スコア, 詳細辞書)
-    """
-    details = {
-        'yield_curve': {'value': None, 'score': None, 'weight': 0.25},
-        'unemployment': {'value': None, 'score': None, 'weight': 0.15},
-        'credit_spread': {'value': None, 'score': None, 'weight': 0.15},
-        'sloos_std': {'value': None, 'score': None, 'weight': 0.15},
-        'leading_index': {'value': None, 'score': None, 'weight': 0.10},
-        'mfg_composite': {'value': None, 'score': None, 'weight': 0.10},
-        'svc_composite': {'value': None, 'score': None, 'weight': 0.10},
-        'components_available': 0,
-        'data_quality': 'unknown'
-    }
-    
-    def extract_series_and_value(key: str) -> Tuple[Optional[pd.Series], Optional[float]]:
-        item = data.get(key)
-        if item is None:
-            return None, None
-        
-        if isinstance(item, pd.Series):
-            return item, item.iloc[-1] if len(item) > 0 else None
-        elif isinstance(item, dict):
-            series = item.get('series') or item.get('data')
-            value = item.get('value') or item.get('latest')
-            if series is not None and value is None and len(series) > 0:
-                value = series.iloc[-1]
-            return series, value
-        elif isinstance(item, (int, float)):
-            return None, float(item)
-        return None, None
-    
-    weighted_sum = 0.0
-    total_weight = 0.0
-    
-    # --- 1. Yield Curve (25%) ---
-    yc_series, yc_val = extract_series_and_value('T10Y2Y')
-    if yc_val is not None:
-        score = score_yield_curve(yc_val, yc_series)
-        details['yield_curve']['value'] = yc_val
-        details['yield_curve']['score'] = score
-        weighted_sum += score * 0.25
-        total_weight += 0.25
-        details['components_available'] += 1
-    
-    # --- 2. Unemployment (15%) ---
-    ur_series, ur_val = extract_series_and_value('UNRATE')
-    if ur_series is not None and len(ur_series) > 60:
-        score = score_unemployment_trend(ur_series)
-        details['unemployment']['value'] = ur_val
-        details['unemployment']['score'] = score
-        weighted_sum += score * 0.15
-        total_weight += 0.15
-        details['components_available'] += 1
-    
-    # --- 3. Credit Spread (15%) ---
-    cs_series, cs_val = extract_series_and_value('Credit_Spread')
-    if cs_val is not None:
-        score = score_credit_spread(cs_val, cs_series)
-        details['credit_spread']['value'] = cs_val
-        details['credit_spread']['score'] = score
-        weighted_sum += score * 0.15
-        total_weight += 0.15
-        details['components_available'] += 1
-    
-    # --- 4. SLOOS Standards (15%) - NEW ---
-    sloos_score, sloos_info = score_sloos_standards(data)
-    if sloos_score is not None:
-        details['sloos_std']['value'] = sloos_info['average']
-        details['sloos_std']['score'] = sloos_score
-        details['sloos_std']['available'] = sloos_info['available']
-        weighted_sum += sloos_score * 0.15
-        total_weight += 0.15
-        details['components_available'] += 1
-    
-    # --- 5. Leading Index (10%) ---
-    li_series, li_val = extract_series_and_value('Leading_Index')
-    if li_val is not None:
-        score = score_leading_index(li_val, li_series)
-        details['leading_index']['value'] = li_val
-        details['leading_index']['score'] = score
-        weighted_sum += score * 0.10
-        total_weight += 0.10
-        details['components_available'] += 1
-    
-    # --- 6. Manufacturing Composite (10%) ---
-    mfg_score, mfg_info = score_manufacturing_composite(data)
-    if mfg_score is not None:
-        details['mfg_composite']['value'] = mfg_info['average']
-        details['mfg_composite']['score'] = mfg_score
-        details['mfg_composite']['available'] = mfg_info['available']
-        weighted_sum += mfg_score * 0.10
-        total_weight += 0.10
-        details['components_available'] += 1
-    
-    # --- 7. Services Composite (10%) ---
-    svc_score, svc_info = score_services_composite(data)
-    if svc_score is not None:
-        details['svc_composite']['value'] = svc_info['average']
-        details['svc_composite']['score'] = svc_score
-        details['svc_composite']['available'] = svc_info['available']
-        weighted_sum += svc_score * 0.10
-        total_weight += 0.10
-        details['components_available'] += 1
-    
-    # --- 総合スコア ---
-    if total_weight > 0:
-        final_score = weighted_sum / total_weight * (total_weight / 1.0)
-        final_score = np.clip(final_score, 0, 100)
-    else:
-        final_score = 50.0
-    
-    # データ品質（7本柱対応）
-    if details['components_available'] >= 5:
-        details['data_quality'] = 'good'
-    elif details['components_available'] >= 3:
-        details['data_quality'] = 'partial'
-    else:
-        details['data_quality'] = 'insufficient'
-    
-    return float(final_score), details
+# OLD LOGIC: 7本柱方式（削除予定）
+# def calculate_old_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
+#     """
+#     サイクル位置スコアを計算 (7本柱)
+#     
+#     DEPRECATED: 旧方式のため削除予定
+#     新4-Tier方式（calculate_new_cycle_score）に移行済み
+#     
+#     Args:
+#         data: データ辞書
+#             'T10Y2Y': イールドカーブ
+#             'UNRATE': 失業率
+#             'Credit_Spread': 信用スプレッド
+#             'Leading_Index': 先行指標
+#             'CI_Std_Large': SLOOS C&I基準（大企業）
+#             'CI_Std_Small': SLOOS C&I基準（小企業）
+#             + 地区連銀製造業・サービス業
+#     
+#     Returns:
+#         (総合スコア, 詳細辞書)
+#     """
+#     pass  # 削除済み
 
 
 def calculate_cycle_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
     """
     サイクル位置スコアを計算
     
-    USE_NEW_CYCLE_LOGIC フラグに応じて新旧方式を切り替え
-    - True: 新4-Tier方式（100点満点）
-    - False: 旧7本柱方式（100点満点）
+    新4-Tier方式で統一（100点満点）
+    - Tier 1: 経済成長サイクル (45点)
+    - Tier 2: 労働・インフレ・金融環境 (35点) 
+    - Tier 3: センチメント・期待値 (15点)
+    - Tier 4: テクニカル・トレンド (5点)
     """
-    if USE_NEW_CYCLE_LOGIC:
-        return calculate_new_cycle_score(data)
-    else:
-        return calculate_old_cycle_score(data)
+    return calculate_new_cycle_score(data)
 
 
 def interpret_cycle_score(score: float) -> Dict[str, str]:
@@ -1163,7 +1049,7 @@ def interpret_cycle_score(score: float) -> Dict[str, str]:
 # テスト用
 # =============================================================================
 if __name__ == '__main__':
-    # ダミーデータでテスト（新旧両方 + 全Tier）
+    # ダミーデータでテスト（新4-Tier方式のみ）
     dates = pd.date_range('2022-01-01', periods=300, freq='D')
     test_data = {
         'T10Y2Y': pd.Series(np.random.normal(0.5, 0.3, 300), index=dates),
@@ -1181,48 +1067,23 @@ if __name__ == '__main__':
         'SPX': pd.Series(np.cumsum(np.random.normal(0.05, 1, 300)) + 4500, index=dates),
     }
     
-    # 旧スコア（7本柱）
-    score, details = calculate_old_cycle_score(test_data)
+    # 新方式（4-Tier）テスト
+    score, details = calculate_cycle_score(test_data)
     interpretation = interpret_cycle_score(score)
     
-    print("=== 旧方式 (7本柱) ===")
+    print("=== 新4-Tier方式 ===")
     print(f"Cycle Score: {score:.1f}")
     print(f"Interpretation: {interpretation['label']} ({interpretation['level']})")
-    print(f"Components: {details['components_available']}/7")
-    
-    # 新スコア（4-Tier）
-    new_score, new_details = calculate_new_cycle_score(test_data)
-    new_interpretation = interpret_cycle_score(new_score)
-    
-    print("\n=== 新方式 (4-Tier) ===")
-    print(f"Cycle Score: {new_score:.1f}")
-    print(f"Interpretation: {new_interpretation['label']} ({new_interpretation['level']})")
-    print(f"Tiers: {new_details['tiers_available']}/4")
+    print(f"Tiers Available: {details['tiers_available']}/4")
+    print(f"Data Quality: {details['data_quality']}")
     
     # Tier別詳細
     for tier_name in ['tier1', 'tier2', 'tier3', 'tier4']:
-        tier_info = new_details[tier_name]
+        tier_info = details[tier_name]
         if tier_info['score'] is not None:
-            print(f"  {tier_name.upper()}: {tier_info['score']:.1f}/{tier_info['weight']:.0f}")
+            print(f"  {tier_name.upper()}: {tier_info['score']:.1f}/{tier_info['weight']:.0f} points")
         else:
             print(f"  {tier_name.upper()}: N/A")
-    
-    # 切り替えテスト
-    print("\n=== 切り替えテスト ===")
-    
-    # 旧方式でテスト
-    global USE_NEW_CYCLE_LOGIC
-    USE_NEW_CYCLE_LOGIC = False
-    unified_score, unified_details = calculate_cycle_score(test_data)
-    print(f"フラグFalse: {unified_score:.1f} (旧方式)")
-    
-    # 新方式でテスト
-    USE_NEW_CYCLE_LOGIC = True
-    unified_score, unified_details = calculate_cycle_score(test_data)
-    print(f"フラグTrue: {unified_score:.1f} (新方式)")
-    
-    # フラグをリセット
-    USE_NEW_CYCLE_LOGIC = False
     
     # 個別関数テスト
     print("\n=== 新関数個別テスト ===")
@@ -1237,3 +1098,5 @@ if __name__ == '__main__':
     print(f"NFCI Score: {nfci_score:.1f}")
     print(f"VIX Score: {vix_score:.1f} (VIX: {vix_info['vix_value']:.1f})")
     print(f"Consumer Sentiment Score: {cs_score:.1f} (CS: {cs_info['sentiment_value']:.1f})")
+    
+    print("\n✅ 新4-Tier方式への移行完了")
