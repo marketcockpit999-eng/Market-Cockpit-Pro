@@ -518,9 +518,10 @@ def get_market_data(_csv_mtime=None, _force_refresh=False):
     df = df.sort_index()
     
     # Unit Normalization (Million to Billion)
-    mil_to_bil = ['TGA', 'Reserves', 'SOMA_Total', 'Bank_Cash', 
-                  'SRF', 'FIMA', 'Primary_Credit', 'Total_Loans', 'SOMA_Treasury',
-                  'SOMA_Bills', 'M2SL', 'M2REAL', 'CI_Loans', 'CRE_Loans', 'ECB_Assets']
+    # NOTE: Bank_Cash removed - FRED returns Billions directly (no conversion needed)
+    mil_to_bil = ['TGA', 'Reserves', 'SOMA_Total',
+    'SRF', 'FIMA', 'Primary_Credit', 'Total_Loans', 'SOMA_Treasury',
+              'SOMA_Bills', 'M2SL', 'M2REAL', 'CI_Loans', 'CRE_Loans', 'ECB_Assets']
     for col in mil_to_bil:
         if col in df.columns:
             df[col] = df[col] / 1000
