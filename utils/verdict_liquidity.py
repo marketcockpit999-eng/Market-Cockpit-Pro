@@ -4,14 +4,23 @@ MARKET VERDICT - Liquidity Score Calculator
 ================================================================================
 流動性スコア（0-100）を計算するモジュール
 
-スコア構成:
-  - Net Liquidity パーセンタイル × 50%
-  - Reserves パーセンタイル × 30%
-  - M2 YoY変化率スコア × 20%
+V2スコア構成（100点満点）:
+  【Tier 1】マクロ流動性環境（50点）
+    - Fed資産増減率:     15点
+    - ON RRP枯渇度:       15点
+    - TGA圧力指数:        20点
+  【Tier 2】システミック指標（35点）
+    - 銀行準備金偏差:     12点
+    - SOFR適正性:         10点
+    - M2実質成長率:       13点
+  【Tier 3】市場シグナル（15点）
+    - CP Spread:          5点
+    - MOVE Index:         5点
+    - Credit Spread:      5点
 
 使用方法:
-  from utils.verdict_liquidity import calculate_liquidity_score
-  score, details = calculate_liquidity_score(data_dict)
+  from utils.verdict_liquidity import calculate_liquidity_score_v2
+  score, details = calculate_liquidity_score_v2(data_dict)
 ================================================================================
 """
 
@@ -79,133 +88,6 @@ def calculate_net_liquidity(fed_assets: float, tga: float, on_rrp: float) -> flo
     if any(pd.isna(x) for x in [fed_assets, tga, on_rrp]):
         return np.nan
     return fed_assets - tga - on_rrp
-
-
-def calculate_liquidity_score(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
-    """
-    流動性スコアを計算
-    
-    Args:
-        data: データ辞書（キー: 'SOMA_Total', 'TGA', 'ON_RRP', 'Reserves', 'M2SL'）
-              各値は pd.Series または dict{'value': float, 'series': pd.Series}
-    
-    Returns:
-        (総合スコア, 詳細辞書)
-    """
-    details = {
-        'fed_assets': {'value': None, 'score': None, 'weight': 0.00},  # 参考情報
-        'tga': {'value': None, 'score': None, 'weight': 0.00},  # 参考情報
-        'net_liquidity': {'value': None, 'score': None, 'weight': 0.50},
-        'reserves': {'value': None, 'score': None, 'weight': 0.30},
-        'm2_growth': {'value': None, 'score': None, 'weight': 0.20},
-        'components_available': 0,
-        'data_quality': 'unknown'
-    }
-    
-    # --- データ抽出ヘルパー ---
-    def extract_series_and_value(key: str) -> Tuple[Optional[pd.Series], Optional[float]]:
-        """データ辞書から series と current value を抽出"""
-        item = data.get(key)
-        if item is None:
-            return None, None
-        
-        if isinstance(item, pd.Series):
-            return item, item.iloc[-1] if len(item) > 0 else None
-        elif isinstance(item, dict):
-            series = item.get('series') or item.get('data')
-            value = item.get('value') or item.get('latest')
-            if series is not None and value is None and len(series) > 0:
-                value = series.iloc[-1]
-            return series, value
-        elif isinstance(item, (int, float)):
-            return None, float(item)
-        return None, None
-    
-    # --- 各指標の取得 ---
-    fed_series, fed_val = extract_series_and_value('SOMA_Total')
-    tga_series, tga_val = extract_series_and_value('TGA')
-    rrp_series, rrp_val = extract_series_and_value('ON_RRP')
-    res_series, res_val = extract_series_and_value('Reserves')
-    m2_series, m2_val = extract_series_and_value('M2SL')
-    
-    weighted_sum = 0.0
-    total_weight = 0.0
-    
-    # --- 参考情報: Fed Assets, TGA ---
-    if fed_val is not None:
-        details['fed_assets']['value'] = fed_val
-        fed_pct = get_percentile_rank(fed_series, fed_val) if fed_series is not None else 50.0
-        details['fed_assets']['score'] = fed_pct
-    
-    if tga_val is not None:
-        details['tga']['value'] = tga_val
-        # TGA は低いほど良い（逆スコア）
-        tga_pct = get_percentile_rank(tga_series, tga_val) if tga_series is not None else 50.0
-        details['tga']['score'] = 100 - tga_pct  # 低TGA = 高スコア
-    
-    # --- 1. Net Liquidity (50%) ---
-    if all(v is not None for v in [fed_val, tga_val, rrp_val]):
-        net_liq = calculate_net_liquidity(fed_val, tga_val, rrp_val)
-        details['net_liquidity']['value'] = net_liq
-        
-        # Net Liquidity の時系列を構築（可能な場合）
-        if all(s is not None for s in [fed_series, tga_series, rrp_series]):
-            try:
-                # 共通インデックスで揃える
-                combined = pd.concat([fed_series, tga_series, rrp_series], axis=1)
-                combined.columns = ['fed', 'tga', 'rrp']
-                combined = combined.dropna()
-                net_series = combined['fed'] - combined['tga'] - combined['rrp']
-                percentile = get_percentile_rank(net_series, net_liq)
-            except:
-                percentile = 50.0
-        else:
-            percentile = 50.0
-        
-        details['net_liquidity']['score'] = percentile
-        weighted_sum += percentile * 0.50
-        total_weight += 0.50
-        details['components_available'] += 1
-    
-    # --- 2. Reserves (30%) ---
-    if res_val is not None:
-        details['reserves']['value'] = res_val
-        percentile = get_percentile_rank(res_series, res_val) if res_series is not None else 50.0
-        details['reserves']['score'] = percentile
-        weighted_sum += percentile * 0.30
-        total_weight += 0.30
-        details['components_available'] += 1
-    
-    # --- 3. M2 Growth (20%) ---
-    if m2_series is not None and len(m2_series) > 252:
-        yoy_score = get_yoy_change_score(m2_series)
-        # YoY変化率も計算してvalueに保存
-        current = m2_series.iloc[-1]
-        year_ago = m2_series.iloc[-252] if len(m2_series) >= 252 else m2_series.iloc[0]
-        if year_ago != 0 and not pd.isna(year_ago):
-            yoy_pct = ((current - year_ago) / abs(year_ago)) * 100
-            details['m2_growth']['value'] = yoy_pct
-        details['m2_growth']['score'] = yoy_score
-        weighted_sum += yoy_score * 0.20
-        total_weight += 0.20
-        details['components_available'] += 1
-    
-    # --- 総合スコア計算 ---
-    if total_weight > 0:
-        final_score = weighted_sum / total_weight * (total_weight / 1.0)  # 欠損補正
-        final_score = np.clip(final_score, 0, 100)
-    else:
-        final_score = 50.0  # データなし時は中立
-    
-    # データ品質判定
-    if details['components_available'] >= 3:
-        details['data_quality'] = 'good'
-    elif details['components_available'] >= 2:
-        details['data_quality'] = 'partial'
-    else:
-        details['data_quality'] = 'insufficient'
-    
-    return float(final_score), details
 
 
 def interpret_liquidity_score(score: float) -> Dict[str, str]:
