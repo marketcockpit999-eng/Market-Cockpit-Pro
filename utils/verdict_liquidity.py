@@ -250,6 +250,331 @@ def interpret_liquidity_score(score: float) -> Dict[str, str]:
 
 
 # =============================================================================
+# V2 スコア計算関数（Tier 1）
+# =============================================================================
+
+def score_fed_assets_change(soma_series: pd.Series) -> Tuple[float, Dict[str, Any]]:
+    """
+    Fed資産の月次変化率をスコア化（0-15点）
+    
+    金融的根拠:
+      - Fed資産増加 = 市場への流動性供給（QE効果）
+      - Fed資産減少 = 市場からの流動性吸収（QT効果）
+      - 月次±3%は歴史的に大きな変動
+    
+    スコア変換:
+      +3%以上 → 15点（QE的拡大）
+      +1%～+3% → 12点（穏やかな拡大）
+      -1%～+1% → 8点（横ばい）
+      -3%～-1% → 4点（穏やかなQT）
+      -3%以下 → 0点（積極的QT）
+    """
+    MAX_POINTS = 15
+    NEUTRAL_SCORE = MAX_POINTS / 2  # 7.5
+    
+    if soma_series is None or len(soma_series) < 30:
+        return NEUTRAL_SCORE, {'value': None, 'status': 'insufficient_data'}
+    
+    current = soma_series.iloc[-1]
+    one_month_ago = soma_series.iloc[-22] if len(soma_series) >= 22 else soma_series.iloc[0]
+    
+    if pd.isna(current) or pd.isna(one_month_ago) or one_month_ago == 0:
+        return NEUTRAL_SCORE, {'value': None, 'status': 'nan'}
+    
+    mom_pct = (current - one_month_ago) / one_month_ago * 100
+    
+    # 線形補間でスコア計算
+    if mom_pct >= 3:
+        score = 15
+    elif mom_pct >= 1:
+        score = 12 + (mom_pct - 1) / 2 * 3
+    elif mom_pct >= -1:
+        score = 8 + (mom_pct + 1) / 2 * 4
+    elif mom_pct >= -3:
+        score = 4 + (mom_pct + 3) / 2 * 4
+    else:
+        score = max(0, 4 + (mom_pct + 3) / 2 * 4)
+    
+    return float(np.clip(score, 0, MAX_POINTS)), {
+        'value': mom_pct,
+        'status': 'ok'
+    }
+
+
+def score_rrp_depletion(rrp_series: pd.Series) -> Tuple[float, Dict[str, Any]]:
+    """
+    ON RRP枯渇度をスコア化（0-15点）
+    
+    金融的根拠:
+      - ON_RRP高水準 = 余剰流動性の滞留（市場に出ていない）
+      - ON_RRP枯渇 = 滞留していた資金が市場に出る
+      - 枯渇完了後は準備金の減少圧力が高まる
+    
+    スコア変換:
+      枯渇度95%以上 → 15点（枯渇完了、流動性逼迫リスク）
+      枯渇度80-95% → 12点（枯渇進行中）
+      枯渇度50-80% → 9点（中間段階）
+      枯渇度20-50% → 6点（まだ余力あり）
+      枯渇度20%未満 → 3点（RRP潤沢）
+    """
+    MAX_POINTS = 15
+    NEUTRAL_SCORE = MAX_POINTS / 2  # 7.5
+    RRP_PEAK = 2554.0  # 2022年12月の歴史的ピーク（固定値）
+    
+    if rrp_series is None or len(rrp_series) == 0:
+        return NEUTRAL_SCORE, {'value': None, 'status': 'insufficient_data'}
+    
+    current = rrp_series.iloc[-1]
+    
+    if pd.isna(current):
+        return NEUTRAL_SCORE, {'value': None, 'status': 'nan'}
+    
+    # 負の値は0として扱う
+    current = max(0, current)
+    
+    # 枯渇度計算
+    depletion_pct = (RRP_PEAK - current) / RRP_PEAK * 100
+    depletion_pct = np.clip(depletion_pct, 0, 100)
+    
+    # スコア変換
+    if depletion_pct >= 95:
+        score = 15
+    elif depletion_pct >= 80:
+        score = 12 + (depletion_pct - 80) / 15 * 3
+    elif depletion_pct >= 50:
+        score = 9 + (depletion_pct - 50) / 30 * 3
+    elif depletion_pct >= 20:
+        score = 6 + (depletion_pct - 20) / 30 * 3
+    else:
+        score = 3 + (depletion_pct / 20) * 3
+    
+    return float(np.clip(score, 0, MAX_POINTS)), {
+        'value': current,
+        'depletion_pct': depletion_pct,
+        'status': 'ok'
+    }
+
+
+def score_tga_pressure(tga_series: pd.Series) -> Tuple[float, Dict[str, Any]]:
+    """
+    TGA圧力指数をスコア化（0-20点）
+    水準スコア（10点）+ 速度スコア（10点）の2軸評価
+    
+    金融的根拠:
+      - TGA = 財務省の「財布」
+      - TGA低下 = 財務省が支出 → 市場に流動性供給
+      - TGA上昇 = 財務省が蓄積 → 市場から流動性吸収
+      - 債務上限問題時にTGAは極端に変動する
+    """
+    MAX_POINTS = 20
+    NEUTRAL_SCORE = MAX_POINTS / 2  # 10
+    
+    if tga_series is None or len(tga_series) < 30:
+        return NEUTRAL_SCORE, {'value': None, 'status': 'insufficient_data'}
+    
+    current = tga_series.iloc[-1]
+    one_month_ago = tga_series.iloc[-22] if len(tga_series) >= 22 else tga_series.iloc[0]
+    
+    if pd.isna(current):
+        return NEUTRAL_SCORE, {'value': None, 'status': 'nan'}
+    
+    # 1. 水準スコア（0-10点）
+    # TGA < 400B → 10点, 400-600B → 8点, 600-800B → 6点, 800-1200B → 4点, >1200B → 2点
+    if current < 400:
+        level_score = 10
+    elif current < 600:
+        level_score = 8 + (600 - current) / 200 * 2
+    elif current < 800:
+        level_score = 6 + (800 - current) / 200 * 2
+    elif current < 1200:
+        level_score = 4 - (current - 800) / 400 * 2
+    else:
+        level_score = max(0, 2 - (current - 1200) / 400 * 2)
+    
+    level_score = np.clip(level_score, 0, 10)
+    
+    # 2. 速度スコア（0-10点）
+    # MoM変化: -200B以下 → 10点 ... +100B以上 → 0点
+    if not pd.isna(one_month_ago):
+        mom_change = current - one_month_ago
+        if mom_change <= -200:
+            speed_score = 10
+        elif mom_change <= -100:
+            speed_score = 8 + (-100 - mom_change) / 100 * 2
+        elif mom_change <= -50:
+            speed_score = 6 + (-50 - mom_change) / 50 * 2
+        elif mom_change <= 50:
+            speed_score = 4 + (-mom_change) / 50 * 2
+        elif mom_change <= 100:
+            speed_score = 2 - (mom_change - 50) / 50 * 2
+        else:
+            speed_score = max(0, 2 - (mom_change - 50) / 50 * 2)
+        speed_score = np.clip(speed_score, 0, 10)
+    else:
+        speed_score = 5  # 中立
+        mom_change = None
+    
+    total = level_score + speed_score
+    
+    return float(np.clip(total, 0, MAX_POINTS)), {
+        'value': current,
+        'level_score': float(level_score),
+        'speed_score': float(speed_score),
+        'mom_change': mom_change,
+        'status': 'ok'
+    }
+
+
+def calculate_liquidity_score_v2(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
+    """
+    流動性スコアv2を計算（0-100点）
+    
+    スコア構成:
+      【Tier 1】マクロ流動性環境（50点）
+        ├─ Fed資産増減率:      15点
+        ├─ ON RRP枯渇度:       15点
+        └─ TGA圧力指数:        20点
+      
+      【Tier 2】システミック指標（35点）- スレッド4で実装予定
+        ├─ 銀行準備金偏差:     12点
+        ├─ SOFR適正性:         10点
+        └─ M2実質成長率:       13点
+      
+      【Tier 3】市場シグナル（15点）- スレッド5で実装予定
+        ├─ CP Spread:          5点
+        ├─ MOVE Index:         5点
+        └─ Credit Spread:      5点
+    
+    Args:
+        data: データ辞書（キー: 'SOMA_Total', 'TGA', 'ON_RRP' 等）
+    
+    Returns:
+        (総合スコア, 詳細辞書)
+    """
+    details = {
+        'tier1': {
+            'fed_assets_change': {'score': None, 'max': 15, 'details': {}},
+            'rrp_depletion': {'score': None, 'max': 15, 'details': {}},
+            'tga_pressure': {'score': None, 'max': 20, 'details': {}},
+            'subtotal': 0,
+            'max_points': 50
+        },
+        'tier2': {
+            'reserves_deviation': {'score': None, 'max': 12, 'details': {}},
+            'sofr_appropriateness': {'score': None, 'max': 10, 'details': {}},
+            'real_m2_growth': {'score': None, 'max': 13, 'details': {}},
+            'subtotal': 0,
+            'max_points': 35
+        },
+        'tier3': {
+            'cp_spread': {'score': None, 'max': 5, 'details': {}},
+            'move_index': {'score': None, 'max': 5, 'details': {}},
+            'credit_spread': {'score': None, 'max': 5, 'details': {}},
+            'subtotal': 0,
+            'max_points': 15
+        },
+        'total_score': 0,
+        'data_quality': 'unknown',
+        'components_available': 0
+    }
+    
+    # --- データ抽出ヘルパー ---
+    def extract_series(key: str) -> Optional[pd.Series]:
+        """データ辞書から series を抽出"""
+        item = data.get(key)
+        if item is None:
+            return None
+        if isinstance(item, pd.Series):
+            return item
+        elif isinstance(item, dict):
+            return item.get('series') or item.get('data')
+        return None
+    
+    # =================================================================
+    # Tier 1: マクロ流動性環境（50点）
+    # =================================================================
+    tier1_total = 0
+    tier1_components = 0
+    
+    # 1.1 Fed資産増減率（15点）
+    soma_series = extract_series('SOMA_Total')
+    score, meta = score_fed_assets_change(soma_series)
+    details['tier1']['fed_assets_change']['score'] = score
+    details['tier1']['fed_assets_change']['details'] = meta
+    if meta.get('status') == 'ok':
+        tier1_total += score
+        tier1_components += 1
+    else:
+        tier1_total += score  # 中立スコアも加算
+    
+    # 1.2 RRP枯渇度（15点）
+    rrp_series = extract_series('ON_RRP')
+    score, meta = score_rrp_depletion(rrp_series)
+    details['tier1']['rrp_depletion']['score'] = score
+    details['tier1']['rrp_depletion']['details'] = meta
+    if meta.get('status') == 'ok':
+        tier1_total += score
+        tier1_components += 1
+    else:
+        tier1_total += score
+    
+    # 1.3 TGA圧力指数（20点）
+    tga_series = extract_series('TGA')
+    score, meta = score_tga_pressure(tga_series)
+    details['tier1']['tga_pressure']['score'] = score
+    details['tier1']['tga_pressure']['details'] = meta
+    if meta.get('status') == 'ok':
+        tier1_total += score
+        tier1_components += 1
+    else:
+        tier1_total += score
+    
+    details['tier1']['subtotal'] = tier1_total
+    details['components_available'] += tier1_components
+    
+    # =================================================================
+    # Tier 2: システミック指標（35点）- スレッド4で実装予定
+    # =================================================================
+    # 中立スコアで埋める（Tier 2の50%）
+    tier2_neutral = 35 / 2  # 17.5
+    details['tier2']['subtotal'] = tier2_neutral
+    details['tier2']['reserves_deviation']['score'] = 6  # 12の半分
+    details['tier2']['sofr_appropriateness']['score'] = 5  # 10の半分
+    details['tier2']['real_m2_growth']['score'] = 6.5  # 13の半分
+    
+    # =================================================================
+    # Tier 3: 市場シグナル（15点）- スレッド5で実装予定
+    # =================================================================
+    # 中立スコアで埋める（Tier 3の50%）
+    tier3_neutral = 15 / 2  # 7.5
+    details['tier3']['subtotal'] = tier3_neutral
+    details['tier3']['cp_spread']['score'] = 2.5
+    details['tier3']['move_index']['score'] = 2.5
+    details['tier3']['credit_spread']['score'] = 2.5
+    
+    # =================================================================
+    # 総合スコア計算
+    # =================================================================
+    total_score = (
+        details['tier1']['subtotal'] +
+        details['tier2']['subtotal'] +
+        details['tier3']['subtotal']
+    )
+    
+    details['total_score'] = float(np.clip(total_score, 0, 100))
+    
+    # データ品質判定（現在はTier 1の3指標のみ）
+    if tier1_components >= 3:
+        details['data_quality'] = 'good'
+    elif tier1_components >= 2:
+        details['data_quality'] = 'partial'
+    else:
+        details['data_quality'] = 'insufficient'
+    
+    return details['total_score'], details
+
+
+# =============================================================================
 # テスト用
 # =============================================================================
 if __name__ == '__main__':
