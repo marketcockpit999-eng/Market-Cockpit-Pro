@@ -593,7 +593,33 @@ if __name__ == '__main__':
     score, details = calculate_liquidity_score(test_data)
     interpretation = interpret_liquidity_score(score)
     
-    print(f"Liquidity Score: {score:.1f}")
+    print(f"Liquidity Score (v1): {score:.1f}")
     print(f"Interpretation: {interpretation['label']} ({interpretation['level']})")
     print(f"Components available: {details['components_available']}/3")
     print(f"Data quality: {details['data_quality']}")
+    
+    print("\n" + "="*50)
+    print("V2 Score Test (Tier 1 only)")
+    print("="*50)
+    
+    # V2テスト
+    score_v2, details_v2 = calculate_liquidity_score_v2(test_data)
+    interpretation_v2 = interpret_liquidity_score(score_v2)
+    
+    print(f"Liquidity Score (v2): {score_v2:.1f}")
+    print(f"Interpretation: {interpretation_v2['label']} ({interpretation_v2['level']})")
+    print(f"Data quality: {details_v2['data_quality']}")
+    print(f"\nTier 1 Details:")
+    t1 = details_v2['tier1']
+    print(f"  Fed Assets Change: {t1['fed_assets_change']['score']:.1f}/15")
+    print(f"    -> MoM%: {t1['fed_assets_change']['details'].get('value', 'N/A')}")
+    print(f"  RRP Depletion: {t1['rrp_depletion']['score']:.1f}/15")
+    print(f"    -> Value: {t1['rrp_depletion']['details'].get('value', 'N/A')}B")
+    print(f"    -> Depletion: {t1['rrp_depletion']['details'].get('depletion_pct', 'N/A')}%")
+    print(f"  TGA Pressure: {t1['tga_pressure']['score']:.1f}/20")
+    print(f"    -> Value: {t1['tga_pressure']['details'].get('value', 'N/A')}B")
+    print(f"    -> Level: {t1['tga_pressure']['details'].get('level_score', 'N/A')}/10")
+    print(f"    -> Speed: {t1['tga_pressure']['details'].get('speed_score', 'N/A')}/10")
+    print(f"  Subtotal: {t1['subtotal']:.1f}/50")
+    print(f"\nTier 2 (placeholder): {details_v2['tier2']['subtotal']:.1f}/35")
+    print(f"Tier 3 (placeholder): {details_v2['tier3']['subtotal']:.1f}/15")
