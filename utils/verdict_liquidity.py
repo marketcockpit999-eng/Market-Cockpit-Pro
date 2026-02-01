@@ -602,6 +602,148 @@ def score_real_m2_growth(m2_series: pd.Series,
     }
 
 
+# =============================================================================
+# V2 スコア計算関数（Tier 3）
+# =============================================================================
+
+def score_cp_spread(cp_spread_series: pd.Series) -> Tuple[float, Dict[str, Any]]:
+    """
+    CPスプレッドをスコア化（0-5点、低スプレッド=高スコア）
+    
+    金融的根拠:
+      - CP-FFスプレッド = 企業の短期資金調達コスト
+      - スプレッド拡大 = 企業の資金調達ストレス
+      - 2008年、2020年の危機時に急拡大
+    
+    スコア変換（逆スケール: 低いほど良い）:
+      spread < 0.10% → 5点（正常）
+      spread 0.10-0.20% → 4点（やや緊張）
+      spread 0.20-0.40% → 3点（警戒）
+      spread 0.40-0.80% → 2点（ストレス）
+      spread > 0.80% → 1点（危機的）
+    """
+    MAX_POINTS = 5
+    NEUTRAL_SCORE = MAX_POINTS / 2  # 2.5
+    
+    if cp_spread_series is None or len(cp_spread_series) == 0:
+        return NEUTRAL_SCORE, {'value': None, 'status': 'insufficient_data'}
+    
+    current = cp_spread_series.iloc[-1]
+    
+    if pd.isna(current):
+        return NEUTRAL_SCORE, {'value': None, 'status': 'nan'}
+    
+    # スコア変換（逆スケール）
+    if current < 0.10:
+        score = 5
+    elif current < 0.20:
+        score = 4 + (0.20 - current) / 0.10
+    elif current < 0.40:
+        score = 3 + (0.40 - current) / 0.20
+    elif current < 0.80:
+        score = 2 + (0.80 - current) / 0.40
+    else:
+        score = max(0, 1 - (current - 0.80) / 0.40)
+    
+    return float(np.clip(score, 0, MAX_POINTS)), {
+        'value': current,
+        'status': 'ok'
+    }
+
+
+def score_move_index(move_series: pd.Series) -> Tuple[float, Dict[str, Any]]:
+    """
+    MOVE Indexをスコア化（0-5点、低MOVE=高スコア）
+    
+    金融的根拠:
+      - MOVE = 債券市場のVIX
+      - 債券ボラ上昇 = 金利不確実性 = 流動性縮小圧力
+      - 株式VIXより先行することがある
+    
+    スコア変換（逆スケール: 低いほど良い）:
+      move < 80 → 5点（低ボラ、安定）
+      move 80-100 → 4点（通常）
+      move 100-120 → 3点（やや高ボラ）
+      move 120-150 → 2点（高ボラ、警戒）
+      move > 150 → 1点（危機水準）
+    """
+    MAX_POINTS = 5
+    NEUTRAL_SCORE = MAX_POINTS / 2  # 2.5
+    
+    if move_series is None or len(move_series) == 0:
+        return NEUTRAL_SCORE, {'value': None, 'status': 'insufficient_data'}
+    
+    current = move_series.iloc[-1]
+    
+    if pd.isna(current):
+        return NEUTRAL_SCORE, {'value': None, 'status': 'nan'}
+    
+    # スコア変換（逆スケール）
+    if current < 80:
+        score = 5
+    elif current < 100:
+        score = 4 + (100 - current) / 20
+    elif current < 120:
+        score = 3 + (120 - current) / 20
+    elif current < 150:
+        score = 2 + (150 - current) / 30
+    else:
+        score = max(0, 1 - (current - 150) / 50)
+    
+    return float(np.clip(score, 0, MAX_POINTS)), {
+        'value': current,
+        'status': 'ok'
+    }
+
+
+def score_credit_spread(credit_spread_series: pd.Series) -> Tuple[float, Dict[str, Any]]:
+    """
+    Credit Spreadをスコア化（0-5点）
+    
+    金融的根拠:
+      - HYスプレッド = 信用リスクのバロメーター
+      - スプレッド縮小 = リスク選好（ただし行き過ぎは警告）
+      - スプレッド拡大 = 信用収縮、流動性縮小
+    
+    スコア変換（非線形: 3-4%が最適）:
+      spread < 3% → 4点（過度の楽観、やや警戒）
+      spread 3-4% → 5点（健全な信用環境）
+      spread 4-5% → 4点（通常）
+      spread 5-7% → 3点（やや警戒）
+      spread 7-10% → 2点（信用収縮）
+      spread > 10% → 1点（危機）
+    """
+    MAX_POINTS = 5
+    NEUTRAL_SCORE = MAX_POINTS / 2  # 2.5
+    
+    if credit_spread_series is None or len(credit_spread_series) == 0:
+        return NEUTRAL_SCORE, {'value': None, 'status': 'insufficient_data'}
+    
+    current = credit_spread_series.iloc[-1]
+    
+    if pd.isna(current):
+        return NEUTRAL_SCORE, {'value': None, 'status': 'nan'}
+    
+    # スコア変換（非線形: 3-4%が最適）
+    if current < 3:
+        score = 4  # 過度の楽観は減点
+    elif current < 4:
+        score = 5  # 最適ゾーン
+    elif current < 5:
+        score = 4 + (5 - current)
+    elif current < 7:
+        score = 3 + (7 - current) / 2
+    elif current < 10:
+        score = 2 + (10 - current) / 3
+    else:
+        score = max(0, 1 - (current - 10) / 5)
+    
+    return float(np.clip(score, 0, MAX_POINTS)), {
+        'value': current,
+        'status': 'ok'
+    }
+
+
 def calculate_liquidity_score_v2(data: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
     """
     流動性スコアv2を計算（0-100点）
@@ -617,7 +759,7 @@ def calculate_liquidity_score_v2(data: Dict[str, Any]) -> Tuple[float, Dict[str,
         ├─ SOFR適正性:         10点
         └─ M2実質成長率:       13点
       
-      【Tier 3】市場シグナル（15点）- スレッド5で実装予定
+      【Tier 3】市場シグナル（15点）
         ├─ CP Spread:          5点
         ├─ MOVE Index:         5点
         └─ Credit Spread:      5点
@@ -754,14 +896,46 @@ def calculate_liquidity_score_v2(data: Dict[str, Any]) -> Tuple[float, Dict[str,
     details['components_available'] += tier2_components
     
     # =================================================================
-    # Tier 3: 市場シグナル（15点）- スレッド5で実装予定
+    # Tier 3: 市場シグナル（15点）
     # =================================================================
-    # 中立スコアで埋める（Tier 3の50%）
-    tier3_neutral = 15 / 2  # 7.5
-    details['tier3']['subtotal'] = tier3_neutral
-    details['tier3']['cp_spread']['score'] = 2.5
-    details['tier3']['move_index']['score'] = 2.5
-    details['tier3']['credit_spread']['score'] = 2.5
+    tier3_total = 0
+    tier3_components = 0
+    
+    # 3.1 CP Spread（5点）
+    cp_spread_series = extract_series('CP_Spread')
+    score, meta = score_cp_spread(cp_spread_series)
+    details['tier3']['cp_spread']['score'] = score
+    details['tier3']['cp_spread']['details'] = meta
+    if meta.get('status') == 'ok':
+        tier3_total += score
+        tier3_components += 1
+    else:
+        tier3_total += score  # 中立スコアも加算
+    
+    # 3.2 MOVE Index（5点）
+    move_series = extract_series('MOVE')
+    score, meta = score_move_index(move_series)
+    details['tier3']['move_index']['score'] = score
+    details['tier3']['move_index']['details'] = meta
+    if meta.get('status') == 'ok':
+        tier3_total += score
+        tier3_components += 1
+    else:
+        tier3_total += score
+    
+    # 3.3 Credit Spread（5点）
+    credit_spread_series = extract_series('Credit_Spread')
+    score, meta = score_credit_spread(credit_spread_series)
+    details['tier3']['credit_spread']['score'] = score
+    details['tier3']['credit_spread']['details'] = meta
+    if meta.get('status') == 'ok':
+        tier3_total += score
+        tier3_components += 1
+    else:
+        tier3_total += score
+    
+    details['tier3']['subtotal'] = tier3_total
+    details['components_available'] += tier3_components
     
     # =================================================================
     # 総合スコア計算
@@ -774,11 +948,11 @@ def calculate_liquidity_score_v2(data: Dict[str, Any]) -> Tuple[float, Dict[str,
     
     details['total_score'] = float(np.clip(total_score, 0, 100))
     
-    # データ品質判定（Tier 1 + Tier 2 の6指標で判定）
-    total_components = tier1_components + tier2_components
-    if total_components >= 5:
+    # データ品質判定（全9指標で判定）
+    total_components = tier1_components + tier2_components + tier3_components
+    if total_components >= 8:
         details['data_quality'] = 'good'
-    elif total_components >= 3:
+    elif total_components >= 5:
         details['data_quality'] = 'partial'
     else:
         details['data_quality'] = 'insufficient'
@@ -805,6 +979,10 @@ if __name__ == '__main__':
         'SOFR': pd.Series(np.random.normal(4.30, 0.05, 600), index=dates),
         'FedFundsUpper': pd.Series(np.full(600, 4.50), index=dates),
         'CorePCE': pd.Series(np.random.normal(2.8, 0.2, 600), index=dates),
+        # Tier 3 data
+        'CP_Spread': pd.Series(np.random.normal(0.15, 0.05, 600), index=dates),
+        'MOVE': pd.Series(np.random.normal(95, 15, 600), index=dates),
+        'Credit_Spread': pd.Series(np.random.normal(4.2, 0.5, 600), index=dates),
     }
     
     score, details = calculate_liquidity_score(test_data)
@@ -816,7 +994,7 @@ if __name__ == '__main__':
     print(f"Data quality: {details['data_quality']}")
     
     print("\n" + "="*50)
-    print("V2 Score Test (Tier 1 + Tier 2)")
+    print("V2 Score Test (All 9 Indicators)")
     print("="*50)
     
     # V2テスト
@@ -825,7 +1003,7 @@ if __name__ == '__main__':
     
     print(f"Liquidity Score (v2): {score_v2:.1f}")
     print(f"Interpretation: {interpretation_v2['label']} ({interpretation_v2['level']})")
-    print(f"Components available: {details_v2['components_available']}/6")
+    print(f"Components available: {details_v2['components_available']}/9")
     print(f"Data quality: {details_v2['data_quality']}")
     
     print(f"\nTier 1 Details (50 points):")
@@ -857,4 +1035,16 @@ if __name__ == '__main__':
     print(f"    -> Real Growth: {t2['real_m2_growth']['details'].get('real_growth', 'N/A')}%")
     print(f"  Subtotal: {t2['subtotal']:.1f}/35")
     
-    print(f"\nTier 3 (placeholder): {details_v2['tier3']['subtotal']:.1f}/15")
+    print(f"\nTier 3 Details (15 points):")
+    t3 = details_v2['tier3']
+    print(f"  CP Spread: {t3['cp_spread']['score']:.1f}/5")
+    print(f"    -> Value: {t3['cp_spread']['details'].get('value', 'N/A')}%")
+    print(f"  MOVE Index: {t3['move_index']['score']:.1f}/5")
+    print(f"    -> Value: {t3['move_index']['details'].get('value', 'N/A')}")
+    print(f"  Credit Spread: {t3['credit_spread']['score']:.1f}/5")
+    print(f"    -> Value: {t3['credit_spread']['details'].get('value', 'N/A')}%")
+    print(f"  Subtotal: {t3['subtotal']:.1f}/15")
+    
+    print(f"\n" + "="*50)
+    print(f"Total Score: {details_v2['total_score']:.1f}/100")
+    print(f"="*50)
