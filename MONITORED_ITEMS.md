@@ -102,6 +102,8 @@
 | 14 | `PPI` | FRED | PPIACO | idx | inflation | 生産者物価指数 |
 | 15 | `RetailSales` | FRED | RSAFS | B | consumption | 小売売上高 |
 | 16 | `UNRATE` | FRED | UNRATE | % | employment | 失業率（別名） |
+| 17 | `INDPRO` | FRED | INDPRO | idx | manufacturing | 工業生産指数 (2017=100) |
+| 18 | `NEWORDER` | FRED | NEWORDER | B | manufacturing | 製造業新規受注 (SAAR) |
 
 ---
 

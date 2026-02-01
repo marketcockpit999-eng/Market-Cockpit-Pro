@@ -511,6 +511,14 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 - These are diffusion indices similar to ISM PMI but free from FRED
 - Each covers different US regions (NY, PA/NJ/DE, TX, Southeast)''',
         
+        # --- US Economic Page: Manufacturing Additional (INDPRO / NEWORDER) ---
+        'indpro_title': 'Industrial Production',
+        'indpro_label': 'Industrial Production Index',
+        'indpro_notes': 'Real output index (2017=100) for manufacturing, mining, electric & gas utilities',
+        'neworder_title': 'Manufacturing New Orders',
+        'neworder_label': 'New Orders',
+        'neworder_notes': 'New orders for manufactured goods (SAAR, leading indicator for capex)',
+        
         # --- US Economic Page: Services/Nonmanufacturing (2026-01-23 added) ---
         'us_economic_section_services': '💼 Services (Nonmanufacturing)',
         'services_indicators_desc': '💡 Regional Fed Services/Nonmanufacturing Surveys (ISM NMI alternatives)',
@@ -1676,6 +1684,14 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
 - **0未満**: 製造業セクターが縮小中
 - ISM PMIと同様のDiffusion Indexだが、FREDから無料で取得可能
 - 各指標は異なる地域をカバー (NY, PA/NJ/DE, TX, 南東部)''',
+        
+        # --- US Economic Page: Manufacturing Additional (INDPRO / NEWORDER) ---
+        'indpro_title': '工業生産',
+        'indpro_label': '工業生産指数',
+        'indpro_notes': '製造業・鉱業・電力ガスの実質生産指数（2017=100）',
+        'neworder_title': '製造業新規受注',
+        'neworder_label': '新規受注',
+        'neworder_notes': '製造業新規受注（年率換算、設備投資の先行指標）',
         
         # --- US Economic Page: Services/Nonmanufacturing (2026-01-23 added) ---
         'us_economic_section_services': '💼 サービス業（非製造業）',

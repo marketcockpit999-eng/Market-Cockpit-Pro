@@ -93,6 +93,9 @@ HELP_EN = {
     'help_Philly_Fed_Mfg': 'Philadelphia Fed Manufacturing Index - Mid-Atlantic region survey. Above 0 = expansion.',
     'help_Dallas_Fed_Mfg': 'Dallas Fed Manufacturing Index - Texas region survey. Above 0 = expansion.',
     'help_Richmond_Fed_Mfg': 'Richmond Fed Manufacturing Index - Fifth District survey. Above 0 = expansion.',
+    # Manufacturing Output & Orders (2026-02-01 added)
+    'help_INDPRO': 'Industrial Production Index - Manufacturing/mining/utilities output (2017=100). Declining trend = economic slowdown.',
+    'help_NEWORDER': 'Manufacturing New Orders - Leading indicator of future production. Decline signals upcoming output drop.',
     # === Key Name Aliases (2026-01-26) ===
     'help_FedFundsUpper': 'Fed Funds Target Rate (Upper) - Policy rate upper bound.',
     'help_FedFundsLower': 'Fed Funds Target Rate (Lower) - Policy rate lower bound.',
@@ -225,6 +228,9 @@ HELP_JA = {
     'help_Philly_Fed_Mfg': '【フィラデルフィア連銀製造業指数】\n中部大西洋地域の製造業調査。0超=拡大。',
     'help_Dallas_Fed_Mfg': '【ダラス連銀製造業指数】\nテキサス地域の製造業調査。0超=拡大。',
     'help_Richmond_Fed_Mfg': '【リッチモンド連銀製造業指数】\n第5地区の製造業調査。0超=拡大。',
+    # === 製造業生産・受注 (2026-02-01 added) ===
+    'help_INDPRO': '【工業生産指数】\n製造業・鉱業・電力の実質生産量（2017=100）。減少トレンドは景気悪化のサイン。',
+    'help_NEWORDER': '【製造業新規受注】\n将来の生産量の先行指標。減少は今後の生産減を示唆。',
     # === キー名エイリアス (2026-01-26) ===
     'help_FedFundsUpper': '【FF誘導目標（上限）】\n政策金利の上限。',
     'help_FedFundsLower': '【FF誘導目標（下限）】\n政策金利の下限。',
