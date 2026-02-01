@@ -15,7 +15,7 @@ VERDICT = 流動性(35%) + サイクル(25%) + テクニカル(25%) + センチ�
 import numpy as np
 from typing import Dict, Any, Optional
 
-from utils.verdict_liquidity import calculate_liquidity_score, interpret_liquidity_score
+from utils.verdict_liquidity import calculate_liquidity_score_v2, interpret_liquidity_score
 from utils.verdict_cycle import calculate_cycle_score, interpret_cycle_score
 from utils.verdict_technical import calculate_technical_score, interpret_technical_score
 from utils.verdict_sentiment import calculate_sentiment_score, interpret_sentiment_score
@@ -69,7 +69,7 @@ def calculate_market_verdict(data: Dict[str, Any]) -> Dict[str, Any]:
     # --- 1. 流動性スコア (40%) ---
     liq_data = data.get('liquidity_data', {})
     if liq_data:
-        liq_score, liq_details = calculate_liquidity_score(liq_data)
+        liq_score, liq_details = calculate_liquidity_score_v2(liq_data)
         liq_interp = interpret_liquidity_score(liq_score)
         result['pillars']['liquidity'] = {
             'score': liq_score,

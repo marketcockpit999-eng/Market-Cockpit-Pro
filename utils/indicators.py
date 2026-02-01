@@ -587,6 +587,37 @@ INDICATORS = {
         'display_pattern': 'web_scrape',
     },
     
+    # === Manufacturing Hard Data (2026-02-01 追加) ===
+    # Direct output & orders measurement (vs survey-based indices above)
+    'INDPRO': {
+        'source': 'FRED',
+        'id': 'INDPRO',
+        'unit': 'idx',
+        'frequency': 'monthly',
+        'freshness': 'monthly',
+        'category': 'manufacturing',
+        'ui_page': '03_us_economic',
+        'ai_include': True,
+        'ai_section': '米経済指標',
+        'notes': '工業生産指数（2017=100、製造業実績の直接測定）',
+        'validation': (80, 140),
+        'display_pattern': 'standard',
+    },
+    'NEWORDER': {
+        'source': 'FRED',
+        'id': 'NEWORDER',
+        'unit': 'B',
+        'frequency': 'monthly',
+        'freshness': 'monthly',
+        'category': 'manufacturing',
+        'ui_page': '03_us_economic',
+        'ai_include': True,
+        'ai_section': '米経済指標',
+        'notes': '製造業新規受注（設備投資の先行指標、年率換算）',
+        'divisor': 1000,  # Millions → Billions
+        'display_pattern': 'standard',
+    },
+
     # === Regional Fed Services/Nonmanufacturing Indices (2026-01-23 追加) ===
     # Non-manufacturing sector surveys from regional Federal Reserve Banks
     'Philly_Fed_Services': {

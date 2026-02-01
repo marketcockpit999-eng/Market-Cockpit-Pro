@@ -323,6 +323,24 @@ with st.expander(t('us_economic_section_manufacturing'), expanded=True):
         else:
             st.info(t('data_fetch_failed'))
 
+    # Additional Manufacturing Indicators
+    st.markdown("---")
+    mfg_add_col1, mfg_add_col2 = st.columns(2)
+    
+    with mfg_add_col1:
+        st.markdown(f"#### {t('indpro_title')}")
+        indpro_series = df.get('INDPRO')
+        show_metric_with_sparkline(t('indpro_label'), indpro_series, 'INDPRO', "idx", "INDPRO", notes=t('indpro_notes'))
+        if indpro_series is not None and not indpro_series.isna().all():
+            styled_line_chart(indpro_series, height=150)
+    
+    with mfg_add_col2:
+        st.markdown(f"#### {t('neworder_title')}")
+        neworder_series = df.get('NEWORDER')
+        show_metric_with_sparkline(t('neworder_label'), neworder_series, 'NEWORDER', "idx", "NEWORDER", notes=t('neworder_notes'))
+        if neworder_series is not None and not neworder_series.isna().all():
+            styled_line_chart(neworder_series, height=150)
+
     # Manufacturing guide
     with st.expander(t('manufacturing_guide').split('\n')[0], expanded=False):
         st.markdown(t('manufacturing_guide'))
