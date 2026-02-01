@@ -405,6 +405,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         
         # --- Crypto Page Extended ---
         'crypto_subtitle': '💡 Crypto market liquidity and RWA (Real World Assets) tokenization trends',
+        'crypto_prices': '💰 Crypto Prices',
+        'btc_price': 'BTC Price',
+        'eth_price': 'ETH Price',
+        'btc_price_notes': 'Source: Yahoo Finance (BTC-USD)',
+        'eth_price_notes': 'Source: Yahoo Finance (ETH-USD)',
         'stablecoin_section': '💵 Stablecoin Supply',
         'total_stablecoin': 'Total Stablecoin Supply',
         'stablecoin_total_help': 'Total supply of all stablecoins',
@@ -995,7 +1000,7 @@ Rather than simply summarizing news, you analyze the "plumbing" behind the data 
         'verdict_header_value': '**Value**',
         'verdict_header_score': '**Score**',
         'verdict_header_weight': '**Weight**',
-        'verdict_reference': 'Ref',
+        'verdict_reference': '(component)',
         'verdict_ind_fed_assets': 'Fed Assets',
         'verdict_ind_tga': 'TGA Balance',
         'verdict_ind_on_rrp': 'ON RRP',
@@ -1566,6 +1571,11 @@ Visualize differences between traditional assets (Gold) and digital assets (BTC)
         
         # --- Crypto Page Extended ---
         'crypto_subtitle': '💡 暗号資産市場の流動性とRWA (実物資産) トークン化のトレンド',
+        'crypto_prices': '💰 暗号資産価格',
+        'btc_price': 'BTC 価格',
+        'eth_price': 'ETH 価格',
+        'btc_price_notes': 'データソース: Yahoo Finance (BTC-USD)',
+        'eth_price_notes': 'データソース: Yahoo Finance (ETH-USD)',
         'stablecoin_section': '💵 ステーブルコイン供給量',
         'total_stablecoin': 'ステーブルコイン総供給量',
         'stablecoin_total_help': '全ステーブルコインの総供給量',
@@ -2271,7 +2281,7 @@ Goldより変動が激しいため、短期的な市場センチメントを反�
         'verdict_header_value': '**値**',
         'verdict_header_score': '**スコア**',
         'verdict_header_weight': '**ウェイト**',
-        'verdict_reference': '参考',
+        'verdict_reference': '(内訳)',
         'verdict_ind_fed_assets': 'Fed総資産',
         'verdict_ind_tga': 'TGA残高',
         'verdict_ind_on_rrp': 'ON RRP',

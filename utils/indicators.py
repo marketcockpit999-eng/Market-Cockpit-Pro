@@ -321,8 +321,8 @@ INDICATORS = {
         'ui_page': '02_global_money',
         'ai_include': True,
         'ai_section': '通貨供給',
-        'notes': '米実質M2',
-        'divisor': 1000,
+        'notes': '米実質M2（1982-84年基準ドル、Billions）',
+        'divisor': 1000,  # Billions → Trillions
         'display_pattern': 'standard',
     },
     # NOTE: Non-US M2 (CN, JP, EU) removed due to unreliable FRED data sources
@@ -703,7 +703,7 @@ INDICATORS = {
         'ai_include': True,
         'ai_section': '銀行セクター',
         'notes': '銀行の現金保有',
-        'divisor': 1000,
+        # divisor削除: FREDはBillionsで返すため変換不要
         'display_pattern': 'standard',
     },
     'CI_Loans': {
@@ -1243,23 +1243,15 @@ INDICATORS = {
     'ECB_Assets': {
         'source': 'FRED',
         'id': 'ECBASSETSW',
-        'unit': 'M',
+        'unit': 'B EUR',
         'frequency': 'weekly',
         'freshness': 'weekly',
         'category': 'central_bank',
-        'ui_page': '02_global_money', # Or hidden mainly for calc
+        'ui_page': '02_global_money',
         'ai_include': True,
         'ai_section': '中央銀行',
-        'notes': 'ECB総資産 (Million EUR)',
-        'divisor': 1000000, # Initial unit is Million? FRED says "Millions of Euros". Convert to Trillions? Or Billions?
-        # Usually we want Billions for consistency with Fed Assets. 1,000,000 Million = 1 Trillion.
-        # Fed Assets is in Billions.
-        # Let's keep it Raw and normalize in data_fetcher if needed, or set divisor here.
-        # FRED: ECBASSETSW is "Millions of Euros".
-        # To get Billions of Euros: Divide by 1,000.
-        # To get Trillions: Divide by 1,000,000.
-        # Current Fed Assets is Billions. Let's aim for Billions.
-        'divisor': 1000, 
+        'notes': 'ECB総資産（10億ユーロ）',
+        'divisor': 1000,  # Millions → Billions変換
         'display_pattern': 'standard',
     },
     'Net_Liquidity': {
